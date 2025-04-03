@@ -176,7 +176,7 @@ export default function EditProfile() {
                                 name="firstName"
                                 value={formData.firstName}
                                 onChange={handleInputChange}
-                                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#F19B12]"
                             />
                         </div>
                         <div>
@@ -189,7 +189,7 @@ export default function EditProfile() {
                                 name="lastName"
                                 value={formData.lastName}
                                 onChange={handleInputChange}
-                                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#F19B12]"
                             />
                         </div>
                     </div>
@@ -204,7 +204,7 @@ export default function EditProfile() {
                             name="phone"
                             value={formData.phone}
                             onChange={handleInputChange}
-                            className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#F19B12]"
                         />
                     </div>
 
@@ -218,7 +218,7 @@ export default function EditProfile() {
                             name="streetAddress"
                             value={formData.streetAddress}
                             onChange={handleInputChange}
-                            className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#F19B12]"
                         />
                     </div>
 
@@ -233,7 +233,7 @@ export default function EditProfile() {
                                 name="city"
                                 value={formData.city}
                                 onChange={handleInputChange}
-                                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#F19B12]"
                             />
                         </div>
                         <div>
@@ -246,7 +246,7 @@ export default function EditProfile() {
                                 name="state"
                                 value={formData.state}
                                 onChange={handleInputChange}
-                                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#F19B12]"
                             />
                         </div>
                         <div>
@@ -259,7 +259,7 @@ export default function EditProfile() {
                                 name="postalCode"
                                 value={formData.postalCode}
                                 onChange={handleInputChange}
-                                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#F19B12]"
                             />
                         </div>
                     </div>
@@ -274,7 +274,7 @@ export default function EditProfile() {
                             name="country"
                             value={formData.country}
                             onChange={handleInputChange}
-                            className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#F19B12]"
                         />
                     </div>
 

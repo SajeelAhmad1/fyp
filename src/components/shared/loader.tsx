@@ -2,7 +2,7 @@ import React from "react";
 
 interface LoaderProps {
   size?: "sm" | "md" | "lg";
-  color?: string; // Hex or Tailwind color (e.g., "#579FE1" or "blue-500")
+  color?: string; // Hex or Tailwind color (e.g., "#579FE1" or "[#F19B12]")
   withText?: boolean; // Show "Loading..." text
   className?: string; // Additional Tailwind classes
 }

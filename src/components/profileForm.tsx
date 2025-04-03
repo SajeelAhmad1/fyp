@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { Toaster } from "sonner";
 import Image from "next/image";
 import { CustomerProfile } from "@/types/customerProfile";
 import { User } from "@/types/user";
@@ -203,7 +204,7 @@ const CustomerProfileForm: React.FC = () => {
               {/* Blue Edit Icon */}
               <div
                 onClick={triggerFileInput}
-                className="absolute bottom-6 right-2 bg-blue-500 rounded-full p-1 cursor-pointer"
+                className="absolute bottom-6 right-2 bg-[#F19B12] rounded-full p-1 cursor-pointer"
               >
                 <Pencil className="text-white w-4 h-4" />
               </div>
@@ -253,6 +254,7 @@ const CustomerProfileForm: React.FC = () => {
           {loading ? "Saving..." : user?.isProfileComplete ? "Update Profile" : "Create Profile"}
         </button>
       </form>
+      <Toaster position="top-right"/>
     </div>
   );
 };

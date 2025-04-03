@@ -225,7 +225,7 @@ export default function Wishlist() {
                       <button
                         onClick={() => handleCartToggle(item.product.id, item.product.stock > 0)}
                         disabled={cartLoadingItems[item.product.id]}
-                        className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 disabled:opacity-50"
+                        className="bg-[#F19B12] text-white py-2 px-4 rounded hover:bg-blue-600 disabled:opacity-50"
                       >
                         {cartLoadingItems[item.product.id] ? 'Adding...' : 'Add to Cart'}
                       </button>

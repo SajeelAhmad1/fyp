@@ -68,7 +68,7 @@ const SideProductType = () => {
                 id={`type-${type.id}`}
                 checked={selectedTypes.includes(type.id)}
                 onChange={() => handleTypeChange(type.id)}
-                className="mr-2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                className="mr-2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-[#F19B12]"
               />
               <label 
                 htmlFor={`type-${type.id}`}

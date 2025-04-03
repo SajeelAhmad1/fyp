@@ -371,7 +371,7 @@ const Product: React.FC<ProductProps> = ({
       className="w-68 bg-white border border-gray-150 shadow-sm hover:shadow-md transition-shadow duration-300 relative overflow-hidden cursor-pointer"
     >
       {discountPercentage > 0 && (
-        <div className="absolute top-2 left-0 bg-blue-500 text-white px-2 py-1 text-xs font-medium z-10 flex items-center after:content-[''] after:absolute after:top-0 after:right-0 after:border-t-[14px] after:border-b-[14px] after:border-l-[14px] after:border-t-transparent after:border-b-transparent after:border-l-blue-500 after:translate-x-full">
+        <div className="absolute top-2 left-0 bg-[#F19B12] text-white px-2 py-1 text-xs font-medium z-10 flex items-center after:content-[''] after:absolute after:top-0 after:right-0 after:border-t-[14px] after:border-b-[14px] after:border-l-[14px] after:border-t-transparent after:border-b-transparent after:border-l-[#F19B12] after:translate-x-full">
           -{discountPercentage}%
         </div>
       )}

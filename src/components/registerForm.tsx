@@ -5,6 +5,7 @@ import { Formik, Form, Field } from "formik";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { toast } from "sonner";
+import { Toaster } from "sonner";
 
 function validateEmail(value: string) {
   let error;
@@ -123,7 +124,7 @@ export default function ClientLoginForm() {
                 name="email"
                 type="email"
                 placeholder="Enter your email address"
-                className="h-[42px] mb-[2px] py-4 px-6 rounded-[6.56px] border-blue-500 border-2 w-full text-sm ring-0 focus:ring-0 outline-none"
+                className="h-[42px] mb-[2px] py-4 px-6 rounded-[6.56px] border-[#F19B12] border-2 w-full text-sm ring-0 focus:ring-0 outline-none"
               />
               
               {errors.email && touched.email ? (
@@ -149,6 +150,7 @@ export default function ClientLoginForm() {
       </div>
 
       {error ? <p className="text-red-500">{error}</p> : null}
+      <Toaster position="top-right"/>
     </div>
   );
 }

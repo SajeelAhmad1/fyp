@@ -7,6 +7,7 @@ import { EyeIcon, EyeOffIcon } from "@heroicons/react/outline";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { toast } from "sonner";
+import { Toaster } from "sonner";
 import { Loader } from "./shared/loader";
 
 function ClientPasswordForm() {
@@ -102,10 +103,10 @@ function ClientPasswordForm() {
             value={formik.values.password}
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
-            className={`w-full border p-2 py-4 px-6 rounded-[6.56px] text-sm focus:border-blue-500  focus:outline-none ${
+            className={`w-full border p-2 py-4 px-6 rounded-[6.56px] text-sm focus:border-[#F19B12]  focus:outline-none ${
               formik.touched.password && formik.errors.password
                 ? "border-red-500"
-                : "border-blue-500"
+                : "border-[#F19B12]"
             }`}
           />
           <div
@@ -141,10 +142,10 @@ function ClientPasswordForm() {
             value={formik.values.confirmPassword}
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
-            className={`w-full p-2 border px-6 py-4 rounded-[6.56px] text-sm  focus:border-blue-500 focus:outline-none ${
+            className={`w-full p-2 border px-6 py-4 rounded-[6.56px] text-sm  focus:border-[#F19B12] focus:outline-none ${
               formik.touched.confirmPassword && formik.errors.confirmPassword
                 ? "border-red-500"
-                : "border-blue-500"
+                : "border-[#F19B12]"
             }`}
           />
           <div
@@ -180,6 +181,7 @@ function ClientPasswordForm() {
           Continue
         </button>
       )}
+      <Toaster position="top-right"/>
     </form>
   );
 }

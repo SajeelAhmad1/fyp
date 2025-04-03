@@ -398,7 +398,7 @@ export default function AddProductPage() {
                 required
                 value={formData.name}
                 onChange={handleChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F19B12] focus:ring-[#F19B12]"
               />
             </div>
 
@@ -412,7 +412,7 @@ export default function AddProductPage() {
                 required
                 value={formData.categoryId}
                 onChange={handleChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F19B12] focus:ring-[#F19B12]"
               >
                 <option value="">Select a category</option>
                 {categories.map(category => (
@@ -438,7 +438,7 @@ export default function AddProductPage() {
                 name="subcategoryId"
                 value={formData.subcategoryId}
                 onChange={handleChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F19B12] focus:ring-[#F19B12]"
                 disabled={subcategories.length === 0}
               >
                 <option value="">Select a subcategory</option>
@@ -465,7 +465,7 @@ export default function AddProductPage() {
                 required
                 value={formData.isFeatured.toString()}
                 onChange={handleChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F19B12] focus:ring-[#F19B12]"
               >
                 <option value="false">No</option>
                 <option value="true">Yes</option>
@@ -484,7 +484,7 @@ export default function AddProductPage() {
                 required
                 value={formData.isBestChoice.toString()}
                 onChange={handleChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F19B12] focus:ring-[#F19B12]"
               >
                 <option value="false">No</option>
                 <option value="true">Yes</option>
@@ -507,7 +507,7 @@ export default function AddProductPage() {
                 step="0.01"
                 value={formData.price}
                 onChange={handleChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F19B12] focus:ring-[#F19B12]"
               />
             </div>
             <div>
@@ -523,7 +523,7 @@ export default function AddProductPage() {
                 step="0.01"
                 value={formData.discount}
                 onChange={handleChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F19B12] focus:ring-[#F19B12]"
               />
             </div>
 
@@ -539,7 +539,7 @@ export default function AddProductPage() {
                 min="0"
                 value={formData.stock}
                 onChange={handleChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F19B12] focus:ring-[#F19B12]"
               />
             </div>
 
@@ -553,7 +553,7 @@ export default function AddProductPage() {
                 name="sku"
                 value={formData.sku || ''}
                 onChange={handleChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F19B12] focus:ring-[#F19B12]"
               />
             </div>
 
@@ -600,7 +600,7 @@ export default function AddProductPage() {
                     name="imageUrl"
                     value={imageUrl}
                     onChange={handleImageUrlChange}
-                    className="block w-full rounded-l-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    className="block w-full rounded-l-md border-gray-300 shadow-sm focus:border-[#F19B12] focus:ring-[#F19B12]"
                     placeholder="Or enter image URL"
                   />
                   <button
@@ -658,7 +658,7 @@ export default function AddProductPage() {
                   name="colorInput"
                   value={colorInput}
                   onChange={handleColorInputChange}
-                  className="block w-full rounded-l-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  className="block w-full rounded-l-md border-gray-300 shadow-sm focus:border-[#F19B12] focus:ring-[#F19B12]"
                   placeholder="Add a color"
                 />
                 <button
@@ -705,7 +705,7 @@ export default function AddProductPage() {
                   name="sizeInput"
                   value={sizeInput}
                   onChange={handleSizeInputChange}
-                  className="block w-full rounded-l-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  className="block w-full rounded-l-md border-gray-300 shadow-sm focus:border-[#F19B12] focus:ring-[#F19B12]"
                   placeholder="Add a size"
                 />
                 <button
@@ -752,7 +752,7 @@ export default function AddProductPage() {
               required
               value={formData.description}
               onChange={handleChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F19B12] focus:ring-[#F19B12]"
             />
           </div>
           <div>
@@ -766,7 +766,7 @@ export default function AddProductPage() {
               required
               value={formData.shortDescription}
               onChange={handleChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F19B12] focus:ring-[#F19B12]"
             />
           </div>
 

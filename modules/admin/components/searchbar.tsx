@@ -26,12 +26,12 @@ const SearchBar = ({ onSearch, placeholder = "Search products..." }: SearchBarPr
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={placeholder}
-          className="w-full py-2 pl-10 pr-4 text-sm bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          className="w-full py-2 pl-10 pr-4 text-sm bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F19B12] focus:border-[#F19B12]"
         />
       </div>
       <button 
         type="submit"
-        className="absolute right-0 inset-y-0 px-4 text-sm font-medium text-white bg-blue-600 rounded-r-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        className="absolute right-0 inset-y-0 px-4 text-sm font-medium text-white bg-blue-600 rounded-r-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-[#F19B12] focus:ring-offset-2"
       >
         Search
       </button>

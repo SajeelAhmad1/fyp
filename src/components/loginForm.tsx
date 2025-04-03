@@ -8,7 +8,7 @@ import { signIn, useSession } from "next-auth/react";
 import { EyeIcon, EyeOffIcon } from "@heroicons/react/outline";
 import googleLogo from "../assets/images/google-logo.png";
 import Link from "next/link";
-import { toast } from "sonner";
+import { toast, Toaster } from "sonner";
 import Image from "next/image";
 
 const LoginSchema = Yup.object().shape({
@@ -115,7 +115,7 @@ function ClientLoginForm() {
         
             if (result?.error) {
               toast.error("Error", {
-                description: result?.error || "🚨Oops... Something went wrong!",
+                description: "Incorrect email or password",
               });
             } else {
               // Wait for session to update
@@ -254,6 +254,7 @@ function ClientLoginForm() {
           Sign Up
         </Link>
       </p>
+      <Toaster position="top-right"/>
     </div>
   );
 }

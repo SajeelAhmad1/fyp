@@ -114,7 +114,7 @@ const Slider = () => {
                 <h2 className="text-xl font-bold">Featured Products</h2>
                 <button 
                     onClick={toggleMobileCards}
-                    className="bg-blue-500 text-white px-3 py-1 rounded-md text-sm"
+                    className="bg-[#F19B12] text-white px-3 py-1 rounded-md text-sm"
                 >
                     {showCardsOnMobile ? 'Hide Cards' : 'Show More Cards'}
                 </button>
@@ -130,7 +130,7 @@ const Slider = () => {
                         >
                             <div className="flex flex-col md:flex-row md:items-center md:justify-between">
                                 <div className="flex flex-col space-y-2 md:space-y-4 max-w-md">
-                                    <div className="text-blue-500 text-xs md:text-sm font-medium">{slide.subtitle}</div>
+                                    <div className="text-[#F19B12] text-xs md:text-sm font-medium">{slide.subtitle}</div>
                                     <h2 className="text-2xl md:text-4xl font-bold text-gray-900">{slide.title}</h2>
                                     <p className="text-gray-700 text-xs md:text-sm mb-4 md:mb-6">{slide.description}</p>
 
@@ -143,7 +143,7 @@ const Slider = () => {
                                 </div>
 
                                 <div className="relative mt-4 md:mt-0">
-                                    <div className="absolute -top-6 right-0 md:-top-10 md:-right-10 bg-blue-500 text-white rounded-full w-16 h-16 md:w-24 md:h-24 flex items-center justify-center text-base md:text-xl font-bold">
+                                    <div className="absolute -top-6 right-0 md:-top-10 md:-right-10 bg-[#F19B12] text-white rounded-full w-16 h-16 md:w-24 md:h-24 flex items-center justify-center text-base md:text-xl font-bold">
                                         {slide.price}
                                     </div>
                                     <img
@@ -222,7 +222,7 @@ const Slider = () => {
                         <div className="flex justify-between">
                             <div>
                                 <h3 className="text-lg font-medium text-gray-900">{rightProducts[1].title}</h3>
-                                <p className="text-blue-500 mt-1">{rightProducts[1].price}</p>
+                                <p className="text-[#F19B12] mt-1">{rightProducts[1].price}</p>
 
                                 <Button
                                     onClick={handleClick}

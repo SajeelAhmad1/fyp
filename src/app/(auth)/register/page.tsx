@@ -41,18 +41,18 @@ export default function Home() {
         <div className="w-full text-center text-black mt-5 space-y-2">
           <p className="text-sm md:text-[15.28px] leading-[20.78px]">
             By Proceeding, You Agree To The <br />
-            <a href="#" className="text-blue-500">
+            <a href="#" className="text-[#F19B12]">
               Terms of Service
             </a>{" "}
             And{" "}
-            <a href="#" className="text-blue-500">
+            <a href="#" className="text-[#F19B12]">
               Privacy Policy
             </a>
           </p>
 
           <p className="text-sm md:text-[15.28px] leading-[25.48px]">
             Already Have An Account?{" "}
-            <a href="./login" className="text-blue-500 font-medium">
+            <a href="./login" className="text-[#F19B12] font-medium">
               Log in
             </a>
           </p>

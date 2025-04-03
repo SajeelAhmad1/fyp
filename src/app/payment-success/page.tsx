@@ -56,7 +56,7 @@ export default function OrderConfirmationPage() {
       <div className="mt-6 text-center">
         <a 
           href={`/track-order/${id}`} 
-          className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300"
+          className="bg-[#F19B12] hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300"
         >
           Track Your Order
         </a>

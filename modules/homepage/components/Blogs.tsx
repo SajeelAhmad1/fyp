@@ -8,7 +8,7 @@ const Blogs = () => {
         <div className="container mx-auto">
             <div className="w-11/12 h-9 gap-96 flex flex-wrap justify-between m-auto p-10 mb-5">
                 <div className="text-cyan-800 text-2xl font-semibold">Latest news</div>
-                <div className="text-cyan-800 text-xl font-medium cursor-pointer hover:text-blue-500">View all</div>
+                <div className="text-cyan-800 text-xl font-medium cursor-pointer hover:text-[#F19B12]">View all</div>
             </div>
             <div className="flex flex-wrap m-auto gap-5 justify-center mb-5">
                 {BLOGS.map((blog, index) => (

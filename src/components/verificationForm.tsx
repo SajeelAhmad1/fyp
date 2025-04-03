@@ -4,7 +4,7 @@ import React, { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import OtpInput from "react-otp-input";
 import { otpVerification, sendOtp } from "@/lib/actions/auth";
-import { toast } from "sonner";
+import { toast, Toaster } from "sonner";
 
 function VerificationForm() {
   const [isVerifying, setIsVerifying] = useState<boolean>(false);
@@ -129,6 +129,7 @@ function VerificationForm() {
           {isResending ? "Resending..." : "Resend Code"}{" "}
         </span>
       </p>
+      <Toaster position="top-right"/>
     </div>
   );
 }
