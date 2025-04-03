@@ -25,17 +25,17 @@ async function sendSubscriptionEmail(email: string, token: string) {
   });
   
   await transporter.sendMail({
-    from: '"DAILY KART" <sajeelashiq1@gmail.com>',
+    from: '"Lyalla and Lora" <sajeelashiq1@gmail.com>',
     to: email,
-    subject: "Subscription Confirmation - DAILY KART",
+    subject: "Subscription Confirmation - Lyalla and Lora",
     html: `
       <div>
-        <h1>DAILY KART</h1>
-        <p>Thank you for subscribing to DAILY KART newsletter!</p>
+        <h1>Lyalla and Lora</h1>
+        <p>Thank you for subscribing to Lyalla and Lora newsletter!</p>
         <p>Your subscription has been confirmed.</p>
         <p>If you did not request this subscription, you can unsubscribe by clicking the link below:</p>
         <a href="${process.env.NEXT_PUBLIC_BASE_URL}/unsubscribe?token=${token}">Unsubscribe</a>
-        <p>© 2025 DAILY KART. All rights reserved.</p>
+        <p>© 2025 Lyalla and Lora. All rights reserved.</p>
       </div>
     `,
   });

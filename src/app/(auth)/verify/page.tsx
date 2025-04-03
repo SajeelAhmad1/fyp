@@ -6,15 +6,15 @@ import logo from "@/assets/images/dark-ava-logo.png";
 
 export default function Verification() {
   useEffect(() => {
-    document.title = "Verification - AVA Health";
+    document.title = "Verification - Lyalla and Lora";
 
     const metaDescription = document.querySelector("meta[name='description']");
     if (metaDescription) {
-      metaDescription.setAttribute("content", "Verify your AVA Health account");
+      metaDescription.setAttribute("content", "Verify your Lyalla and Lora account");
     } else {
       const newMetaDescription = document.createElement("meta");
       newMetaDescription.name = "description";
-      newMetaDescription.content = "Verify your AVA Health account";
+      newMetaDescription.content = "Verify your Lyalla and Lora account";
       document.head.appendChild(newMetaDescription);
     }
   }, []);
@@ -26,7 +26,7 @@ export default function Verification() {
           <img
             className="max-w-[450px] w-full m-auto"
             src={logo.src}
-            alt="AVA Health"
+            alt="Lyalla and Lora"
           />
           <div className="flex flex-col items-center space-y-1 lg:space-y-1 p-5 mt-[50px]">
             <h1 className="font-semibold leading-[28.8px] md:leading-[48.8px] text-[24px] md:text-[36px] lg:text-[40px] text-center font-custom">

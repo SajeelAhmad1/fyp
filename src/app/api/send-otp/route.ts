@@ -52,14 +52,14 @@ export async function POST(req: NextRequest) {
       });
         
       await transporter.sendMail({
-        from: '"DAILY KART" <sajeelashiq1@gmail.com>',
+        from: '"Lyalla and Lora" <sajeelashiq1@gmail.com>',
         to: email,
-        subject: "Your OTP Code - DAILY KART",
+        subject: "Your OTP Code - Lyalla and Lora",
         html: `
         <div style="font-family: 'Helvetica Neue', Arial, sans-serif; background-color: #ffffff; padding: 20px; text-align: center; border-radius: 10px;">
-            <div style="background: linear-gradient(to bottom, #579FE1, #2290F3); padding: 15px; border-radius: 10px;">
-              <h1 style="margin: 0; font-size: 28px; color: #ffffff;">DAILY KART</h1>
-            </div>
+            <div style="background: #F19B12; padding: 15px; border-radius: 10px;">
+              <h1 style="margin: 0; font-size: 28px; color: #ffffff;">Lyalla and Lora</h1>
+            </div> 
             <div style="margin-top: 20px; padding: 20px; background-color: #ffffff; border-radius: 10px; border: 2px solid #2290F3;">
               <p style="font-size: 20px; color: #2290F3; margin: 0;">Your OTP Code</p>
               <div style="margin: 10px 0; padding: 10px; border-radius: 5px; background-color: #f0f4f8; display: inline-block;">
@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
               <p style="font-size: 14px; color: #777777; margin-top: 10px;">If you didn't request this code, please disregard this email.</p>
             </div>
             <div style="margin-top: 30px; padding: 10px; border-top: 1px solid #2290F3;">
-              <p style="font-size: 12px; color: #777777;">© 2025 DAILY KART. All rights reserved.</p>
+              <p style="font-size: 12px; color: #777777;">© 2025 Lyalla and Lora. All rights reserved.</p>
             </div>
           </div>
         `,

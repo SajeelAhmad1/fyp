@@ -1,5 +1,5 @@
 export const METADATA = {
-    title: "Daily Kart",
+    title: "Lyalla and Lora",
     bTitle: " | Electon Design",
     keywords: "dailykart",
     description: "Electon Design",
