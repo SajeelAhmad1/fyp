@@ -18,7 +18,7 @@ model User {
   verified            Boolean            @default(false)
   isPasswordSet       Boolean            @default(false)
   isProfileComplete       Boolean            @default(false)
-  loginType          String 
+  loginType          String?
   // Relationships
   customerProfile CustomerProfile? 
   orders       Order[]
