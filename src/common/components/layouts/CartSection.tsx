@@ -39,31 +39,48 @@ const CartSection: React.FC = () => {
         };
     }, []);
 
-    // Fetch counts from API when session or component changes
+    // Fetch counts from API when component mounts or session changes
     useEffect(() => {
         const fetchCounts = async () => {
-            if (session) {
-                try {
-                    // Fetch cart count
-                    const cartResponse = await fetch('/api/cart/count');
-                    if (cartResponse.ok) {
-                        const cartData = await cartResponse.json();
-                        setCartCount(cartData.count);
-                    }
+            try {
+                // Fetch cart count - fetch regardless of session status
+                const guestCartId = localStorage.getItem("guestCartId")
+                const cartResponse = await fetch(`/api/cart/count?guestCartId=${guestCartId}`);
+                if (cartResponse.ok) {
+                    const cartData = await cartResponse.json();
+                    console.log("cart datta", cartData)
+                    console.log(guestCartId)
+                    setCartCount(cartData.count);
+                }
 
-                    // Fetch wishlist count
+                // Only fetch wishlist if logged in
+                if (session) {
                     const wishlistResponse = await fetch('/api/wishlist/count');
                     if (wishlistResponse.ok) {
                         const wishlistData = await wishlistResponse.json();
                         setWishlistCount(wishlistData.count);
                     }
-                } catch (error) {
-                    console.error('Failed to fetch counts:', error);
                 }
+            } catch (error) {
+                console.error('Failed to fetch counts:', error);
             }
         };
 
         fetchCounts();
+
+        // Set up event listener for cart updates
+        const handleCartUpdate = (event: CustomEvent) => {
+            if (event.detail && typeof event.detail.cartItemCount === 'number') {
+                setCartCount(event.detail.cartItemCount);
+            }
+        };
+
+        // Listen for custom cart update events
+        window.addEventListener('cart-updated', handleCartUpdate as EventListener);
+
+        return () => {
+            window.removeEventListener('cart-updated', handleCartUpdate as EventListener);
+        };
     }, [session]);
 
     const toggleDropdown = (e: React.MouseEvent) => {
@@ -100,7 +117,7 @@ const CartSection: React.FC = () => {
                 </svg>
             ),
             onClick: (e: React.MouseEvent) => router.push("/cart"),
-            count: session ? cartCount : null
+            count: cartCount // Remove session condition, always show cart count
         },
         {
             name: "Orders",
