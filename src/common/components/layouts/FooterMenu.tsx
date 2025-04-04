@@ -1,11 +1,13 @@
 "use client"
 import React, { useState } from 'react';
 import { Send } from "lucide-react";
+import { toast } from 'sonner';
+import { Toaster } from 'sonner';
 
 const Footer = () => {
     const [email, setEmail] = useState('');
     const [message, setMessage] = useState('');
-    const [status, setStatus] = useState('idle'); // idle, loading, success, error
+    const [status, setStatus] = useState('idle'); 
     
     const handleSubscribe = async (e) => {
         e.preventDefault();
@@ -34,7 +36,8 @@ const Footer = () => {
             if (response.ok) {
                 setStatus('success');
                 setMessage(data.message || 'Subscription successful!');
-                setEmail(''); // Clear input on success
+                setEmail(''); 
+                toast.success("Subscribed to news letter!")
             } else {
                 setStatus('error');
                 setMessage(data.message || 'Subscription failed. Please try again.');

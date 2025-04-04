@@ -385,6 +385,7 @@ const CheckoutPage = () => {
                 ...(session?.user?.id ? { userId: session.user.id } : { guestEmail: localStorage.getItem(GUEST_EMAIL_KEY) }),
 
                 email: formData.email,
+                guestCartId: localStorage.getItem("guestCartId"),
                 paymentMethod: 'STRIPE',
                 status: OrderStatus.CONFIRMED
             };
