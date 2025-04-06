@@ -169,6 +169,7 @@ const CartSection: React.FC = () => {
         },
     ];
 
+
     return (
         <div className="flex items-center justify-end space-x-4">
             {navItems.map((item, index) => (

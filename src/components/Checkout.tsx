@@ -76,70 +76,71 @@ const GUEST_CART_ID_KEY = 'guestCartId';
 const StripePaymentForm = ({
     order,
     formData,
-    onPaymentSuccess
+    onPaymentSuccess,
+    validateForm 
 }: {
     order: Order,
     formData: any,
-    onPaymentSuccess: () => void
+    onPaymentSuccess: () => void,
+    validateForm: () => boolean
 }) => {
     const stripe = useStripe();
     const elements = useElements();
     const [errorMessage, setErrorMessage] = useState<string>();
-    const [clientSecret, setClientSecret] = useState("");
     const [loading, setLoading] = useState(false);
-
-    useEffect(() => {
-        fetch("/api/create-payment-intent", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                amount: Math.round(order.totalPrice * 100),
-                orderId: order.id
-            }),
-        })
-            .then((res) => res.json())
-            .then((data) => setClientSecret(data.clientSecret));
-    }, [order]);
+    const [paymentElementLoaded, setPaymentElementLoaded] = useState(false);
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        setLoading(true);
-
-        if (!stripe || !elements) return;
-
-        const { error: submitError } = await elements.submit();
-        if (submitError) {
-            setErrorMessage(submitError.message);
-            setLoading(false);
+        
+        if (!validateForm()) {
+            return;
+        }
+        
+        if (!stripe || !elements || !paymentElementLoaded) {
+            setErrorMessage('Payment system is not ready yet. Please wait...');
             return;
         }
 
-        const { error } = await stripe.confirmPayment({
-            elements,
-            clientSecret,
-            confirmParams: {
-                return_url: `${window.location.origin}/payment-success?orderId=${order.id}`,
-            },
-        });
-
-        if (error) {
-            setErrorMessage(error.message);
-        } else {
-            onPaymentSuccess();
+        setLoading(true);
+    
+        try {
+            await onPaymentSuccess();
+            
+            const { error: submitError } = await elements.submit();
+            if (submitError) {
+                throw submitError;
+            }
+    
+            const { error } = await stripe.confirmPayment({
+                elements,
+                confirmParams: {
+                    return_url: `${window.location.origin}/payment-success?orderId=${order.id}`,
+                },
+            });
+    
+            if (error) {
+                throw error;
+            }
+        } catch (err) {
+            setErrorMessage(err instanceof Error ? err.message : 'Payment processing failed');
+        } finally {
+            setLoading(false);
         }
-
-        setLoading(false);
     };
-
-    if (!clientSecret) return null;
 
     return (
         <form onSubmit={handleSubmit} className="mt-6">
-            {clientSecret && <PaymentElement />}
+            <PaymentElement 
+                onReady={() => setPaymentElementLoaded(true)}
+                options={{
+                    layout: "tabs",
+                }}
+            />
             {errorMessage && <div className="text-red-500 mt-2">{errorMessage}</div>}
             <button
                 type="submit"
-                disabled={!stripe || loading}
+                disabled={!stripe || !paymentElementLoaded || loading}
                 className="w-full bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition-colors disabled:bg-blue-400 disabled:cursor-not-allowed mt-4"
             >
                 {loading ? 'Processing Payment...' : `Pay $${order.totalPrice}`}
@@ -159,6 +160,7 @@ const CheckoutPage = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isCreatingOrder, setIsCreatingOrder] = useState(false);
+    const [clientSecret, setClientSecret] = useState<string | null>(null);
 
     const [formData, setFormData] = useState({
         shippingFirstName: '',
@@ -188,6 +190,25 @@ const CheckoutPage = () => {
         cardName: ''
     });
 
+    const [formErrors, setFormErrors] = useState({
+        shippingFirstName: false,
+        shippingLastName: false,
+        shippingStreet: false,
+        shippingCity: false,
+        shippingState: false,
+        shippingPostalCode: false,
+        shippingCountry: false,
+        shippingPhone: false,
+        billingFirstName: false,
+        billingLastName: false,
+        billingStreet: false,
+        billingCity: false,
+        billingState: false,
+        billingPostalCode: false,
+        billingCountry: false,
+        email: false
+    });
+
     const getGuestCartId = useCallback(() => {
         if (typeof window !== 'undefined') {
             return localStorage.getItem(GUEST_CART_ID_KEY);
@@ -195,7 +216,73 @@ const CheckoutPage = () => {
         return null;
     }, []);
 
+    const validateForm = () => {
+        const newErrors = {
+            shippingFirstName: !formData.shippingFirstName.trim(),
+            shippingLastName: !formData.shippingLastName.trim(),
+            shippingStreet: !formData.shippingStreet.trim(),
+            shippingCity: !formData.shippingCity.trim(),
+            shippingState: !formData.shippingState.trim(),
+            shippingPostalCode: !formData.shippingPostalCode.trim(),
+            shippingCountry: !formData.shippingCountry.trim(),
+            shippingPhone: !formData.shippingPhone.trim(),
+            billingFirstName: !formData.useSameAddress && !formData.billingFirstName.trim(),
+            billingLastName: !formData.useSameAddress && !formData.billingLastName.trim(),
+            billingStreet: !formData.useSameAddress && !formData.billingStreet.trim(),
+            billingCity: !formData.useSameAddress && !formData.billingCity.trim(),
+            billingState: !formData.useSameAddress && !formData.billingState.trim(),
+            billingPostalCode: !formData.useSameAddress && !formData.billingPostalCode.trim(),
+            billingCountry: !formData.useSameAddress && !formData.billingCountry.trim(),
+            email: !formData.email.trim() || !/^\S+@\S+\.\S+$/.test(formData.email)
+        };
+
+        setFormErrors(newErrors);
+
+        if (Object.values(newErrors).some(error => error)) {
+            const firstErrorField = Object.keys(newErrors).find(key => newErrors[key as keyof typeof newErrors]);
+            if (firstErrorField) {
+                document.getElementById(firstErrorField)?.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'center' 
+                });
+            }
+            return false;
+        }
+        return true;
+    };
+
+    const createPaymentIntent = async () => {
+        if (!order?.id) return;
+
+        try {
+            const response = await fetch("/api/create-payment-intent", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    amount: Math.round(order.totalPrice * 100),
+                    orderId: order.id
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to create payment intent');
+            }
+
+            const data = await response.json();
+            if (!data.clientSecret) {
+                throw new Error('No client secret returned');
+            }
+            setClientSecret(data.clientSecret);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to initialize payment');
+        }
+    };
+
     const createOrderAndProceedToCheckout = useCallback(async () => {
+        if (!validateForm()) {
+            return;
+        }
+
         const guestCartId = getGuestCartId();
         if ((!session?.user?.id && !guestCartId) || !orderId) return;
 
@@ -237,8 +324,6 @@ const CheckoutPage = () => {
                 localStorage.setItem(GUEST_EMAIL_KEY, requestBody.guestEmail);
             }
 
-            const userId = session?.user.id;
-            console.log("gcid", guestCartId)
             const response = await fetch(`/api/orders`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -340,20 +425,41 @@ const CheckoutPage = () => {
             ...prev,
             [name]: value
         }));
+        
+        if (formErrors[name as keyof typeof formErrors]) {
+            setFormErrors(prev => ({
+                ...prev,
+                [name]: false
+            }));
+        }
     };
 
     const handleSameAddressToggle = () => {
+        const useSameAddress = !formData.useSameAddress;
         setFormData(prev => ({
             ...prev,
-            useSameAddress: !prev.useSameAddress,
-            billingFirstName: prev.useSameAddress ? prev.shippingFirstName : '',
-            billingLastName: prev.useSameAddress ? prev.shippingLastName : '',
-            billingStreet: prev.useSameAddress ? prev.shippingStreet : '',
-            billingCity: prev.useSameAddress ? prev.shippingCity : '',
-            billingState: prev.useSameAddress ? prev.shippingState : '',
-            billingPostalCode: prev.useSameAddress ? prev.shippingPostalCode : '',
-            billingCountry: prev.useSameAddress ? prev.shippingCountry : ''
+            useSameAddress,
+            billingFirstName: useSameAddress ? prev.shippingFirstName : '',
+            billingLastName: useSameAddress ? prev.shippingLastName : '',
+            billingStreet: useSameAddress ? prev.shippingStreet : '',
+            billingCity: useSameAddress ? prev.shippingCity : '',
+            billingState: useSameAddress ? prev.shippingState : '',
+            billingPostalCode: useSameAddress ? prev.shippingPostalCode : '',
+            billingCountry: useSameAddress ? prev.shippingCountry : ''
         }));
+
+        if (useSameAddress) {
+            setFormErrors(prev => ({
+                ...prev,
+                billingFirstName: false,
+                billingLastName: false,
+                billingStreet: false,
+                billingCity: false,
+                billingState: false,
+                billingPostalCode: false,
+                billingCountry: false
+            }));
+        }
     };
 
     const formatPrice = (price: number | string | null | undefined): string => {
@@ -373,7 +479,6 @@ const CheckoutPage = () => {
                 shippingPostalCode: formData.shippingPostalCode,
                 shippingCountry: formData.shippingCountry,
                 shippingPhone: formData.shippingPhone,
-
                 billingFirstName: formData.useSameAddress ? null : formData.billingFirstName,
                 billingLastName: formData.useSameAddress ? null : formData.billingLastName,
                 billingStreet: formData.useSameAddress ? null : formData.billingStreet,
@@ -396,7 +501,6 @@ const CheckoutPage = () => {
                 body: JSON.stringify(orderUpdatePayload),
             });
 
-            // Clear guest cart after successful payment
             if (!session?.user?.id) {
                 localStorage.removeItem(GUEST_CART_ID_KEY);
             }
@@ -419,6 +523,12 @@ const CheckoutPage = () => {
 
         fetchData();
     }, [session?.user?.id, orderId]);
+
+    useEffect(() => {
+        if (order) {
+            createPaymentIntent();
+        }
+    }, [order]);
 
     useEffect(() => {
         if (customerProfile && (!order || !order.shippingFirstName)) {
@@ -480,8 +590,25 @@ const CheckoutPage = () => {
             <div className="bg-white p-6 rounded-lg mb-6">
                 <h1 className="text-2xl font-semibold mb-6">Checkout</h1>
 
-                {order && (
-                    <Elements stripe={stripePromise} options={{ mode: 'payment', amount: Math.round(order.totalPrice * 100), currency: 'gbp' }}>
+                {order && clientSecret ? (
+                    <Elements 
+                        stripe={stripePromise} 
+                        options={{ 
+                            clientSecret,
+                            appearance: {
+                                theme: 'stripe',
+                                variables: {
+                                    colorPrimary: '#0570de',
+                                    colorBackground: '#ffffff',
+                                    colorText: '#30313d',
+                                    colorDanger: '#df1b41',
+                                    fontFamily: 'Ideal Sans, system-ui, sans-serif',
+                                    spacingUnit: '2px',
+                                    borderRadius: '4px'
+                                }
+                            }
+                        }}
+                    >
                         <div className="mb-6">
                             <h2 className="text-lg font-medium mb-3">Order Summary</h2>
                             <div className="border rounded-md overflow-hidden">
@@ -539,7 +666,7 @@ const CheckoutPage = () => {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label htmlFor="shippingFirstName" className="block text-sm font-medium text-gray-700 mb-1">
-                                        First Name
+                                        First Name *
                                     </label>
                                     <input
                                         type="text"
@@ -548,13 +675,14 @@ const CheckoutPage = () => {
                                         placeholder="Enter First Name"
                                         value={formData.shippingFirstName}
                                         onChange={handleInputChange}
-                                        className="w-full p-2 border border-gray-300 rounded"
+                                        className={`w-full p-2 border ${formErrors.shippingFirstName ? 'border-red-500' : 'border-gray-300'} rounded`}
                                         required
                                     />
+                                    {formErrors.shippingFirstName && <p className="text-red-500 text-xs mt-1">First name is required</p>}
                                 </div>
                                 <div>
                                     <label htmlFor="shippingLastName" className="block text-sm font-medium text-gray-700 mb-1">
-                                        Last Name
+                                        Last Name *
                                     </label>
                                     <input
                                         type="text"
@@ -563,13 +691,14 @@ const CheckoutPage = () => {
                                         placeholder="Enter Last Name"
                                         value={formData.shippingLastName}
                                         onChange={handleInputChange}
-                                        className="w-full p-2 border border-gray-300 rounded"
+                                        className={`w-full p-2 border ${formErrors.shippingLastName ? 'border-red-500' : 'border-gray-300'} rounded`}
                                         required
                                     />
+                                    {formErrors.shippingLastName && <p className="text-red-500 text-xs mt-1">Last name is required</p>}
                                 </div>
                                 <div className="col-span-2">
                                     <label htmlFor="shippingStreet" className="block text-sm font-medium text-gray-700 mb-1">
-                                        Street Address
+                                        Street Address *
                                     </label>
                                     <input
                                         type="text"
@@ -578,13 +707,14 @@ const CheckoutPage = () => {
                                         placeholder="Enter Street Address"
                                         value={formData.shippingStreet}
                                         onChange={handleInputChange}
-                                        className="w-full p-2 border border-gray-300 rounded"
+                                        className={`w-full p-2 border ${formErrors.shippingStreet ? 'border-red-500' : 'border-gray-300'} rounded`}
                                         required
                                     />
+                                    {formErrors.shippingStreet && <p className="text-red-500 text-xs mt-1">Street address is required</p>}
                                 </div>
                                 <div>
                                     <label htmlFor="shippingCity" className="block text-sm font-medium text-gray-700 mb-1">
-                                        City
+                                        City *
                                     </label>
                                     <input
                                         type="text"
@@ -593,13 +723,14 @@ const CheckoutPage = () => {
                                         placeholder="Enter City"
                                         value={formData.shippingCity}
                                         onChange={handleInputChange}
-                                        className="w-full p-2 border border-gray-300 rounded"
+                                        className={`w-full p-2 border ${formErrors.shippingCity ? 'border-red-500' : 'border-gray-300'} rounded`}
                                         required
                                     />
+                                    {formErrors.shippingCity && <p className="text-red-500 text-xs mt-1">City is required</p>}
                                 </div>
                                 <div>
                                     <label htmlFor="shippingState" className="block text-sm font-medium text-gray-700 mb-1">
-                                        State/Province
+                                        State/Province *
                                     </label>
                                     <input
                                         type="text"
@@ -608,12 +739,14 @@ const CheckoutPage = () => {
                                         placeholder="Enter State"
                                         value={formData.shippingState}
                                         onChange={handleInputChange}
-                                        className="w-full p-2 border border-gray-300 rounded"
+                                        className={`w-full p-2 border ${formErrors.shippingState ? 'border-red-500' : 'border-gray-300'} rounded`}
+                                        required
                                     />
+                                    {formErrors.shippingState && <p className="text-red-500 text-xs mt-1">State is required</p>}
                                 </div>
                                 <div>
                                     <label htmlFor="shippingPostalCode" className="block text-sm font-medium text-gray-700 mb-1">
-                                        Postal Code
+                                        Postal Code *
                                     </label>
                                     <input
                                         type="text"
@@ -622,13 +755,14 @@ const CheckoutPage = () => {
                                         placeholder="Enter Postal Code"
                                         value={formData.shippingPostalCode}
                                         onChange={handleInputChange}
-                                        className="w-full p-2 border border-gray-300 rounded"
+                                        className={`w-full p-2 border ${formErrors.shippingPostalCode ? 'border-red-500' : 'border-gray-300'} rounded`}
                                         required
                                     />
+                                    {formErrors.shippingPostalCode && <p className="text-red-500 text-xs mt-1">Postal code is required</p>}
                                 </div>
                                 <div>
                                     <label htmlFor="shippingCountry" className="block text-sm font-medium text-gray-700 mb-1">
-                                        Country
+                                        Country *
                                     </label>
                                     <input
                                         type="text"
@@ -637,13 +771,14 @@ const CheckoutPage = () => {
                                         placeholder="Enter Country"
                                         value={formData.shippingCountry}
                                         onChange={handleInputChange}
-                                        className="w-full p-2 border border-gray-300 rounded"
+                                        className={`w-full p-2 border ${formErrors.shippingCountry ? 'border-red-500' : 'border-gray-300'} rounded`}
                                         required
                                     />
+                                    {formErrors.shippingCountry && <p className="text-red-500 text-xs mt-1">Country is required</p>}
                                 </div>
                                 <div>
                                     <label htmlFor="shippingPhone" className="block text-sm font-medium text-gray-700 mb-1">
-                                        Phone Number
+                                        Phone Number *
                                     </label>
                                     <input
                                         type="tel"
@@ -652,9 +787,10 @@ const CheckoutPage = () => {
                                         placeholder="Enter Phone Number"
                                         value={formData.shippingPhone}
                                         onChange={handleInputChange}
-                                        className="w-full p-2 border border-gray-300 rounded"
+                                        className={`w-full p-2 border ${formErrors.shippingPhone ? 'border-red-500' : 'border-gray-300'} rounded`}
                                         required
                                     />
+                                    {formErrors.shippingPhone && <p className="text-red-500 text-xs mt-1">Phone number is required</p>}
                                 </div>
                             </div>
                         </div>
@@ -678,101 +814,115 @@ const CheckoutPage = () => {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <label htmlFor="billingFirstName" className="block text-sm font-medium text-gray-700 mb-1">
-                                            First Name
+                                            First Name *
                                         </label>
                                         <input
                                             type="text"
                                             id="billingFirstName"
                                             name="billingFirstName"
                                             placeholder="Enter First Name"
-                                            value={formData.billingFirstName || customerProfile?.firstName || ''}
+                                            value={formData.billingFirstName}
                                             onChange={handleInputChange}
-                                            className="w-full p-2 border border-gray-300 rounded"
+                                            className={`w-full p-2 border ${formErrors.billingFirstName ? 'border-red-500' : 'border-gray-300'} rounded`}
+                                            required={!formData.useSameAddress}
                                         />
+                                        {formErrors.billingFirstName && <p className="text-red-500 text-xs mt-1">First name is required</p>}
                                     </div>
                                     <div>
                                         <label htmlFor="billingLastName" className="block text-sm font-medium text-gray-700 mb-1">
-                                            Last Name
+                                            Last Name *
                                         </label>
                                         <input
                                             type="text"
                                             id="billingLastName"
                                             name="billingLastName"
                                             placeholder="Enter Last Name"
-                                            value={formData.billingLastName || customerProfile?.lastName || ''}
+                                            value={formData.billingLastName}
                                             onChange={handleInputChange}
-                                            className="w-full p-2 border border-gray-300 rounded"
+                                            className={`w-full p-2 border ${formErrors.billingLastName ? 'border-red-500' : 'border-gray-300'} rounded`}
+                                            required={!formData.useSameAddress}
                                         />
+                                        {formErrors.billingLastName && <p className="text-red-500 text-xs mt-1">Last name is required</p>}
                                     </div>
                                     <div className="col-span-2">
                                         <label htmlFor="billingStreet" className="block text-sm font-medium text-gray-700 mb-1">
-                                            Street Address
+                                            Street Address *
                                         </label>
                                         <input
                                             type="text"
                                             id="billingStreet"
                                             name="billingStreet"
                                             placeholder="Enter Street Address"
-                                            value={formData.billingStreet || customerProfile?.streetAddress || ''}
+                                            value={formData.billingStreet}
                                             onChange={handleInputChange}
-                                            className="w-full p-2 border border-gray-300 rounded"
+                                            className={`w-full p-2 border ${formErrors.billingStreet ? 'border-red-500' : 'border-gray-300'} rounded`}
+                                            required={!formData.useSameAddress}
                                         />
+                                        {formErrors.billingStreet && <p className="text-red-500 text-xs mt-1">Street address is required</p>}
                                     </div>
                                     <div>
                                         <label htmlFor="billingCity" className="block text-sm font-medium text-gray-700 mb-1">
-                                            City
+                                            City *
                                         </label>
                                         <input
                                             type="text"
                                             id="billingCity"
                                             name="billingCity"
                                             placeholder="Enter City"
-                                            value={formData.billingCity || customerProfile?.city || ''}
+                                            value={formData.billingCity}
                                             onChange={handleInputChange}
-                                            className="w-full p-2 border border-gray-300 rounded"
+                                            className={`w-full p-2 border ${formErrors.billingCity ? 'border-red-500' : 'border-gray-300'} rounded`}
+                                            required={!formData.useSameAddress}
                                         />
+                                        {formErrors.billingCity && <p className="text-red-500 text-xs mt-1">City is required</p>}
                                     </div>
                                     <div>
                                         <label htmlFor="billingState" className="block text-sm font-medium text-gray-700 mb-1">
-                                            State/Province
+                                            State/Province *
                                         </label>
                                         <input
                                             type="text"
                                             id="billingState"
                                             name="billingState"
                                             placeholder="Enter State"
-                                            value={formData.billingState || customerProfile?.state || ''}
+                                            value={formData.billingState}
                                             onChange={handleInputChange}
-                                            className="w-full p-2 border border-gray-300 rounded"
+                                            className={`w-full p-2 border ${formErrors.billingState ? 'border-red-500' : 'border-gray-300'} rounded`}
+                                            required={!formData.useSameAddress}
                                         />
+                                        {formErrors.billingState && <p className="text-red-500 text-xs mt-1">State is required</p>}
                                     </div>
                                     <div>
                                         <label htmlFor="billingPostalCode" className="block text-sm font-medium text-gray-700 mb-1">
-                                            Postal Code
+                                            Postal Code *
                                         </label>
                                         <input
                                             type="text"
                                             id="billingPostalCode"
                                             name="billingPostalCode"
                                             placeholder="Enter Postal Code"
-                                            value={formData.billingPostalCode || customerProfile?.postalCode || ''}
+                                            value={formData.billingPostalCode}
                                             onChange={handleInputChange}
-                                            className="w-full p-2 border border-gray-300 rounded"
+                                            className={`w-full p-2 border ${formErrors.billingPostalCode ? 'border-red-500' : 'border-gray-300'} rounded`}
+                                            required={!formData.useSameAddress}
                                         />
+                                        {formErrors.billingPostalCode && <p className="text-red-500 text-xs mt-1">Postal code is required</p>}
                                     </div>
                                     <div>
                                         <label htmlFor="billingCountry" className="block text-sm font-medium text-gray-700 mb-1">
-                                            Country
+                                            Country *
                                         </label>
                                         <input
                                             type="text"
                                             id="billingCountry"
                                             name="billingCountry"
                                             placeholder="Enter Country"
-                                            value={formData.billingCountry || customerProfile?.country || ''}
+                                            value={formData.billingCountry}
                                             onChange={handleInputChange}
-                                            className="w-full p-2 border border-gray-300 rounded"
+                                            className={`w-full p-2 border ${formErrors.billingCountry ? 'border-red-500' : 'border-gray-300'} rounded`}
+                                            required={!formData.useSameAddress}
                                         />
+                                        {formErrors.billingCountry && <p className="text-red-500 text-xs mt-1">Country is required</p>}
                                     </div>
                                 </div>
                             )}
@@ -783,7 +933,7 @@ const CheckoutPage = () => {
                             <h2 className="text-lg font-medium mb-3">Contact Information</h2>
                             <div>
                                 <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                                    Email Address
+                                    Email Address *
                                 </label>
                                 <input
                                     type="email"
@@ -792,9 +942,14 @@ const CheckoutPage = () => {
                                     placeholder="Enter Email Address"
                                     value={formData.email}
                                     onChange={handleInputChange}
-                                    className="w-full p-2 border border-gray-300 rounded"
+                                    className={`w-full p-2 border ${formErrors.email ? 'border-red-500' : 'border-gray-300'} rounded`}
                                     required
                                 />
+                                {formErrors.email && (
+                                    <p className="text-red-500 text-xs mt-1">
+                                        {!formData.email.trim() ? 'Email is required' : 'Please enter a valid email'}
+                                    </p>
+                                )}
                             </div>
                         </div>
 
@@ -802,8 +957,13 @@ const CheckoutPage = () => {
                             order={order}
                             formData={formData}
                             onPaymentSuccess={handlePaymentSuccess}
+                            validateForm={validateForm}
                         />
                     </Elements>
+                ) : (
+                    <div className="flex justify-center items-center h-64">
+                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+                    </div>
                 )}
             </div>
         </div>

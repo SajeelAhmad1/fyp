@@ -5,6 +5,7 @@ import { Prisma } from "@prisma/client";
 export async function POST(request: Request) {
     try {
         const body = await request.json();
+        console.log(body)
 
         // Validate essential input
         if (!body.items || body.items.length === 0) {

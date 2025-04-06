@@ -37,7 +37,7 @@ const GUEST_CART_KEY = 'guestCartId';
 const GUEST_EMAIL_KEY = 'guestEmail';
 
 const CartSidebar = () => {
-  const { isCartOpen, closeCart } = useCart();
+  const { isCartOpen, closeCart, refreshCart, cartVersion } = useCart();
   const { data: session, status } = useSession();
   const [cart, setCart] = useState<Cart | null>(null);
   const [loading, setLoading] = useState(true);
@@ -100,10 +100,10 @@ const CartSidebar = () => {
   }, [session?.user?.id, getGuestCartId, setGuestCartId]);
 
   useEffect(() => {
-    if (isCartOpen && status !== 'loading') {
-      fetchCart();
-    }
-  }, [isCartOpen, status, fetchCart]);
+  if ((isCartOpen || cartVersion > 0) && status !== 'loading') {
+    fetchCart();
+  }
+}, [isCartOpen, status, fetchCart, cartVersion]);
 
   const removeItem = async (itemId: string) => {
     const userId = session?.user?.id;

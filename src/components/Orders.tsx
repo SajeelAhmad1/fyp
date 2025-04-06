@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -9,16 +9,57 @@ import { Order } from "@/types/order";
 
 export default function Orders() {
     const router = useRouter();
-    const { data: session, status } = useSession();
+    const { data: session, status } = useSession({
+        required: false,
+    });
     const [activeTab, setActiveTab] = useState("orders");
     const [orders, setOrders] = useState<Order[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [guestEmail, setGuestEmail] = useState("");
     const [showEmailPopup, setShowEmailPopup] = useState(false);
+    const hasFetched = useRef(false);
+
+    const fetchOrders = useCallback(async (email = null) => {
+        if (hasFetched.current) return;
+        
+        setIsLoading(true);
+        try {
+            let response;
+            if (session?.user.id) {
+                response = await fetch(`/api/orders?userId=${session.user.id}`);
+            } else if (email) {
+                response = await fetch(`/api/orders?guestEmail=${email}`);
+            } else {
+                return;
+            }
+            
+            const result = await response.json();
+
+            if (response.ok) {
+                setOrders(result.data);
+                hasFetched.current = true;
+            } else {
+                console.error("Failed to fetch orders");
+            }
+        } catch (error) {
+            console.error("Error fetching orders:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    }, [session?.user.id]);
 
     useEffect(() => {
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                // Don't refetch when tab becomes visible
+                return;
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        
+        // Initial fetch
         if (status === "unauthenticated") {
-            // Check if we have a stored guest email in localStorage
             const storedEmail = localStorage.getItem("guestEmail");
             if (storedEmail) {
                 setGuestEmail(storedEmail);
@@ -29,40 +70,19 @@ export default function Orders() {
         } else if (status === "authenticated" && session?.user.id) {
             fetchOrders();
         }
-    }, [status, session]);
 
-    const handleEmailSubmit = (e) => {
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
+    }, [status, session, fetchOrders]);
+
+    const handleEmailSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (guestEmail.trim()) {
             localStorage.setItem("guestEmail", guestEmail);
             setShowEmailPopup(false);
+            hasFetched.current = false; // Reset fetch flag
             fetchOrders(guestEmail);
-        }
-    };
-
-    const fetchOrders = async (email = null) => {
-        setIsLoading(true);
-        try {
-            let response;
-            if (session?.user.id) {
-                response = await fetch(`/api/orders?userId=${session.user.id}`);
-            } else if (email) {
-                response = await fetch(`/api/orders?guestEmail=${email}`);
-            } else {
-                return; // Don't fetch if no identification is available
-            }
-            
-            const result = await response.json();
-
-            if (response.ok) {
-                setOrders(result.data);
-            } else {
-                console.error("Failed to fetch orders");
-            }
-        } catch (error) {
-            console.error("Error fetching orders:", error);
-        } finally {
-            setIsLoading(false);
         }
     };
 

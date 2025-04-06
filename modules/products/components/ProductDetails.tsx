@@ -221,7 +221,10 @@ const ProductDetails: React.FC = () => {
 
     setIsCartLoading(true);
     if(!inCart && !isBuyNow){
-      openCart();
+      router.refresh()
+      setTimeout(() => {
+        openCart();
+      }, 200);
     }
 
     try {

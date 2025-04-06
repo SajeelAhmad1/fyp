@@ -4,6 +4,7 @@ import HeaderTop from "@/common/components/layouts/HeaderTop";
 import Navigation from "@/common/components/layouts/Navigation";
 import Account from "@/components/Account"
 import Orders from "@/components/Orders";
+import Footer from "@/common/components/layouts/FooterMenu";
 
 export const metadata: Metadata = {
     title: "Orders - Lyalla and Lora",
@@ -26,6 +27,7 @@ const Page = () => {
             <HeaderBottom />
             <Navigation />
             <Orders />
+            <Footer/>
         </>
     )
 }

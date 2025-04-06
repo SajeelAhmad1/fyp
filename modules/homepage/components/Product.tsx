@@ -238,7 +238,7 @@ const Product: React.FC<ProductProps> = ({
     }
   };
 
-  const { openCart } = useCart();
+  const { openCart, refreshCart } = useCart();
 
   const handleCartToggle = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -249,7 +249,11 @@ const Product: React.FC<ProductProps> = ({
 
     setIsCartLoading(true);
     if(!inCart){
-      openCart();
+      router.refresh()
+      refreshCart();
+      setTimeout(() => {
+        openCart();
+      }, 200);
     }
     try {
       const cartPayload = userId 
@@ -281,7 +285,7 @@ const Product: React.FC<ProductProps> = ({
           toast.success("Successfully removed item from cart")
         } else {
           const errorData = await response.json();
-          toast.error('Delete Cart Item Error: ', errorData);
+          toast.error("Can't delete item from cart", errorData);
         }
       } else {
         const response = await fetch('/api/cart', {

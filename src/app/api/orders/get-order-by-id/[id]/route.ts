@@ -33,6 +33,8 @@ export async function GET(
                 payment: true
             },
         });
+        console.log("here")
+        console.log(orderWithDetails)
 
         if (!orderWithDetails) {
             console.log("No order found with ID:", orderId);

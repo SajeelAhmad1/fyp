@@ -18,12 +18,17 @@ const CustomerProfileForm: React.FC = () => {
     firstName: "",
     lastName: "",
     imageUrl: null,
-    phone: null,
+    phone: "",
     streetAddress: null,
     city: null,
     state: null,
     postalCode: null,
     country: null,
+  });
+  const [errors, setErrors] = useState({
+    firstName: false,
+    lastName: false,
+    phone: false,
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -42,6 +47,17 @@ const CustomerProfileForm: React.FC = () => {
       fetchProfile();
     }
   }, [session]);
+
+  const validateForm = () => {
+    const newErrors = {
+      firstName: !profile.firstName.trim(),
+      lastName: !profile.lastName.trim(),
+      phone: !profile.phone?.trim(), // Make sure phone is required
+    };
+
+    setErrors(newErrors);
+    return !Object.values(newErrors).some(error => error);
+  };
 
   const fetchProfile = async () => {
     setLoading(true);
@@ -65,8 +81,16 @@ const CustomerProfileForm: React.FC = () => {
     const { name, value } = e.target;
     setProfile((prev) => ({ 
       ...prev, 
-      [name]: value || null  // Convert empty string to null
+      [name]: value
     }));
+
+    // Clear error when user types
+    if (errors[name as keyof typeof errors]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: false
+      }));
+    }
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -88,11 +112,9 @@ const CustomerProfileForm: React.FC = () => {
   };
 
   const uploadImage = async (file: File): Promise<string> => {
-    // Create form data
     const formData = new FormData();
     formData.append('image', file);
 
-    // Upload to your image storage API
     const response = await fetch('/api/upload-image', {
       method: 'POST',
       body: formData,
@@ -103,17 +125,23 @@ const CustomerProfileForm: React.FC = () => {
     }
 
     const data = await response.json();
-    return data.imageUrl; // Return the URL of the uploaded image
+    return data.imageUrl;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate before submission
+    if (!validateForm()) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
     setLoading(true);
 
     try {
       let updatedProfile = { ...profile };
 
-      // If there's a new image file, upload it first
       if (imageFile) {
         const imageUrl = await uploadImage(imageFile);
         updatedProfile.imageUrl = imageUrl;
@@ -134,7 +162,7 @@ const CustomerProfileForm: React.FC = () => {
         throw new Error(data.message || "Failed to save profile");
       }
 
-      // Subscribe the user to the newsletter
+      // Newsletter subscription (unchanged)
       try {
         const email = user?.email;
         if (email) {
@@ -148,13 +176,9 @@ const CustomerProfileForm: React.FC = () => {
               name: `${updatedProfile.firstName} ${updatedProfile.lastName}`.trim()
             }),
           });
-          // We intentionally don't await this or handle errors differently
-          // as we don't want it to block the profile creation process
-          // Just log success silently
         }
       } catch (subscribeError) {
         console.error("Error subscribing user:", subscribeError);
-        // We don't show this error to the user as the profile was successfully created
       }
 
       toast.success(data.message);
@@ -181,12 +205,10 @@ const CustomerProfileForm: React.FC = () => {
     <div className="">
       <form onSubmit={handleSubmit} className="max-w-2xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Profile Image Upload Section */}
+          {/* Profile Image Upload Section (unchanged) */}
           <div className="col-span-1 md:col-span-2 flex flex-col items-center mb-4">
             <div className="relative">
-              <div
-                className="w-32 h-32 relative rounded-full overflow-hidden mb-4 bg-gray-100 border border-gray-300"
-              >
+              <div className="w-32 h-32 relative rounded-full overflow-hidden mb-4 bg-gray-100 border border-gray-300">
                 {imagePreview ? (
                   <Image
                     src={imagePreview}
@@ -200,8 +222,6 @@ const CustomerProfileForm: React.FC = () => {
                   </div>
                 )}
               </div>
-
-              {/* Blue Edit Icon */}
               <div
                 onClick={triggerFileInput}
                 className="absolute bottom-6 right-2 bg-[#F19B12] rounded-full p-1 cursor-pointer"
@@ -209,7 +229,6 @@ const CustomerProfileForm: React.FC = () => {
                 <Pencil className="text-white w-4 h-4" />
               </div>
             </div>
-
             <input
               type="file"
               accept="image/*"
@@ -219,27 +238,78 @@ const CustomerProfileForm: React.FC = () => {
             />
           </div>
 
-          {/* Other Form Fields */}
+          {/* Required Fields */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              First Name *
+            </label>
+            <input
+              type="text"
+              name="firstName"
+              value={profile.firstName}
+              onChange={handleChange}
+              className={`mt-1 py-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 ${
+                errors.firstName ? "border-red-500" : ""
+              }`}
+            />
+            {errors.firstName && (
+              <p className="text-red-500 text-xs mt-1">First name is required</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Last Name *
+            </label>
+            <input
+              type="text"
+              name="lastName"
+              value={profile.lastName}
+              onChange={handleChange}
+              className={`mt-1 py-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 ${
+                errors.lastName ? "border-red-500" : ""
+              }`}
+            />
+            {errors.lastName && (
+              <p className="text-red-500 text-xs mt-1">Last name is required</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Phone Number *
+            </label>
+            <input
+              type="tel"
+              name="phone"
+              value={profile.phone || ""}
+              onChange={handleChange}
+              className={`mt-1 py-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 ${
+                errors.phone ? "border-red-500" : ""
+              }`}
+            />
+            {errors.phone && (
+              <p className="text-red-500 text-xs mt-1">Phone number is required</p>
+            )}
+          </div>
+
+          {/* Optional Fields */}
           {[
-            { label: "First Name", name: "firstName", type: "text", required: true },
-            { label: "Last Name", name: "lastName", type: "text", required: true },
-            { label: "Phone Number", name: "phone", type: "tel" },
             { label: "Street Address", name: "streetAddress", type: "text" },
             { label: "City", name: "city", type: "text" },
             { label: "State", name: "state", type: "text" },
             { label: "Postal Code", name: "postalCode", type: "text" },
             { label: "Country", name: "country", type: "text" },
-          ].map(({ label, name, type, required }) => (
+          ].map(({ label, name, type }) => (
             <div key={name}>
               <label className="block text-sm font-medium text-gray-700">
-                {label} {required && "*"}
+                {label}
               </label>
               <input
                 type={type}
                 name={name}
                 value={profile[name as keyof CustomerProfile] || ""}
                 onChange={handleChange}
-                required={required}
                 className="mt-1 py-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
               />
             </div>
