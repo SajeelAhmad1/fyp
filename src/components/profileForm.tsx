@@ -52,7 +52,7 @@ const CustomerProfileForm: React.FC = () => {
     const newErrors = {
       firstName: !profile.firstName.trim(),
       lastName: !profile.lastName.trim(),
-      phone: !profile.phone?.trim(), // Make sure phone is required
+      phone: !profile.phone?.trim() || profile.phone.length !== 10, // Must be exactly 10 digits
     };
 
     setErrors(newErrors);
@@ -79,10 +79,26 @@ const CustomerProfileForm: React.FC = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setProfile((prev) => ({ 
-      ...prev, 
-      [name]: value
-    }));
+
+    if (name === "phone") {
+      // Remove all non-digit characters
+      const digitsOnly = value.replace(/\D/g, '');
+
+      // Check if the number exceeds 10 digits
+      if (digitsOnly.length > 10) {
+        return; // Don't update if more than 10 digits
+      }
+
+      setProfile((prev) => ({
+        ...prev,
+        [name]: digitsOnly
+      }));
+    } else {
+      setProfile((prev) => ({
+        ...prev,
+        [name]: value
+      }));
+    }
 
     // Clear error when user types
     if (errors[name as keyof typeof errors]) {
@@ -130,7 +146,7 @@ const CustomerProfileForm: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate before submission
     if (!validateForm()) {
       toast.error("Please fill in all required fields");
@@ -140,7 +156,10 @@ const CustomerProfileForm: React.FC = () => {
     setLoading(true);
 
     try {
-      let updatedProfile = { ...profile };
+      let updatedProfile = {
+        ...profile,
+        phone: profile.phone ? `${profile.phone}` : null
+      };
 
       if (imageFile) {
         const imageUrl = await uploadImage(imageFile);
@@ -171,7 +190,7 @@ const CustomerProfileForm: React.FC = () => {
             headers: {
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ 
+            body: JSON.stringify({
               email,
               name: `${updatedProfile.firstName} ${updatedProfile.lastName}`.trim()
             }),
@@ -182,12 +201,12 @@ const CustomerProfileForm: React.FC = () => {
       }
 
       toast.success(data.message);
-      await update({ 
-        user: { 
-          ...session?.user, 
-          customerProfile: updatedProfile, 
-          isProfileComplete: true 
-        } 
+      await update({
+        user: {
+          ...session?.user,
+          customerProfile: updatedProfile,
+          isProfileComplete: true
+        }
       });
 
       if (!user?.isProfileComplete) {
@@ -248,9 +267,8 @@ const CustomerProfileForm: React.FC = () => {
               name="firstName"
               value={profile.firstName}
               onChange={handleChange}
-              className={`mt-1 py-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 ${
-                errors.firstName ? "border-red-500" : ""
-              }`}
+              className={`mt-1 py-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 ${errors.firstName ? "border-red-500" : ""
+                }`}
             />
             {errors.firstName && (
               <p className="text-red-500 text-xs mt-1">First name is required</p>
@@ -266,9 +284,8 @@ const CustomerProfileForm: React.FC = () => {
               name="lastName"
               value={profile.lastName}
               onChange={handleChange}
-              className={`mt-1 py-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 ${
-                errors.lastName ? "border-red-500" : ""
-              }`}
+              className={`mt-1 py-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 ${errors.lastName ? "border-red-500" : ""
+                }`}
             />
             {errors.lastName && (
               <p className="text-red-500 text-xs mt-1">Last name is required</p>
@@ -279,17 +296,22 @@ const CustomerProfileForm: React.FC = () => {
             <label className="block text-sm font-medium text-gray-700">
               Phone Number *
             </label>
-            <input
-              type="tel"
-              name="phone"
-              value={profile.phone || ""}
-              onChange={handleChange}
-              className={`mt-1 py-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 ${
-                errors.phone ? "border-red-500" : ""
-              }`}
-            />
+            <div className="flex">
+              <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm">
+                +44
+              </span>
+              <input
+                type="tel"
+                name="phone"
+                value={profile.phone || ""}
+                onChange={handleChange}
+                maxLength={10}
+                className={`flex-1 min-w-0 block w-full px-3 py-1 rounded-none rounded-r-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 ${errors.phone ? "border-red-500" : ""
+                  }`}
+              />
+            </div>
             {errors.phone && (
-              <p className="text-red-500 text-xs mt-1">Phone number is required</p>
+              <p className="text-red-500 text-xs mt-1">10 diigit Phone number is required</p>
             )}
           </div>
 
@@ -324,7 +346,7 @@ const CustomerProfileForm: React.FC = () => {
           {loading ? "Saving..." : user?.isProfileComplete ? "Update Profile" : "Create Profile"}
         </button>
       </form>
-      <Toaster position="top-right"/>
+      <Toaster position="top-right" />
     </div>
   );
 };

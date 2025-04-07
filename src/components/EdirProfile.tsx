@@ -36,17 +36,24 @@ export default function EditProfile() {
                     }
                     const result = await response.json();
                     setProfile(result.data);
-                    setFormData(result.data || {
-                        firstName: "",
-                        lastName: "",
-                        phone: "",
-                        streetAddress: "",
-                        city: "",
-                        state: "",
-                        postalCode: "",
-                        country: "",
-                        imageUrl: ""
+
+                    // Process phone number to remove +44 if present
+                    const phone = result.data?.phone?.startsWith('+44')
+                        ? result.data.phone.substring(3)
+                        : result.data?.phone || "";
+
+                    setFormData({
+                        firstName: result.data?.firstName || "",
+                        lastName: result.data?.lastName || "",
+                        phone: phone,
+                        streetAddress: result.data?.streetAddress || "",
+                        city: result.data?.city || "",
+                        state: result.data?.state || "",
+                        postalCode: result.data?.postalCode || "",
+                        country: result.data?.country || "",
+                        imageUrl: result.data?.imageUrl || ""
                     });
+
                     setImagePreview(result.data?.imageUrl || null);
                     setIsLoading(false);
                 } catch (err) {
@@ -81,10 +88,26 @@ export default function EditProfile() {
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
+
+        if (name === "phone") {
+            // Remove all non-digit characters
+            const digitsOnly = value.replace(/\D/g, '');
+
+            // Check if the number exceeds 10 digits
+            if (digitsOnly.length > 10) {
+                return; // Don't update if more than 10 digits
+            }
+
+            setFormData(prev => ({
+                ...prev,
+                [name]: digitsOnly
+            }));
+        } else {
+            setFormData(prev => ({
+                ...prev,
+                [name]: value
+            }));
+        }
     };
 
     const handleSubmit = async (e: FormEvent) => {
@@ -93,12 +116,18 @@ export default function EditProfile() {
         setError(null);
 
         try {
+            // Prepare the data to be sent with +44 prefix
+            const dataToSend = {
+                ...formData,
+                phone: formData.phone ? `+44${formData.phone}` : ""
+            };
+
             const response = await fetch('/api/customer-profile', {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(formData)
+                body: JSON.stringify(dataToSend)
             });
 
             if (!response.ok) {
@@ -128,7 +157,7 @@ export default function EditProfile() {
                 <h1 className="text-2xl font-bold mb-6">Edit Profile</h1>
                 <form onSubmit={handleSubmit}>
                     <div className="mb-6">
-                        
+
                         <div className="relative w-32 h-32 rounded-full overflow-hidden border">
                             {imagePreview ? (
                                 <Image
@@ -198,16 +227,21 @@ export default function EditProfile() {
                         <label htmlFor="phone" className="block text-gray-700 text-sm font-bold mb-2">
                             Phone Number
                         </label>
-                        <input
-                            type="tel"
-                            id="phone"
-                            name="phone"
-                            value={formData.phone}
-                            onChange={handleInputChange}
-                            className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#F19B12]"
-                        />
+                        <div className="flex">
+                            <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm">
+                                +44
+                            </span>
+                            <input
+                                type="tel"
+                                id="phone"
+                                name="phone"
+                                value={formData.phone}
+                                onChange={handleInputChange}
+                                maxLength={10}
+                                className="flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-r-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#F19B12]"
+                            />
+                        </div>
                     </div>
-
                     <div className="mb-4">
                         <label htmlFor="streetAddress" className="block text-gray-700 text-sm font-bold mb-2">
                             Street Address

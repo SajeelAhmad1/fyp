@@ -77,7 +77,7 @@ const StripePaymentForm = ({
     order,
     formData,
     onPaymentSuccess,
-    validateForm 
+    validateForm
 }: {
     order: Order,
     formData: any,
@@ -92,33 +92,33 @@ const StripePaymentForm = ({
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        
+
         if (!validateForm()) {
             return;
         }
-        
+
         if (!stripe || !elements || !paymentElementLoaded) {
             setErrorMessage('Payment system is not ready yet. Please wait...');
             return;
         }
 
         setLoading(true);
-    
+
         try {
             await onPaymentSuccess();
-            
+
             const { error: submitError } = await elements.submit();
             if (submitError) {
                 throw submitError;
             }
-    
+
             const { error } = await stripe.confirmPayment({
                 elements,
                 confirmParams: {
                     return_url: `${window.location.origin}/payment-success?orderId=${order.id}`,
                 },
             });
-    
+
             if (error) {
                 throw error;
             }
@@ -131,7 +131,7 @@ const StripePaymentForm = ({
 
     return (
         <form onSubmit={handleSubmit} className="mt-6">
-            <PaymentElement 
+            <PaymentElement
                 onReady={() => setPaymentElementLoaded(true)}
                 options={{
                     layout: "tabs",
@@ -225,7 +225,7 @@ const CheckoutPage = () => {
             shippingState: !formData.shippingState.trim(),
             shippingPostalCode: !formData.shippingPostalCode.trim(),
             shippingCountry: !formData.shippingCountry.trim(),
-            shippingPhone: !formData.shippingPhone.trim(),
+            shippingPhone: !formData.shippingPhone.trim() || formData.shippingPhone.length !== 10, // Must be exactly 10 digits
             billingFirstName: !formData.useSameAddress && !formData.billingFirstName.trim(),
             billingLastName: !formData.useSameAddress && !formData.billingLastName.trim(),
             billingStreet: !formData.useSameAddress && !formData.billingStreet.trim(),
@@ -241,9 +241,9 @@ const CheckoutPage = () => {
         if (Object.values(newErrors).some(error => error)) {
             const firstErrorField = Object.keys(newErrors).find(key => newErrors[key as keyof typeof newErrors]);
             if (firstErrorField) {
-                document.getElementById(firstErrorField)?.scrollIntoView({ 
-                    behavior: 'smooth', 
-                    block: 'center' 
+                document.getElementById(firstErrorField)?.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
                 });
             }
             return false;
@@ -391,6 +391,11 @@ const CheckoutPage = () => {
             setOrder(data);
 
             if (data) {
+                // Process phone number to remove +44 if present
+                const phone = data.shippingPhone?.startsWith('+44')
+                    ? data.shippingPhone.substring(3)
+                    : data.shippingPhone || '';
+
                 setFormData(prev => ({
                     ...prev,
                     shippingFirstName: data.shippingFirstName || '',
@@ -400,7 +405,7 @@ const CheckoutPage = () => {
                     shippingState: data.shippingState || '',
                     shippingPostalCode: data.shippingPostalCode || '',
                     shippingCountry: data.shippingCountry || '',
-                    shippingPhone: data.shippingPhone || '',
+                    shippingPhone: phone,
 
                     billingFirstName: data.billingFirstName || '',
                     billingLastName: data.billingLastName || '',
@@ -421,11 +426,27 @@ const CheckoutPage = () => {
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
-        
+
+        if (name === "shippingPhone") {
+            // Remove all non-digit characters
+            const digitsOnly = value.replace(/\D/g, '');
+
+            // Check if the number exceeds 10 digits
+            if (digitsOnly.length > 10) {
+                return; // Don't update if more than 10 digits
+            }
+
+            setFormData(prev => ({
+                ...prev,
+                [name]: digitsOnly
+            }));
+        } else {
+            setFormData(prev => ({
+                ...prev,
+                [name]: value
+            }));
+        }
+
         if (formErrors[name as keyof typeof formErrors]) {
             setFormErrors(prev => ({
                 ...prev,
@@ -478,7 +499,7 @@ const CheckoutPage = () => {
                 shippingState: formData.shippingState,
                 shippingPostalCode: formData.shippingPostalCode,
                 shippingCountry: formData.shippingCountry,
-                shippingPhone: formData.shippingPhone,
+                shippingPhone: formData.shippingPhone ? `+44${formData.shippingPhone}` : '', // Add +44 prefix
                 billingFirstName: formData.useSameAddress ? null : formData.billingFirstName,
                 billingLastName: formData.useSameAddress ? null : formData.billingLastName,
                 billingStreet: formData.useSameAddress ? null : formData.billingStreet,
@@ -504,8 +525,6 @@ const CheckoutPage = () => {
             if (!session?.user?.id) {
                 localStorage.removeItem(GUEST_CART_ID_KEY);
             }
-
-            router.push(`/orders/confirmation?orderId=${order?.id}`);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Payment processing failed');
         }
@@ -591,9 +610,9 @@ const CheckoutPage = () => {
                 <h1 className="text-2xl font-semibold mb-6">Checkout</h1>
 
                 {order && clientSecret ? (
-                    <Elements 
-                        stripe={stripePromise} 
-                        options={{ 
+                    <Elements
+                        stripe={stripePromise}
+                        options={{
                             clientSecret,
                             appearance: {
                                 theme: 'stripe',
@@ -780,16 +799,23 @@ const CheckoutPage = () => {
                                     <label htmlFor="shippingPhone" className="block text-sm font-medium text-gray-700 mb-1">
                                         Phone Number *
                                     </label>
-                                    <input
-                                        type="tel"
-                                        id="shippingPhone"
-                                        name="shippingPhone"
-                                        placeholder="Enter Phone Number"
-                                        value={formData.shippingPhone}
-                                        onChange={handleInputChange}
-                                        className={`w-full p-2 border ${formErrors.shippingPhone ? 'border-red-500' : 'border-gray-300'} rounded`}
-                                        required
-                                    />
+                                    <div className="flex">
+                                        <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm">
+                                            +44
+                                        </span>
+                                        <input
+                                            type="tel"
+                                            id="shippingPhone"
+                                            name="shippingPhone"
+                                            placeholder="Enter Phone Number"
+                                            value={formData.shippingPhone}
+                                            onChange={handleInputChange}
+                                            maxLength={10}
+                                            className={`flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-r-md border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#F19B12] ${formErrors.shippingPhone ? 'border-red-500' : 'border-gray-300'
+                                                }`}
+                                            required
+                                        />
+                                    </div>
                                     {formErrors.shippingPhone && <p className="text-red-500 text-xs mt-1">Phone number is required</p>}
                                 </div>
                             </div>

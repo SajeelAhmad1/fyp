@@ -85,6 +85,122 @@ interface Order {
   payment: Payment;
 }
 
+// Skeleton loading component for the order page
+const OrderSkeleton = () => {
+  return (
+    <div className="container mx-auto py-8 px-4">
+      {/* Header skeleton */}
+      <div className="bg-gray-50 p-6 rounded-lg mb-8">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 w-1/3 mx-auto mb-4 rounded"></div>
+          <div className="h-4 bg-gray-200 w-2/3 mx-auto mb-3 rounded"></div>
+          <div className="h-3 bg-gray-200 w-1/2 mx-auto rounded"></div>
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2">
+          {/* Order items skeleton */}
+          <div className="bg-white p-6 rounded-lg shadow-md mb-8">
+            <div className="animate-pulse">
+              <div className="h-6 bg-gray-200 w-1/4 mb-6 rounded"></div>
+              
+              {/* Item 1 */}
+              <div className="flex items-center space-x-4 py-4 border-b">
+                <div className="w-16 h-16 bg-gray-200 rounded-md flex-shrink-0"></div>
+                <div className="flex-grow">
+                  <div className="h-4 bg-gray-200 w-3/4 mb-2 rounded"></div>
+                  <div className="h-3 bg-gray-200 w-1/4 rounded"></div>
+                </div>
+                <div className="w-16">
+                  <div className="h-4 bg-gray-200 w-full rounded"></div>
+                </div>
+              </div>
+              
+              {/* Item 2 */}
+              <div className="flex items-center space-x-4 py-4 border-b">
+                <div className="w-16 h-16 bg-gray-200 rounded-md flex-shrink-0"></div>
+                <div className="flex-grow">
+                  <div className="h-4 bg-gray-200 w-1/2 mb-2 rounded"></div>
+                  <div className="h-3 bg-gray-200 w-1/4 rounded"></div>
+                </div>
+                <div className="w-16">
+                  <div className="h-4 bg-gray-200 w-full rounded"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Shipping info skeleton */}
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <div className="animate-pulse">
+                <div className="h-6 bg-gray-200 w-3/4 mb-4 rounded"></div>
+                <div className="space-y-3">
+                  <div className="h-4 bg-gray-200 w-5/6 rounded"></div>
+                  <div className="h-4 bg-gray-200 w-1/2 rounded"></div>
+                  <div className="h-4 bg-gray-200 w-5/6 rounded"></div>
+                  <div className="h-4 bg-gray-200 w-3/4 rounded"></div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Payment info skeleton */}
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <div className="animate-pulse">
+                <div className="h-6 bg-gray-200 w-3/4 mb-4 rounded"></div>
+                <div className="space-y-3">
+                  <div className="h-4 bg-gray-200 w-2/3 rounded"></div>
+                  <div className="h-4 bg-gray-200 w-1/2 rounded"></div>
+                  <div className="h-4 bg-gray-200 w-3/4 rounded"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Order summary skeleton */}
+        <div className="lg:col-span-1">
+          <div className="bg-white p-6 rounded-lg shadow-md">
+            <div className="animate-pulse">
+              <div className="h-6 bg-gray-200 w-1/2 mb-6 rounded"></div>
+              
+              <div className="space-y-3">
+                <div className="flex justify-between">
+                  <div className="h-4 bg-gray-200 w-1/3 rounded"></div>
+                  <div className="h-4 bg-gray-200 w-16 rounded"></div>
+                </div>
+                
+                <div className="flex justify-between">
+                  <div className="h-4 bg-gray-200 w-1/4 rounded"></div>
+                  <div className="h-4 bg-gray-200 w-16 rounded"></div>
+                </div>
+                
+                <div className="flex justify-between">
+                  <div className="h-4 bg-gray-200 w-1/5 rounded"></div>
+                  <div className="h-4 bg-gray-200 w-16 rounded"></div>
+                </div>
+                
+                <div className="pt-2 mt-2 border-t border-gray-200">
+                  <div className="flex justify-between mt-2">
+                    <div className="h-5 bg-gray-200 w-1/4 rounded"></div>
+                    <div className="h-5 bg-gray-200 w-20 rounded"></div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="mt-8 space-y-4">
+                <div className="h-10 bg-gray-200 w-full rounded-md"></div>
+                <div className="h-10 bg-gray-200 w-full rounded-md"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default function OrderConfirmationPage() {
   const params = useParams();
   const router = useRouter();
@@ -139,14 +255,7 @@ export default function OrderConfirmationPage() {
   };
   
   if (isLoading) {
-    return (
-      <div className="container mx-auto py-16 px-4 text-center">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 w-1/2 mx-auto mb-8 rounded"></div>
-          <div className="h-64 bg-gray-200 w-full rounded mb-4"></div>
-        </div>
-      </div>
-    );
+    return <OrderSkeleton />;
   }
   
   if (!order) {
@@ -180,7 +289,7 @@ export default function OrderConfirmationPage() {
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
-          <div className="bg-white p-6 rounded-lg border border-gray-200  mb-8">
+          <div className="bg-white p-6 rounded-lg shadow-md mb-8">
             <h2 className="text-xl font-semibold mb-4">Order Items</h2>
             
             <div className="space-y-4">
@@ -226,7 +335,7 @@ export default function OrderConfirmationPage() {
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* Shipping Information */}
-            <div className="bg-white p-6 rounded-lg border border-gray-200 ">
+            <div className="bg-white p-6 rounded-lg shadow-md">
               <h2 className="text-xl font-semibold mb-4">Shipping Information</h2>
               <div className="space-y-2">
                 <p>
@@ -248,7 +357,7 @@ export default function OrderConfirmationPage() {
             </div>
             
             {/* Payment Information */}
-            <div className="bg-white p-6 rounded-lg border border-gray-200 ">
+            <div className="bg-white p-6 rounded-lg shadow-md">
               <h2 className="text-xl font-semibold mb-4">Payment Information</h2>
               <div className="space-y-2">
                 <p>
@@ -278,7 +387,7 @@ export default function OrderConfirmationPage() {
         
         {/* Order Summary */}
         <div className="lg:col-span-1">
-          <div className="bg-white p-6 rounded-lg border border-gray-200  sticky top-8">
+          <div className="bg-white p-6 rounded-lg shadow-md sticky top-8">
             <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
             
             <div className="space-y-2">
