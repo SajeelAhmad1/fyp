@@ -83,7 +83,7 @@ export async function POST(request: Request) {
     const order = await prisma.order.create({
       data: {
         userId: session.user.id,
-        status: 'PENDING',
+        status: 'CONFIRMED',
         shippingAddress: shippingAddress as any, // Type casting for Prisma
         paymentMethod: paymentMethod as any, // Type casting for Prisma
         shippingMethod,
@@ -112,7 +112,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ 
       success: true, 
       orderId: order.id,
-      total: order.total
     });
   } catch (error) {
     console.error('Checkout error:', error);

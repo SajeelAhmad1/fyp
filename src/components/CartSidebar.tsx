@@ -221,97 +221,50 @@ const CartSidebar = () => {
     return true;
   }, [cart]);
 
-  const createOrderAndProceedToCheckout = useCallback(async (guestEmail?: string) => {
+  const proceedToCheckout = () => {
     if (!checkProductStock()) {
       return;
     }
-
+  
     if (!cart || cart.items.length === 0) {
       setError('Your cart is empty');
       return;
     }
-
-    try {
-      setIsCreatingOrder(true);
-      setError(null);
-      setStockError(null);
-
-      if (!session?.user && !guestEmail) {
-        throw new Error('Email is required for guest checkout');
-      }
-
-      if (guestEmail) {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(guestEmail)) {
-          throw new Error('Please enter a valid email address');
-        }
-      }
-
-      const orderItems = cart.items.map(item => ({
-        productId: item.productId,
-        quantity: item.quantity,
-        unitPrice: typeof item.product.price === 'string'
-          ? parseFloat(item.product.price)
-          : item.product.price,
-        discountPercentage: item.product.discount
-          ? (typeof item.product.discount === 'string'
-            ? parseFloat(item.product.discount)
-            : item.product.discount)
-          : 0
-      }));
-
-      const requestBody = {
-        items: orderItems,
-        ...(session?.user
-          ? { userId: session.user.id }
-          : { guestEmail: guestEmail?.toLowerCase().trim() })
-      };
-
-      const response = await fetch('/api/orders', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || errorData.message || 'Failed to create order');
-      }
-
-      const { data } = await response.json();
-
-      closeCart();
-      router.push(`/checkout?orderId=${data.id}`);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create order');
-    } finally {
-      setIsCreatingOrder(false);
-    }
-  }, [cart, session, router, checkProductStock, closeCart]);
-
-  const handleProceedToCheckout = () => {
-    setStockError(null);
-
-    if (checkProductStock()) {
-      if (session?.user) {
-        createOrderAndProceedToCheckout();
-      } else {
-        setShowEmailModal(true);
-      }
+  
+    closeCart();
+    
+    // For guest users, we still need to collect email
+    if (!session?.user) {
+      setShowEmailModal(true);
+    } else {
+      // Navigate directly to checkout without creating order
+      router.push('/checkout');
     }
   };
+
+  
 
   const handleEmailSubmit = () => {
     if (!validateEmail(email)) {
       setEmailError('Please enter a valid email address');
       return;
     }
+    
     setEmailError('');
     localStorage.setItem(GUEST_EMAIL_KEY, email.toLowerCase().trim());
-    createOrderAndProceedToCheckout(email);
-    setShowEmailModal(false)
+    setShowEmailModal(false);
+    
+    // Navigate to checkout without creating order
+    router.push('/checkout');
+  };
+  
+  // Update the button handler
+  const handleProceedToCheckout = () => {
+    setStockError(null);
+    
+    if (checkProductStock()) {
+      proceedToCheckout();
+    }
   };
 
   const calculations = cartCalculations();

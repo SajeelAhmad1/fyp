@@ -48,7 +48,7 @@ export async function POST(request: Request) {
                     isGuestOrder: !body.userId,
                     guestEmail: !body.userId ? body.guestEmail : undefined,
                     totalPrice,
-                    status: "PENDING",
+                    status: body.status,
                     shippingFirstName: body.shippingFirstName || "",
                     shippingLastName: body.shippingLastName || "",
                     shippingStreet: body.shippingStreet || "",

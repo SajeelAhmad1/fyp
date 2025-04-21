@@ -198,6 +198,8 @@ model Order {
   payment             Payment?
   shipment            Shipment?
 
+  stripeCustomerId    String?
+
   guestEmail          String?      
   isGuestOrder        Boolean      @default(false)
   

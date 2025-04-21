@@ -297,7 +297,8 @@ const CartDisplay: React.FC = () => {
         // Check stock before proceeding
         if (checkProductStock()) {
             if (session?.user) {
-                createOrderAndProceedToCheckout();
+                // createOrderAndProceedToCheckout();
+                router.push("/checkout")
             } else {
                 setShowEmailModal(true);
             }

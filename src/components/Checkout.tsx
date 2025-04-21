@@ -74,21 +74,24 @@ const GUEST_EMAIL_KEY = 'guestEmail';
 const GUEST_CART_ID_KEY = 'guestCartId';
 
 const StripePaymentForm = ({
-    order,
+    cartItems,
     formData,
     onPaymentSuccess,
-    validateForm
+    validateForm,
+    totalPrice
 }: {
-    order: Order,
+    cartItems?: any[],
     formData: any,
-    onPaymentSuccess: () => void,
-    validateForm: () => boolean
+    onPaymentSuccess: () => Promise<string | null>,
+    validateForm: () => boolean,
+    totalPrice: number
 }) => {
     const stripe = useStripe();
     const elements = useElements();
     const [errorMessage, setErrorMessage] = useState<string>();
     const [loading, setLoading] = useState(false);
     const [paymentElementLoaded, setPaymentElementLoaded] = useState(false);
+    const router = useRouter()
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -103,24 +106,40 @@ const StripePaymentForm = ({
         }
 
         setLoading(true);
+        setErrorMessage(undefined);
 
         try {
-            await onPaymentSuccess();
-
+            // First submit the payment elements to Stripe
             const { error: submitError } = await elements.submit();
             if (submitError) {
                 throw submitError;
             }
 
-            const { error } = await stripe.confirmPayment({
+            // Confirm the payment with Stripe
+            const { error, paymentIntent } = await stripe.confirmPayment({
                 elements,
                 confirmParams: {
-                    return_url: `${window.location.origin}/payment-success?orderId=${order.id}`,
+                    return_url: `${window.location.origin}/payment-success`,
                 },
+                redirect: 'if_required' // Don't redirect automatically
             });
 
             if (error) {
                 throw error;
+            }
+
+            // Only if payment was successful, create the order
+            if (paymentIntent && paymentIntent.status === 'succeeded') {
+                const orderId = await onPaymentSuccess();
+                
+                if (!orderId) {
+                    throw new Error('Failed to create order after successful payment');
+                }
+
+                // Redirect to success page with order ID
+                router.push(`/payment-success?orderId=${orderId}`);
+            } else {
+                throw new Error('Payment was not successful');
             }
         } catch (err) {
             setErrorMessage(err instanceof Error ? err.message : 'Payment processing failed');
@@ -143,7 +162,7 @@ const StripePaymentForm = ({
                 disabled={!stripe || !paymentElementLoaded || loading}
                 className="w-full bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition-colors disabled:bg-blue-400 disabled:cursor-not-allowed mt-4"
             >
-                {loading ? 'Processing Payment...' : `Pay $${order.totalPrice}`}
+                {loading ? 'Processing Payment...' : `Pay $${totalPrice}`}
             </button>
         </form>
     );
@@ -161,6 +180,9 @@ const CheckoutPage = () => {
     const [error, setError] = useState<string | null>(null);
     const [isCreatingOrder, setIsCreatingOrder] = useState(false);
     const [clientSecret, setClientSecret] = useState<string | null>(null);
+    const [stripeCustId, setStripeCustId] = useState<string | null>(null);
+    const [cartItems, setCartItems] = useState<any[]>([]);
+    const [cartTotal, setCartTotal] = useState<number>(0);
 
     const [formData, setFormData] = useState({
         shippingFirstName: '',
@@ -251,17 +273,22 @@ const CheckoutPage = () => {
         return true;
     };
 
-    const createPaymentIntent = async () => {
-        if (!order?.id) return;
-
+    const createPaymentIntent = async (amount: number, orderId?: string) => {
         try {
+            const payload: any = {
+                amount: Math.round(amount * 100),
+                email: formData.email || session?.user?.email,
+                name: `${formData.shippingFirstName} ${formData.shippingLastName}`
+            };
+            
+            if (orderId) {
+                payload.orderId = orderId;
+            }
+
             const response = await fetch("/api/create-payment-intent", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    amount: Math.round(order.totalPrice * 100),
-                    orderId: order.id
-                }),
+                body: JSON.stringify(payload),
             });
 
             if (!response.ok) {
@@ -269,80 +296,25 @@ const CheckoutPage = () => {
             }
 
             const data = await response.json();
+            console.log("Stripe details:", data);
+
             if (!data.clientSecret) {
                 throw new Error('No client secret returned');
             }
+
+            // Store the customer ID
+            if (data.customerId) {
+                console.log(data.customerId);
+                localStorage.setItem('stripeCustomerId', data.customerId);
+            }
+
             setClientSecret(data.clientSecret);
+            return data.clientSecret;
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to initialize payment');
+            return null;
         }
     };
-
-    const createOrderAndProceedToCheckout = useCallback(async () => {
-        if (!validateForm()) {
-            return;
-        }
-
-        const guestCartId = getGuestCartId();
-        if ((!session?.user?.id && !guestCartId) || !orderId) return;
-
-        try {
-            setIsCreatingOrder(true);
-            setError(null);
-
-            const orderItems = order?.items.map(item => ({
-                productId: item.product.id,
-                quantity: item.quantity,
-                unitPrice: typeof item.product.price === 'string'
-                    ? parseFloat(item.product.price)
-                    : item.product.price,
-                discountPercentage: 0
-            })) || [];
-
-            const requestBody: any = {
-                items: orderItems,
-                shippingFirstName: formData.shippingFirstName,
-                shippingLastName: formData.shippingLastName,
-                shippingStreet: formData.shippingStreet,
-                shippingCity: formData.shippingCity,
-                shippingState: formData.shippingState,
-                shippingPostalCode: formData.shippingPostalCode,
-                shippingCountry: formData.shippingCountry,
-                shippingPhone: formData.shippingPhone,
-                useSameAddress: formData.useSameAddress,
-            };
-
-            if (session?.user?.id) {
-                requestBody.userId = session.user.id;
-                requestBody.email = session.user.email;
-            } else {
-                if (!guestCartId) {
-                    throw new Error('Guest cart ID is required');
-                }
-                requestBody.guestCartId = guestCartId;
-                requestBody.guestEmail = localStorage.getItem(GUEST_EMAIL_KEY) || formData.email;
-                localStorage.setItem(GUEST_EMAIL_KEY, requestBody.guestEmail);
-            }
-
-            const response = await fetch(`/api/orders`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(requestBody),
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Failed to create order');
-            }
-
-            const { data } = await response.json();
-            router.push(`/checkout?orderId=${data.id}`);
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'An unknown error occurred');
-        } finally {
-            setIsCreatingOrder(false);
-        }
-    }, [order, session, router, getGuestCartId, orderId, formData]);
 
     const fetchCustomerProfile = async () => {
         if (!session?.user?.id) return;
@@ -419,8 +391,54 @@ const CheckoutPage = () => {
                     paymentMethod: 'STRIPE'
                 }));
             }
+            
+            // Create a payment intent for this order
+            await createPaymentIntent(data.totalPrice, data.id);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'An error occurred while loading your order');
+        }
+    };
+
+    const fetchCart = async () => {
+        try {
+            const userId = session?.user?.id;
+            const guestCartId = getGuestCartId();
+            
+            if (!userId && !guestCartId) {
+                throw new Error('No cart identified');
+            }
+            
+            const response = await fetch(`/api/cart?${userId ? `userId=${userId}` : `guestCartId=${guestCartId}`}`, {
+                headers: { 'Cache-Control': 'no-cache' }
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to fetch cart');
+            }
+            
+            const { data: cartData } = await response.json();
+            
+            if (!cartData?.items || cartData.items.length === 0) {
+                throw new Error('Your cart is empty');
+            }
+            
+            setCartItems(cartData.items);
+            
+            // Calculate cart total
+            const total = cartData.items.reduce((sum: number, item: any) => {
+                const price = typeof item.product.price === 'string'
+                    ? parseFloat(item.product.price)
+                    : item.product.price;
+                
+                return sum + (price * item.quantity);
+            }, 0);
+            
+            setCartTotal(total);
+            
+            // Initialize payment intent without creating an order
+            await createPaymentIntent(total);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to load your cart');
         }
     };
 
@@ -489,9 +507,47 @@ const CheckoutPage = () => {
         return isNaN(numPrice) ? "0.00" : numPrice.toFixed(2);
     };
 
-    const handlePaymentSuccess = async () => {
+    const createOrderFromCart = async () => {
+        setIsCreatingOrder(true);
+        setError(null);
+        
         try {
-            const orderUpdatePayload = {
+            const userId = session?.user?.id;
+            const guestEmail = localStorage.getItem(GUEST_EMAIL_KEY) || formData.email;
+            const guestCartId = getGuestCartId();
+            
+            if (!userId && !guestEmail) {
+                throw new Error('Email is required for guest checkout');
+            }
+            
+            if (!cartItems || cartItems.length === 0) {
+                throw new Error('Your cart is empty');
+            }
+            
+            // Save guest email if not logged in
+            if (!userId && formData.email) {
+                localStorage.setItem(GUEST_EMAIL_KEY, formData.email);
+            }
+            
+            // Prepare order items from cart
+            const orderItems = cartItems.map(item => ({
+                productId: item.productId,
+                quantity: item.quantity,
+                unitPrice: typeof item.product.price === 'string'
+                  ? parseFloat(item.product.price)
+                  : item.product.price,
+                discountPercentage: item.product.discount
+                  ? (typeof item.product.discount === 'string'
+                    ? parseFloat(item.product.discount)
+                    : item.product.discount)
+                  : 0
+            }));
+            
+            const orderPayload = {
+                items: orderItems,
+                ...(userId
+                    ? { userId }
+                    : { guestEmail: formData.email.toLowerCase().trim() }),
                 shippingFirstName: formData.shippingFirstName,
                 shippingLastName: formData.shippingLastName,
                 shippingStreet: formData.shippingStreet,
@@ -499,7 +555,7 @@ const CheckoutPage = () => {
                 shippingState: formData.shippingState,
                 shippingPostalCode: formData.shippingPostalCode,
                 shippingCountry: formData.shippingCountry,
-                shippingPhone: formData.shippingPhone ? `+44${formData.shippingPhone}` : '', // Add +44 prefix
+                shippingPhone: formData.shippingPhone ? `+44${formData.shippingPhone}` : '',
                 billingFirstName: formData.useSameAddress ? null : formData.billingFirstName,
                 billingLastName: formData.useSameAddress ? null : formData.billingLastName,
                 billingStreet: formData.useSameAddress ? null : formData.billingStreet,
@@ -507,65 +563,97 @@ const CheckoutPage = () => {
                 billingState: formData.useSameAddress ? null : formData.billingState,
                 billingPostalCode: formData.useSameAddress ? null : formData.billingPostalCode,
                 billingCountry: formData.useSameAddress ? null : formData.billingCountry,
-
-                ...(session?.user?.id ? { userId: session.user.id } : { guestEmail: localStorage.getItem(GUEST_EMAIL_KEY) }),
-
                 email: formData.email,
-                guestCartId: localStorage.getItem("guestCartId"),
                 paymentMethod: 'STRIPE',
                 status: OrderStatus.CONFIRMED
             };
-
-            await fetch(`/api/orders/${order?.id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(orderUpdatePayload),
+            
+            // Create the order
+            const orderResponse = await fetch('/api/orders', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(orderPayload),
             });
+            
+            if (!orderResponse.ok) {
+                const errorData = await orderResponse.json();
+                throw new Error(errorData.error || errorData.message || 'Failed to create order');
+            }
+            
+            const { data } = await orderResponse.json();
+            
+            // Return the created order ID
+            return data.id;
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to create order');
+            return null;
+        } finally {
+            setIsCreatingOrder(false);
+        }
+    };
 
+    const handlePaymentSuccess = async (): Promise<string | null> => {
+        try {
+            // Create the order only when payment is initiated
+            const newOrderId = await createOrderFromCart();
+            
+            if (!newOrderId) {
+                throw new Error('Failed to create order');
+            }
+            
             if (!session?.user?.id) {
                 localStorage.removeItem(GUEST_CART_ID_KEY);
             }
+            
+            return newOrderId;
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Payment processing failed');
+            return null;
         }
     };
 
     useEffect(() => {
         const fetchData = async () => {
             setLoading(true);
-            await Promise.all([
-                fetchCustomerProfile(),
-                fetchOrder()
-            ]);
-            setLoading(false);
+
+            try {
+                await fetchCustomerProfile();
+
+                // If orderId exists in URL, fetch the existing order
+                if (orderId) {
+                    await fetchOrder();
+                } else {
+                    // Otherwise, just fetch the cart but don't create an order yet
+                    await fetchCart();
+                }
+            } catch (error) {
+                setError(error instanceof Error ? error.message : 'An error occurred');
+            } finally {
+                setLoading(false);
+            }
         };
 
         fetchData();
     }, [session?.user?.id, orderId]);
 
     useEffect(() => {
-        if (order) {
-            createPaymentIntent();
-        }
-    }, [order]);
-
-    useEffect(() => {
-        if (customerProfile && (!order || !order.shippingFirstName)) {
+        if (customerProfile && !formData.shippingFirstName) {
             setFormData(prev => ({
                 ...prev,
-                shippingFirstName: prev.shippingFirstName || customerProfile.firstName || '',
-                shippingLastName: prev.shippingLastName || customerProfile.lastName || '',
-                shippingStreet: prev.shippingStreet || customerProfile.streetAddress || '',
-                shippingCity: prev.shippingCity || customerProfile.city || '',
-                shippingState: prev.shippingState || customerProfile.state || '',
-                shippingPostalCode: prev.shippingPostalCode || customerProfile.postalCode || '',
-                shippingCountry: prev.shippingCountry || customerProfile.country || '',
-                shippingPhone: prev.shippingPhone || customerProfile.phone || '',
-
-                email: prev.email || session?.user?.email || ''
+                shippingFirstName: customerProfile.firstName || '',
+                shippingLastName: customerProfile.lastName || '',
+                shippingStreet: customerProfile.streetAddress || '',
+                shippingCity: customerProfile.city || '',
+                shippingState: customerProfile.state || '',
+                shippingPostalCode: customerProfile.postalCode || '',
+                shippingCountry: customerProfile.country || '',
+                shippingPhone: customerProfile.phone || '',
+                email: session?.user?.email || ''
             }));
         }
-    }, [customerProfile, order, session]);
+    }, [customerProfile, session]);
 
     if (loading || isCreatingOrder) {
         return <div className="flex justify-center items-center h-64">Loading checkout...</div>;
@@ -587,12 +675,12 @@ const CheckoutPage = () => {
         );
     }
 
-    if (!order && !isCreatingOrder) {
+    if (!order && !cartItems.length && !isCreatingOrder) {
         return (
             <div className="p-12 mx-auto">
-                <div className="bg-white p-6 rounded-lg  text-center">
-                    <h2 className="text-xl font-semibold mb-4">Order Not Found</h2>
-                    <p className="text-gray-600 mb-4">The order you're looking for doesn't exist or you don't have permission to view it.</p>
+                <div className="bg-white p-6 rounded-lg text-center">
+                    <h2 className="text-xl font-semibold mb-4">Your Cart is Empty</h2>
+                    <p className="text-gray-600 mb-4">There are no items in your cart to checkout.</p>
                     <button
                         onClick={() => router.push('/products')}
                         className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
@@ -604,12 +692,22 @@ const CheckoutPage = () => {
         );
     }
 
+    // Determine which items and total price to display based on whether we have an order or cart
+    const displayItems = order ? order.items : cartItems.map(item => ({
+        id: item.id,
+        quantity: item.quantity,
+        price: item.product.price * item.quantity,
+        product: item.product
+    }));
+    
+    const displayTotal = order ? order.totalPrice : cartTotal;
+
     return (
         <div className="p-12 mx-auto">
             <div className="bg-white p-6 rounded-lg mb-6">
                 <h1 className="text-2xl font-semibold mb-6">Checkout</h1>
 
-                {order && clientSecret ? (
+                {clientSecret ? (
                     <Elements
                         stripe={stripePromise}
                         options={{
@@ -640,7 +738,7 @@ const CheckoutPage = () => {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-200">
-                                        {order.items.map((item) => (
+                                        {displayItems.map((item) => (
                                             <tr key={item.id}>
                                                 <td className="px-4 py-3">
                                                     <div className="flex items-center">
@@ -672,7 +770,7 @@ const CheckoutPage = () => {
                                     <tfoot className="bg-gray-50">
                                         <tr>
                                             <td colSpan={2} className="px-4 py-3 text-right font-semibold">Total:</td>
-                                            <td className="px-4 py-3 text-right font-semibold">${formatPrice(order.totalPrice)}</td>
+                                            <td className="px-4 py-3 text-right font-semibold">${formatPrice(displayTotal)}</td>
                                         </tr>
                                     </tfoot>
                                 </table>
@@ -682,7 +780,7 @@ const CheckoutPage = () => {
                         {/* Shipping Details Section */}
                         <div className="mb-6">
                             <h2 className="text-lg font-medium mb-3">Shipping Details</h2>
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <label htmlFor="shippingFirstName" className="block text-sm font-medium text-gray-700 mb-1">
                                         First Name *
@@ -715,7 +813,7 @@ const CheckoutPage = () => {
                                     />
                                     {formErrors.shippingLastName && <p className="text-red-500 text-xs mt-1">Last name is required</p>}
                                 </div>
-                                <div className="col-span-2">
+                                <div className="md:col-span-2">
                                     <label htmlFor="shippingStreet" className="block text-sm font-medium text-gray-700 mb-1">
                                         Street Address *
                                     </label>
@@ -726,7 +824,7 @@ const CheckoutPage = () => {
                                         placeholder="Enter Street Address"
                                         value={formData.shippingStreet}
                                         onChange={handleInputChange}
-                                        className={`w-full p-2 border ${formErrors.shippingStreet ? 'border-red-500' : 'border-gray-300'} rounded`}
+                                            className={`w-full p-2 border ${formErrors.shippingStreet ? 'border-red-500' : 'border-gray-300'} rounded`}
                                         required
                                     />
                                     {formErrors.shippingStreet && <p className="text-red-500 text-xs mt-1">Street address is required</p>}
@@ -755,13 +853,13 @@ const CheckoutPage = () => {
                                         type="text"
                                         id="shippingState"
                                         name="shippingState"
-                                        placeholder="Enter State"
+                                        placeholder="Enter State/Province"
                                         value={formData.shippingState}
                                         onChange={handleInputChange}
                                         className={`w-full p-2 border ${formErrors.shippingState ? 'border-red-500' : 'border-gray-300'} rounded`}
                                         required
                                     />
-                                    {formErrors.shippingState && <p className="text-red-500 text-xs mt-1">State is required</p>}
+                                    {formErrors.shippingState && <p className="text-red-500 text-xs mt-1">State/Province is required</p>}
                                 </div>
                                 <div>
                                     <label htmlFor="shippingPostalCode" className="block text-sm font-medium text-gray-700 mb-1">
@@ -783,61 +881,88 @@ const CheckoutPage = () => {
                                     <label htmlFor="shippingCountry" className="block text-sm font-medium text-gray-700 mb-1">
                                         Country *
                                     </label>
-                                    <input
-                                        type="text"
+                                    <select
                                         id="shippingCountry"
                                         name="shippingCountry"
-                                        placeholder="Enter Country"
                                         value={formData.shippingCountry}
                                         onChange={handleInputChange}
                                         className={`w-full p-2 border ${formErrors.shippingCountry ? 'border-red-500' : 'border-gray-300'} rounded`}
                                         required
-                                    />
+                                    >
+                                        <option value="">Select Country</option>
+                                        <option value="United Kingdom">United Kingdom</option>
+                                        <option value="United States">United States</option>
+                                        <option value="Canada">Canada</option>
+                                        <option value="Australia">Australia</option>
+                                        <option value="France">France</option>
+                                        <option value="Germany">Germany</option>
+                                        <option value="Italy">Italy</option>
+                                        <option value="Spain">Spain</option>
+                                    </select>
                                     {formErrors.shippingCountry && <p className="text-red-500 text-xs mt-1">Country is required</p>}
                                 </div>
                                 <div>
                                     <label htmlFor="shippingPhone" className="block text-sm font-medium text-gray-700 mb-1">
-                                        Phone Number *
+                                        Phone Number * (digits only)
                                     </label>
                                     <div className="flex">
-                                        <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm">
+                                        <span className="inline-flex items-center px-3 text-gray-500 bg-gray-100 border border-r-0 border-gray-300 rounded-l">
                                             +44
                                         </span>
                                         <input
                                             type="tel"
                                             id="shippingPhone"
                                             name="shippingPhone"
-                                            placeholder="Enter Phone Number"
+                                            placeholder="1234567890"
                                             value={formData.shippingPhone}
                                             onChange={handleInputChange}
-                                            maxLength={10}
-                                            className={`flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-r-md border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#F19B12] ${formErrors.shippingPhone ? 'border-red-500' : 'border-gray-300'
-                                                }`}
+                                            className={`w-full p-2 border ${formErrors.shippingPhone ? 'border-red-500' : 'border-gray-300'} rounded-r`}
                                             required
                                         />
                                     </div>
-                                    {formErrors.shippingPhone && <p className="text-red-500 text-xs mt-1">Phone number is required</p>}
+                                    {formErrors.shippingPhone && (
+                                        <p className="text-red-500 text-xs mt-1">
+                                            Please enter a valid 10-digit phone number
+                                        </p>
+                                    )}
+                                </div>
+                                <div className="md:col-span-2">
+                                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                                        Email Address *
+                                    </label>
+                                    <input
+                                        type="email"
+                                        id="email"
+                                        name="email"
+                                        placeholder="Enter Email Address"
+                                        value={formData.email}
+                                        onChange={handleInputChange}
+                                        className={`w-full p-2 border ${formErrors.email ? 'border-red-500' : 'border-gray-300'} rounded`}
+                                        required
+                                    />
+                                    {formErrors.email && <p className="text-red-500 text-xs mt-1">Please enter a valid email address</p>}
                                 </div>
                             </div>
                         </div>
 
-                        {/* Billing Details Section */}
+                        {/* Billing Address Section */}
                         <div className="mb-6">
                             <div className="flex items-center mb-3">
-                                <input
-                                    type="checkbox"
-                                    id="sameAddress"
-                                    checked={formData.useSameAddress}
-                                    onChange={handleSameAddressToggle}
-                                    className="mr-2"
-                                />
-                                <label htmlFor="sameAddress" className="text-sm font-medium text-gray-700">
-                                    Billing address same as shipping
-                                </label>
+                                <h2 className="text-lg font-medium">Billing Address</h2>
+                                <div className="ml-auto flex items-center">
+                                    <input
+                                        type="checkbox"
+                                        id="useSameAddress"
+                                        checked={formData.useSameAddress}
+                                        onChange={handleSameAddressToggle}
+                                        className="mr-2"
+                                    />
+                                    <label htmlFor="useSameAddress" className="text-sm">Same as shipping address</label>
+                                </div>
                             </div>
 
                             {!formData.useSameAddress && (
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label htmlFor="billingFirstName" className="block text-sm font-medium text-gray-700 mb-1">
                                             First Name *
@@ -850,7 +975,7 @@ const CheckoutPage = () => {
                                             value={formData.billingFirstName}
                                             onChange={handleInputChange}
                                             className={`w-full p-2 border ${formErrors.billingFirstName ? 'border-red-500' : 'border-gray-300'} rounded`}
-                                            required={!formData.useSameAddress}
+                                            required
                                         />
                                         {formErrors.billingFirstName && <p className="text-red-500 text-xs mt-1">First name is required</p>}
                                     </div>
@@ -866,11 +991,11 @@ const CheckoutPage = () => {
                                             value={formData.billingLastName}
                                             onChange={handleInputChange}
                                             className={`w-full p-2 border ${formErrors.billingLastName ? 'border-red-500' : 'border-gray-300'} rounded`}
-                                            required={!formData.useSameAddress}
+                                            required
                                         />
                                         {formErrors.billingLastName && <p className="text-red-500 text-xs mt-1">Last name is required</p>}
                                     </div>
-                                    <div className="col-span-2">
+                                    <div className="md:col-span-2">
                                         <label htmlFor="billingStreet" className="block text-sm font-medium text-gray-700 mb-1">
                                             Street Address *
                                         </label>
@@ -882,7 +1007,7 @@ const CheckoutPage = () => {
                                             value={formData.billingStreet}
                                             onChange={handleInputChange}
                                             className={`w-full p-2 border ${formErrors.billingStreet ? 'border-red-500' : 'border-gray-300'} rounded`}
-                                            required={!formData.useSameAddress}
+                                            required
                                         />
                                         {formErrors.billingStreet && <p className="text-red-500 text-xs mt-1">Street address is required</p>}
                                     </div>
@@ -898,7 +1023,7 @@ const CheckoutPage = () => {
                                             value={formData.billingCity}
                                             onChange={handleInputChange}
                                             className={`w-full p-2 border ${formErrors.billingCity ? 'border-red-500' : 'border-gray-300'} rounded`}
-                                            required={!formData.useSameAddress}
+                                            required
                                         />
                                         {formErrors.billingCity && <p className="text-red-500 text-xs mt-1">City is required</p>}
                                     </div>
@@ -910,13 +1035,13 @@ const CheckoutPage = () => {
                                             type="text"
                                             id="billingState"
                                             name="billingState"
-                                            placeholder="Enter State"
+                                            placeholder="Enter State/Province"
                                             value={formData.billingState}
                                             onChange={handleInputChange}
                                             className={`w-full p-2 border ${formErrors.billingState ? 'border-red-500' : 'border-gray-300'} rounded`}
-                                            required={!formData.useSameAddress}
+                                            required
                                         />
-                                        {formErrors.billingState && <p className="text-red-500 text-xs mt-1">State is required</p>}
+                                        {formErrors.billingState && <p className="text-red-500 text-xs mt-1">State/Province is required</p>}
                                     </div>
                                     <div>
                                         <label htmlFor="billingPostalCode" className="block text-sm font-medium text-gray-700 mb-1">
@@ -930,7 +1055,7 @@ const CheckoutPage = () => {
                                             value={formData.billingPostalCode}
                                             onChange={handleInputChange}
                                             className={`w-full p-2 border ${formErrors.billingPostalCode ? 'border-red-500' : 'border-gray-300'} rounded`}
-                                            required={!formData.useSameAddress}
+                                            required
                                         />
                                         {formErrors.billingPostalCode && <p className="text-red-500 text-xs mt-1">Postal code is required</p>}
                                     </div>
@@ -938,57 +1063,47 @@ const CheckoutPage = () => {
                                         <label htmlFor="billingCountry" className="block text-sm font-medium text-gray-700 mb-1">
                                             Country *
                                         </label>
-                                        <input
-                                            type="text"
+                                        <select
                                             id="billingCountry"
                                             name="billingCountry"
-                                            placeholder="Enter Country"
                                             value={formData.billingCountry}
                                             onChange={handleInputChange}
                                             className={`w-full p-2 border ${formErrors.billingCountry ? 'border-red-500' : 'border-gray-300'} rounded`}
-                                            required={!formData.useSameAddress}
-                                        />
+                                            required
+                                        >
+                                            <option value="">Select Country</option>
+                                            <option value="United Kingdom">United Kingdom</option>
+                                            <option value="United States">United States</option>
+                                            <option value="Canada">Canada</option>
+                                            <option value="Australia">Australia</option>
+                                            <option value="France">France</option>
+                                            <option value="Germany">Germany</option>
+                                            <option value="Italy">Italy</option>
+                                            <option value="Spain">Spain</option>
+                                        </select>
                                         {formErrors.billingCountry && <p className="text-red-500 text-xs mt-1">Country is required</p>}
                                     </div>
                                 </div>
                             )}
                         </div>
 
-                        {/* Contact Information */}
+                        {/* Payment Section */}
                         <div className="mb-6">
-                            <h2 className="text-lg font-medium mb-3">Contact Information</h2>
-                            <div>
-                                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                                    Email Address *
-                                </label>
-                                <input
-                                    type="email"
-                                    id="email"
-                                    name="email"
-                                    placeholder="Enter Email Address"
-                                    value={formData.email}
-                                    onChange={handleInputChange}
-                                    className={`w-full p-2 border ${formErrors.email ? 'border-red-500' : 'border-gray-300'} rounded`}
-                                    required
+                            <h2 className="text-lg font-medium mb-3">Payment Method</h2>
+                            <div className="border rounded-md p-4">
+                                <StripePaymentForm
+                                    cartItems={cartItems}
+                                    formData={formData}
+                                    onPaymentSuccess={handlePaymentSuccess}
+                                    validateForm={validateForm}
+                                    totalPrice={displayTotal}
                                 />
-                                {formErrors.email && (
-                                    <p className="text-red-500 text-xs mt-1">
-                                        {!formData.email.trim() ? 'Email is required' : 'Please enter a valid email'}
-                                    </p>
-                                )}
                             </div>
                         </div>
-
-                        <StripePaymentForm
-                            order={order}
-                            formData={formData}
-                            onPaymentSuccess={handlePaymentSuccess}
-                            validateForm={validateForm}
-                        />
                     </Elements>
                 ) : (
                     <div className="flex justify-center items-center h-64">
-                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+                        <p>Initializing payment system...</p>
                     </div>
                 )}
             </div>
