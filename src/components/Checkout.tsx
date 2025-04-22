@@ -6,167 +6,17 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { OrderStatus } from '@prisma/client';
 import { loadStripe } from '@stripe/stripe-js';
-import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
-
+import { Elements } from '@stripe/react-stripe-js';
+import StripePaymentForm from './stripePatmentForm';
+import { Order, CustomerProfile } from '@/types/checkout';
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
-interface Product {
-    id: string;
-    name: string;
-    images: string[];
-    price: number;
-}
 
-interface OrderItem {
-    id: string;
-    quantity: number;
-    price: number;
-    product: Product;
-}
-
-interface Payment {
-    id: string;
-    method: string;
-    status: string;
-}
-
-interface Order {
-    id: string;
-    userId: string;
-    items: OrderItem[];
-    totalPrice: number;
-    status: string;
-    payment: Payment;
-    createdAt: string;
-
-    shippingFirstName: string;
-    shippingLastName: string;
-    shippingStreet: string;
-    shippingCity: string;
-    shippingState?: string;
-    shippingPostalCode: string;
-    shippingCountry: string;
-    shippingPhone: string;
-
-    billingFirstName?: string;
-    billingLastName?: string;
-    billingStreet?: string;
-    billingCity?: string;
-    billingState?: string;
-    billingPostalCode?: string;
-    billingCountry?: string;
-
-    email: string;
-}
-
-interface CustomerProfile {
-    firstName: string;
-    lastName: string;
-    streetAddress: string;
-    city: string;
-    state?: string;
-    postalCode: string;
-    country: string;
-    phone?: string;
-}
 
 const GUEST_EMAIL_KEY = 'guestEmail';
 const GUEST_CART_ID_KEY = 'guestCartId';
 
-const StripePaymentForm = ({
-    cartItems,
-    formData,
-    onPaymentSuccess,
-    validateForm,
-    totalPrice
-}: {
-    cartItems?: any[],
-    formData: any,
-    onPaymentSuccess: () => Promise<string | null>,
-    validateForm: () => boolean,
-    totalPrice: number
-}) => {
-    const stripe = useStripe();
-    const elements = useElements();
-    const [errorMessage, setErrorMessage] = useState<string>();
-    const [loading, setLoading] = useState(false);
-    const [paymentElementLoaded, setPaymentElementLoaded] = useState(false);
-    const router = useRouter()
 
-    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-
-        if (!validateForm()) {
-            return;
-        }
-
-        if (!stripe || !elements || !paymentElementLoaded) {
-            setErrorMessage('Payment system is not ready yet. Please wait...');
-            return;
-        }
-
-        setLoading(true);
-        setErrorMessage(undefined);
-
-        try {
-            // First submit the payment elements to Stripe
-            const { error: submitError } = await elements.submit();
-            if (submitError) {
-                throw submitError;
-            }
-
-            // Confirm the payment with Stripe
-            const { error, paymentIntent } = await stripe.confirmPayment({
-                elements,
-                confirmParams: {
-                    return_url: `${window.location.origin}/payment-success`,
-                },
-                redirect: 'if_required' // Don't redirect automatically
-            });
-
-            if (error) {
-                throw error;
-            }
-
-            // Only if payment was successful, create the order
-            if (paymentIntent && paymentIntent.status === 'succeeded') {
-                const orderId = await onPaymentSuccess();
-                
-                if (!orderId) {
-                    throw new Error('Failed to create order after successful payment');
-                }
-
-                // Redirect to success page with order ID
-                router.push(`/payment-success?orderId=${orderId}`);
-            } else {
-                throw new Error('Payment was not successful');
-            }
-        } catch (err) {
-            setErrorMessage(err instanceof Error ? err.message : 'Payment processing failed');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    return (
-        <form onSubmit={handleSubmit} className="mt-6">
-            <PaymentElement
-                onReady={() => setPaymentElementLoaded(true)}
-                options={{
-                    layout: "tabs",
-                }}
-            />
-            {errorMessage && <div className="text-red-500 mt-2">{errorMessage}</div>}
-            <button
-                type="submit"
-                disabled={!stripe || !paymentElementLoaded || loading}
-                className="w-full bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition-colors disabled:bg-blue-400 disabled:cursor-not-allowed mt-4"
-            >
-                {loading ? 'Processing Payment...' : `Pay $${totalPrice}`}
-            </button>
-        </form>
-    );
-};
 
 const CheckoutPage = () => {
     const { data: session } = useSession();
@@ -183,6 +33,8 @@ const CheckoutPage = () => {
     const [stripeCustId, setStripeCustId] = useState<string | null>(null);
     const [cartItems, setCartItems] = useState<any[]>([]);
     const [cartTotal, setCartTotal] = useState<number>(0);
+    const [paymentIntentCreated, setPaymentIntentCreated] = useState(false);
+
 
     const [formData, setFormData] = useState({
         shippingFirstName: '',
@@ -273,48 +125,42 @@ const CheckoutPage = () => {
         return true;
     };
 
+
     const createPaymentIntent = async (amount: number, orderId?: string) => {
+        if (paymentIntentCreated || clientSecret) return; // Skip if already exists
+        setPaymentIntentCreated(true);
+        
+        console.log("Creating payment intent with amount:", amount);
+        
         try {
-            const payload: any = {
-                amount: Math.round(amount * 100),
-                email: formData.email || session?.user?.email,
-                name: `${formData.shippingFirstName} ${formData.shippingLastName}`
-            };
-            
-            if (orderId) {
-                payload.orderId = orderId;
-            }
-
-            const response = await fetch("/api/create-payment-intent", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload),
+            const response = await fetch('/api/create-payment-intent', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    amount: Math.round(amount * 100),
+                    currency: 'gbp',
+                    orderId,
+                    email: formData.email || session?.user?.email,
+                }),
             });
-
-            if (!response.ok) {
-                throw new Error('Failed to create payment intent');
+            
+            console.log("Payment intent response status:", response.status);
+            
+            const responseData = await response.json();
+            console.log("Payment intent response:", responseData);
+            
+            if (responseData.clientSecret) {
+                setClientSecret(responseData.clientSecret);
+            } else {
+                throw new Error("No client secret returned");
             }
-
-            const data = await response.json();
-            console.log("Stripe details:", data);
-
-            if (!data.clientSecret) {
-                throw new Error('No client secret returned');
-            }
-
-            // Store the customer ID
-            if (data.customerId) {
-                console.log(data.customerId);
-                localStorage.setItem('stripeCustomerId', data.customerId);
-            }
-
-            setClientSecret(data.clientSecret);
-            return data.clientSecret;
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to initialize payment');
-            return null;
+            console.error("Payment intent error:", err);
+            setPaymentIntentCreated(false); // Reset on error
+            setError("Failed to initialize payment: " + (err instanceof Error ? err.message : String(err)));
         }
     };
+
 
     const fetchCustomerProfile = async () => {
         if (!session?.user?.id) return;
@@ -391,9 +237,10 @@ const CheckoutPage = () => {
                     paymentMethod: 'STRIPE'
                 }));
             }
-            
-            // Create a payment intent for this order
-            await createPaymentIntent(data.totalPrice, data.id);
+
+            if (data?.id && !clientSecret) { // Only create if no existing PaymentIntent
+                await createPaymentIntent(data.totalPrice, data.id);
+            }
         } catch (err) {
             setError(err instanceof Error ? err.message : 'An error occurred while loading your order');
         }
@@ -401,42 +248,49 @@ const CheckoutPage = () => {
 
     const fetchCart = async () => {
         try {
-            const userId = session?.user?.id;
+            const userId = "030fdee8-750d-40cb-8b7e-0661c4eaf240"
             const guestCartId = getGuestCartId();
-            
+            console.log(session?.user.id)
+
             if (!userId && !guestCartId) {
                 throw new Error('No cart identified');
             }
-            
+
             const response = await fetch(`/api/cart?${userId ? `userId=${userId}` : `guestCartId=${guestCartId}`}`, {
                 headers: { 'Cache-Control': 'no-cache' }
             });
-            
+            console.log("cart data", response)
+
             if (!response.ok) {
                 throw new Error('Failed to fetch cart');
             }
-            
+
             const { data: cartData } = await response.json();
-            
-            if (!cartData?.items || cartData.items.length === 0) {
-                throw new Error('Your cart is empty');
+
+
+            setCartItems(cartData.items || []);
+            console.log("products", cartData)
+            if (!cartData?.items) {
+                console.log('Your cart is empty');
             }
-            
-            setCartItems(cartData.items);
-            
-            // Calculate cart total
-            const total = cartData.items.reduce((sum: number, item: any) => {
-                const price = typeof item.product.price === 'string'
+
+
+            const calculatedTotal = cartData.items?.reduce((sum, item) => {
+                const price = typeof item.product?.price === 'string'
                     ? parseFloat(item.product.price)
-                    : item.product.price;
-                
-                return sum + (price * item.quantity);
+                    : (item.product?.price || 0);
+
+                const quantity = item.quantity || 0;
+
+                console.log(`Item: ${item.product?.name || 'unknown'}, Price: ${price}, Quantity: ${quantity}, Subtotal: ${price * quantity}`);
+
+                return sum + (price * quantity);
             }, 0);
-            
-            setCartTotal(total);
-            
-            // Initialize payment intent without creating an order
-            await createPaymentIntent(total);
+            setCartTotal(calculatedTotal || 0);
+
+            if (!orderId && !clientSecret && calculatedTotal > 0) { 
+                await createPaymentIntent(calculatedTotal);
+            }
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to load your cart');
         }
@@ -510,39 +364,39 @@ const CheckoutPage = () => {
     const createOrderFromCart = async () => {
         setIsCreatingOrder(true);
         setError(null);
-        
+
         try {
             const userId = session?.user?.id;
             const guestEmail = localStorage.getItem(GUEST_EMAIL_KEY) || formData.email;
             const guestCartId = getGuestCartId();
-            
+
             if (!userId && !guestEmail) {
                 throw new Error('Email is required for guest checkout');
             }
-            
+
             if (!cartItems || cartItems.length === 0) {
                 throw new Error('Your cart is empty');
             }
-            
+
             // Save guest email if not logged in
             if (!userId && formData.email) {
                 localStorage.setItem(GUEST_EMAIL_KEY, formData.email);
             }
-            
+
             // Prepare order items from cart
             const orderItems = cartItems.map(item => ({
                 productId: item.productId,
                 quantity: item.quantity,
                 unitPrice: typeof item.product.price === 'string'
-                  ? parseFloat(item.product.price)
-                  : item.product.price,
+                    ? parseFloat(item.product.price)
+                    : item.product.price,
                 discountPercentage: item.product.discount
-                  ? (typeof item.product.discount === 'string'
-                    ? parseFloat(item.product.discount)
-                    : item.product.discount)
-                  : 0
+                    ? (typeof item.product.discount === 'string'
+                        ? parseFloat(item.product.discount)
+                        : item.product.discount)
+                    : 0
             }));
-            
+
             const orderPayload = {
                 items: orderItems,
                 ...(userId
@@ -567,7 +421,7 @@ const CheckoutPage = () => {
                 paymentMethod: 'STRIPE',
                 status: OrderStatus.CONFIRMED
             };
-            
+
             // Create the order
             const orderResponse = await fetch('/api/orders', {
                 method: 'POST',
@@ -576,14 +430,14 @@ const CheckoutPage = () => {
                 },
                 body: JSON.stringify(orderPayload),
             });
-            
+
             if (!orderResponse.ok) {
                 const errorData = await orderResponse.json();
                 throw new Error(errorData.error || errorData.message || 'Failed to create order');
             }
-            
+
             const { data } = await orderResponse.json();
-            
+
             // Return the created order ID
             return data.id;
         } catch (err) {
@@ -598,15 +452,15 @@ const CheckoutPage = () => {
         try {
             // Create the order only when payment is initiated
             const newOrderId = await createOrderFromCart();
-            
+
             if (!newOrderId) {
                 throw new Error('Failed to create order');
             }
-            
+
             if (!session?.user?.id) {
                 localStorage.removeItem(GUEST_CART_ID_KEY);
             }
-            
+
             return newOrderId;
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Payment processing failed');
@@ -637,6 +491,12 @@ const CheckoutPage = () => {
 
         fetchData();
     }, [session?.user?.id, orderId]);
+    useEffect(() => {
+        console.log("Cart total:", cartTotal);
+        if (cartTotal > 0 && !clientSecret && !paymentIntentCreated) {
+            createPaymentIntent(cartTotal);
+        }
+    }, [cartTotal]);
 
     useEffect(() => {
         if (customerProfile && !formData.shippingFirstName) {
@@ -675,7 +535,7 @@ const CheckoutPage = () => {
         );
     }
 
-    if (!order && !cartItems.length && !isCreatingOrder) {
+    if (!cartItems.length) {
         return (
             <div className="p-12 mx-auto">
                 <div className="bg-white p-6 rounded-lg text-center">
@@ -699,7 +559,7 @@ const CheckoutPage = () => {
         price: item.product.price * item.quantity,
         product: item.product
     }));
-    
+
     const displayTotal = order ? order.totalPrice : cartTotal;
 
     return (
@@ -824,7 +684,7 @@ const CheckoutPage = () => {
                                         placeholder="Enter Street Address"
                                         value={formData.shippingStreet}
                                         onChange={handleInputChange}
-                                            className={`w-full p-2 border ${formErrors.shippingStreet ? 'border-red-500' : 'border-gray-300'} rounded`}
+                                        className={`w-full p-2 border ${formErrors.shippingStreet ? 'border-red-500' : 'border-gray-300'} rounded`}
                                         required
                                     />
                                     {formErrors.shippingStreet && <p className="text-red-500 text-xs mt-1">Street address is required</p>}
