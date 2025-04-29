@@ -44,9 +44,6 @@ const CartSidebar = () => {
   const [error, setError] = useState<string | null>(null);
   const [stockError, setStockError] = useState<string | null>(null);
   const [isCreatingOrder, setIsCreatingOrder] = useState(false);
-  const [showEmailModal, setShowEmailModal] = useState(false);
-  const [email, setEmail] = useState('');
-  const [emailError, setEmailError] = useState('');
   const router = useRouter();
 
   const getGuestCartId = useCallback(() => {
@@ -100,10 +97,10 @@ const CartSidebar = () => {
   }, [session?.user?.id, getGuestCartId, setGuestCartId]);
 
   useEffect(() => {
-  if ((isCartOpen || cartVersion > 0) && status !== 'loading') {
-    fetchCart();
-  }
-}, [isCartOpen, status, fetchCart, cartVersion]);
+    if ((isCartOpen || cartVersion > 0) && status !== 'loading') {
+      fetchCart();
+    }
+  }, [isCartOpen, status, fetchCart, cartVersion]);
 
   const removeItem = async (itemId: string) => {
     const userId = session?.user?.id;
@@ -205,15 +202,15 @@ const CartSidebar = () => {
   const checkProductStock = useCallback(() => {
     if (!cart || cart.items.length === 0) return true;
 
-    const outOfStockItems = cart.items.filter(item => 
+    const outOfStockItems = cart.items.filter(item =>
       item.quantity > item.product.stock
     );
 
     if (outOfStockItems.length > 0) {
-      const errorMessage = outOfStockItems.map(item => 
+      const errorMessage = outOfStockItems.map(item =>
         `${item.product.name} - Available: ${item.product.stock}, Requested: ${item.quantity}`
       ).join('; ');
-      
+
       setStockError(`Some items are out of stock: ${errorMessage}`);
       return false;
     }
@@ -225,43 +222,22 @@ const CartSidebar = () => {
     if (!checkProductStock()) {
       return;
     }
-  
+
     if (!cart || cart.items.length === 0) {
       setError('Your cart is empty');
       return;
     }
-  
+
     closeCart();
-    
-    // For guest users, we still need to collect email
-    if (!session?.user) {
-      setShowEmailModal(true);
-    } else {
-      // Navigate directly to checkout without creating order
-      router.push('/checkout');
-    }
-  };
-
-  
-
-  const handleEmailSubmit = () => {
-    if (!validateEmail(email)) {
-      setEmailError('Please enter a valid email address');
-      return;
-    }
-    
-    setEmailError('');
-    localStorage.setItem(GUEST_EMAIL_KEY, email.toLowerCase().trim());
-    setShowEmailModal(false);
-    
-    // Navigate to checkout without creating order
     router.push('/checkout');
+
   };
-  
+
+
   // Update the button handler
   const handleProceedToCheckout = () => {
     setStockError(null);
-    
+
     if (checkProductStock()) {
       proceedToCheckout();
     }
@@ -272,7 +248,7 @@ const CartSidebar = () => {
   return (
     <>
       {isCartOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black bg-opacity-50 z-40"
           onClick={closeCart}
         />
@@ -281,7 +257,7 @@ const CartSidebar = () => {
         <div className="flex flex-col h-full">
           <div className="flex justify-between items-center p-4 border-b">
             <h2 className="text-xl font-bold">Your Cart</h2>
-            <button 
+            <button
               onClick={closeCart}
               className="p-2 rounded-full hover:bg-gray-100"
             >
@@ -306,7 +282,7 @@ const CartSidebar = () => {
             ) : !cart || cart.items.length === 0 ? (
               <div className="text-center py-8">
                 <p>Your cart is empty</p>
-                <button 
+                <button
                   onClick={() => {
                     closeCart();
                     router.push('/products');
@@ -407,37 +383,6 @@ const CartSidebar = () => {
           )}
         </div>
       </div>
-
-      {showEmailModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg max-w-md w-full">
-            <h3 className="text-lg font-semibold mb-4">Enter Your Email</h3>
-            <p className="text-gray-600 mb-4">Please provide your email address to proceed with checkout.</p>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="your@email.com"
-              className="w-full p-2 border border-gray-300 rounded mb-2"
-            />
-            {emailError && <p className="text-red-500 text-sm mb-2">{emailError}</p>}
-            <div className="flex justify-end space-x-2">
-              <button
-                onClick={() => setShowEmailModal(false)}
-                className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-100"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleEmailSubmit}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-              >
-                Continue
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 };

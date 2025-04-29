@@ -33,7 +33,6 @@ interface Cart {
 }
 
 const GUEST_CART_KEY = 'guestCartId';
-const GUEST_EMAIL_KEY = 'guestEmail';
 
 const CartDisplay: React.FC = () => {
     const { data: session, status } = useSession();
@@ -42,9 +41,6 @@ const CartDisplay: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [stockError, setStockError] = useState<string | null>(null);
     const [isCreatingOrder, setIsCreatingOrder] = useState(false);
-    const [showEmailModal, setShowEmailModal] = useState(false);
-    const [email, setEmail] = useState('');
-    const [emailError, setEmailError] = useState('');
     const router = useRouter();
 
     const getGuestCartId = useCallback(() => {
@@ -56,11 +52,6 @@ const CartDisplay: React.FC = () => {
             localStorage.setItem(GUEST_CART_KEY, cartId);
         }
     }, []);
-
-    const validateEmail = (email: string) => {
-        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return re.test(email);
-    };
 
     const fetchCart = useCallback(async () => {
         try {
@@ -203,15 +194,15 @@ const CartDisplay: React.FC = () => {
     const checkProductStock = useCallback(() => {
         if (!cart || cart.items.length === 0) return true;
 
-        const outOfStockItems = cart.items.filter(item => 
+        const outOfStockItems = cart.items.filter(item =>
             item.quantity > item.product.stock
         );
 
         if (outOfStockItems.length > 0) {
-            const errorMessage = outOfStockItems.map(item => 
+            const errorMessage = outOfStockItems.map(item =>
                 `${item.product.name} - Available: ${item.product.stock}, Requested: ${item.quantity}`
             ).join('; ');
-            
+
             setStockError(`Some items are out of stock: ${errorMessage}`);
             return false;
         }
@@ -219,100 +210,13 @@ const CartDisplay: React.FC = () => {
         return true;
     }, [cart]);
 
-    const createOrderAndProceedToCheckout = useCallback(async (guestEmail?: string) => {
-        // First, check product stock
-        if (!checkProductStock()) {
-            return;
-        }
-
-        if (!cart || cart.items.length === 0) {
-            setError('Your cart is empty');
-            return;
-        }
-
-        try {
-            setIsCreatingOrder(true);
-            setError(null);
-            setStockError(null);
-
-            // Validate guest email if not logged in
-            if (!session?.user && !guestEmail) {
-                throw new Error('Email is required for guest checkout');
-            }
-
-            if (guestEmail) {
-                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                if (!emailRegex.test(guestEmail)) {
-                    throw new Error('Please enter a valid email address');
-                }
-            }
-
-            const orderItems = cart.items.map(item => ({
-                productId: item.productId,
-                quantity: item.quantity,
-                unitPrice: typeof item.product.price === 'string'
-                    ? parseFloat(item.product.price)
-                    : item.product.price,
-                discountPercentage: item.product.discount
-                    ? (typeof item.product.discount === 'string'
-                        ? parseFloat(item.product.discount)
-                        : item.product.discount)
-                    : 0
-            }));
-
-            const requestBody = {
-                items: orderItems,
-                ...(session?.user
-                    ? { userId: session.user.id }
-                    : { guestEmail: guestEmail?.toLowerCase().trim() })
-            };
-
-            const response = await fetch('/api/orders', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(requestBody),
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || errorData.message || 'Failed to create order');
-            }
-
-            const { data } = await response.json();
-
-            router.push(`/checkout?orderId=${data.id}`);
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to create order');
-        } finally {
-            setIsCreatingOrder(false);
-        }
-    }, [cart, session, router, checkProductStock]);
 
     const handleProceedToCheckout = () => {
-        // Clear any previous stock errors
         setStockError(null);
 
-        // Check stock before proceeding
         if (checkProductStock()) {
-            if (session?.user) {
-                // createOrderAndProceedToCheckout();
-                router.push("/checkout")
-            } else {
-                setShowEmailModal(true);
-            }
+            router.push("/checkout")
         }
-    };
-
-    const handleEmailSubmit = () => {
-        if (!validateEmail(email)) {
-            setEmailError('Please enter a valid email address');
-            return;
-        }
-        setEmailError('');
-        localStorage.setItem(GUEST_EMAIL_KEY, email.toLowerCase().trim());
-        createOrderAndProceedToCheckout(email);
     };
 
     if (loading) {
@@ -447,37 +351,6 @@ const CartDisplay: React.FC = () => {
                     </button>
                 </div>
             </div>
-
-            {showEmailModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white p-6 rounded-lg max-w-md w-full">
-                        <h3 className="text-lg font-semibold mb-4">Enter Your Email</h3>
-                        <p className="text-gray-600 mb-4">Please provide your email address to proceed with checkout.</p>
-                        <input
-                            type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            placeholder="your@email.com"
-                            className="w-full p-2 border border-gray-300 rounded mb-2"
-                        />
-                        {emailError && <p className="text-red-500 text-sm mb-2">{emailError}</p>}
-                        <div className="flex justify-end space-x-2">
-                            <button
-                                onClick={() => setShowEmailModal(false)}
-                                className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-100"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleEmailSubmit}
-                                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                            >
-                                Continue
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };

@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
@@ -11,12 +11,8 @@ import StripePaymentForm from './stripePatmentForm';
 import { Order, CustomerProfile } from '@/types/checkout';
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
-
-
 const GUEST_EMAIL_KEY = 'guestEmail';
 const GUEST_CART_ID_KEY = 'guestCartId';
-
-
 
 const CheckoutPage = () => {
     const { data: session } = useSession();
@@ -33,8 +29,10 @@ const CheckoutPage = () => {
     const [stripeCustId, setStripeCustId] = useState<string | null>(null);
     const [cartItems, setCartItems] = useState<any[]>([]);
     const [cartTotal, setCartTotal] = useState<number>(0);
-    const [paymentIntentCreated, setPaymentIntentCreated] = useState(false);
-
+    
+    // Use ref instead of state for tracking payment intent creation
+    // This helps avoid race conditions between state updates and function calls
+    const paymentIntentCreatingRef = useRef(false);
 
     const [formData, setFormData] = useState({
         shippingFirstName: '',
@@ -125,21 +123,25 @@ const CheckoutPage = () => {
         return true;
     };
 
-
-    const createPaymentIntent = async (amount: number, orderId?: string) => {
-        if (paymentIntentCreated || clientSecret) return; // Skip if already exists
-        setPaymentIntentCreated(true);
-        
-        console.log("Creating payment intent with amount:", amount);
+    // Single consolidated function to create payment intent
+    const createPaymentIntent = async (amount: number, orderIdParam?: string) => {
+        // If we're already creating a payment intent or one exists, don't create another
+        if (paymentIntentCreatingRef.current || clientSecret) {
+            return;
+        }
         
         try {
+            // Set ref to true to prevent multiple simultaneous calls
+            paymentIntentCreatingRef.current = true;
+            console.log("Creating payment intent with amount:", amount);
+            
             const response = await fetch('/api/create-payment-intent', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     amount: Math.round(amount * 100),
                     currency: 'gbp',
-                    orderId,
+                    orderId: orderIdParam,
                     email: formData.email || session?.user?.email,
                 }),
             });
@@ -156,11 +158,12 @@ const CheckoutPage = () => {
             }
         } catch (err) {
             console.error("Payment intent error:", err);
-            setPaymentIntentCreated(false); // Reset on error
             setError("Failed to initialize payment: " + (err instanceof Error ? err.message : String(err)));
+        } finally {
+            // Even if there's an error, we should reset the flag
+            paymentIntentCreatingRef.current = false;
         }
     };
-
 
     const fetchCustomerProfile = async () => {
         if (!session?.user?.id) return;
@@ -236,10 +239,11 @@ const CheckoutPage = () => {
                     email: data.email || (session?.user?.email || ''),
                     paymentMethod: 'STRIPE'
                 }));
-            }
-
-            if (data?.id && !clientSecret) { // Only create if no existing PaymentIntent
-                await createPaymentIntent(data.totalPrice, data.id);
+                
+                // Only create payment intent if we have order data
+                if (data.totalPrice > 0 && !clientSecret) {
+                    await createPaymentIntent(data.totalPrice, data.id);
+                }
             }
         } catch (err) {
             setError(err instanceof Error ? err.message : 'An error occurred while loading your order');
@@ -248,9 +252,8 @@ const CheckoutPage = () => {
 
     const fetchCart = async () => {
         try {
-            const userId = "030fdee8-750d-40cb-8b7e-0661c4eaf240"
+            const userId = session?.user?.id;
             const guestCartId = getGuestCartId();
-            console.log(session?.user.id)
 
             if (!userId && !guestCartId) {
                 throw new Error('No cart identified');
@@ -259,21 +262,17 @@ const CheckoutPage = () => {
             const response = await fetch(`/api/cart?${userId ? `userId=${userId}` : `guestCartId=${guestCartId}`}`, {
                 headers: { 'Cache-Control': 'no-cache' }
             });
-            console.log("cart data", response)
-
+            
             if (!response.ok) {
                 throw new Error('Failed to fetch cart');
             }
 
             const { data: cartData } = await response.json();
-
-
             setCartItems(cartData.items || []);
-            console.log("products", cartData)
+            
             if (!cartData?.items) {
                 console.log('Your cart is empty');
             }
-
 
             const calculatedTotal = cartData.items?.reduce((sum, item) => {
                 const price = typeof item.product?.price === 'string'
@@ -281,14 +280,13 @@ const CheckoutPage = () => {
                     : (item.product?.price || 0);
 
                 const quantity = item.quantity || 0;
-
-                console.log(`Item: ${item.product?.name || 'unknown'}, Price: ${price}, Quantity: ${quantity}, Subtotal: ${price * quantity}`);
-
                 return sum + (price * quantity);
             }, 0);
+            
             setCartTotal(calculatedTotal || 0);
 
-            if (!orderId && !clientSecret && calculatedTotal > 0) { 
+            // Only create payment intent when no orderId exists and we have cart data
+            if (!orderId && calculatedTotal > 0 && !clientSecret) {
                 await createPaymentIntent(calculatedTotal);
             }
         } catch (err) {
@@ -468,6 +466,7 @@ const CheckoutPage = () => {
         }
     };
 
+    // Primary data loading effect - consolidate main data fetching logic
     useEffect(() => {
         const fetchData = async () => {
             setLoading(true);
@@ -479,7 +478,7 @@ const CheckoutPage = () => {
                 if (orderId) {
                     await fetchOrder();
                 } else {
-                    // Otherwise, just fetch the cart but don't create an order yet
+                    // Otherwise, just fetch the cart
                     await fetchCart();
                 }
             } catch (error) {
@@ -490,14 +489,9 @@ const CheckoutPage = () => {
         };
 
         fetchData();
-    }, [session?.user?.id, orderId]);
-    useEffect(() => {
-        console.log("Cart total:", cartTotal);
-        if (cartTotal > 0 && !clientSecret && !paymentIntentCreated) {
-            createPaymentIntent(cartTotal);
-        }
-    }, [cartTotal]);
-
+    }, [session?.user?.id, orderId]); // Only depend on these important values
+    
+    // Apply customer profile data to form when available
     useEffect(() => {
         if (customerProfile && !formData.shippingFirstName) {
             setFormData(prev => ({
