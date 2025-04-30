@@ -73,62 +73,44 @@ export async function POST(request: Request) {
                 },
             });
 
+            // Update product stock
+            for (const item of body.items) {
+                await prisma.product.update({
+                    where: { id: item.productId },
+                    data: { 
+                        stock: { decrement: item.quantity } 
+                    }
+                });
+            }
+
+            // Clear the cart after successful order
+            if (body.userId) {
+                // For logged-in users
+                await prisma.cartItem.deleteMany({
+                    where: { 
+                        cart: { 
+                            userId: body.userId 
+                        } 
+                    }
+                });
+            } else if (body.guestCartId) {
+                // For guest users
+                await prisma.cartItem.deleteMany({
+                    where: { 
+                        cartId: body.guestCartId 
+                    }
+                });
+            }
             
-        
             return createdOrder;
         });
 
-        // Return response with cart cleanup information
-        const responseData = {
-            data: order,
-            cartCleanup: {
-                clearedCart: !!body.userId || !!body.guestCartId,
-                cartId: body.guestCartId || null,
-                isGuest: !body.userId
-            }
-        };
-
-        return NextResponse.json(responseData, { status: 201 });
+        return NextResponse.json({ data: order }, { status: 201 });
     } catch (error) {
         console.error("Order creation error:", error);
         return NextResponse.json({ 
             error: "Internal Server Error", 
             details: error instanceof Error ? error.message : "Unknown error" 
         }, { status: 500 });
-    }
-} 
-
-export async function GET(request: Request) {
-    try {
-        const { searchParams } = new URL(request.url);
-        const userId = searchParams.get('userId');
-        const guestEmail = searchParams.get('guestEmail');
-
-        // Support both user and guest order retrieval
-        if (!userId && !guestEmail) {
-            return NextResponse.json({ error: "User ID or Guest Email is required" }, { status: 400 });
-        }
-
-        const orders = await prisma.order.findMany({
-            where: userId 
-                ? { userId } 
-                : { 
-                    isGuestOrder: true, 
-                    guestEmail: guestEmail || undefined 
-                },
-            include: { 
-                items: { 
-                    include: { 
-                        product: true 
-                    } 
-                } 
-            },
-            orderBy: { createdAt: 'desc' }
-        });
-
-        return NextResponse.json({ data: orders }, { status: 200 });
-    } catch (error) {
-        console.error("Order retrieval error:", error);
-        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }

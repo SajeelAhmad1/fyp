@@ -30,8 +30,6 @@ const CheckoutPage = () => {
     const [cartItems, setCartItems] = useState<any[]>([]);
     const [cartTotal, setCartTotal] = useState<number>(0);
     
-    // Use ref instead of state for tracking payment intent creation
-    // This helps avoid race conditions between state updates and function calls
     const paymentIntentCreatingRef = useRef(false);
 
     const [formData, setFormData] = useState({
@@ -123,15 +121,12 @@ const CheckoutPage = () => {
         return true;
     };
 
-    // Single consolidated function to create payment intent
     const createPaymentIntent = async (amount: number, orderIdParam?: string) => {
-        // If we're already creating a payment intent or one exists, don't create another
         if (paymentIntentCreatingRef.current || clientSecret) {
             return;
         }
         
         try {
-            // Set ref to true to prevent multiple simultaneous calls
             paymentIntentCreatingRef.current = true;
             console.log("Creating payment intent with amount:", amount);
             
@@ -145,11 +140,8 @@ const CheckoutPage = () => {
                     email: formData.email || session?.user?.email,
                 }),
             });
-            
-            console.log("Payment intent response status:", response.status);
-            
+                        
             const responseData = await response.json();
-            console.log("Payment intent response:", responseData);
             
             if (responseData.clientSecret) {
                 setClientSecret(responseData.clientSecret);
@@ -160,7 +152,6 @@ const CheckoutPage = () => {
             console.error("Payment intent error:", err);
             setError("Failed to initialize payment: " + (err instanceof Error ? err.message : String(err)));
         } finally {
-            // Even if there's an error, we should reset the flag
             paymentIntentCreatingRef.current = false;
         }
     };
@@ -212,7 +203,6 @@ const CheckoutPage = () => {
             setOrder(data);
 
             if (data) {
-                // Process phone number to remove +44 if present
                 const phone = data.shippingPhone?.startsWith('+44')
                     ? data.shippingPhone.substring(3)
                     : data.shippingPhone || '';
@@ -240,7 +230,6 @@ const CheckoutPage = () => {
                     paymentMethod: 'STRIPE'
                 }));
                 
-                // Only create payment intent if we have order data
                 if (data.totalPrice > 0 && !clientSecret) {
                     await createPaymentIntent(data.totalPrice, data.id);
                 }
@@ -285,7 +274,6 @@ const CheckoutPage = () => {
             
             setCartTotal(calculatedTotal || 0);
 
-            // Only create payment intent when no orderId exists and we have cart data
             if (!orderId && calculatedTotal > 0 && !clientSecret) {
                 await createPaymentIntent(calculatedTotal);
             }
@@ -298,12 +286,10 @@ const CheckoutPage = () => {
         const { name, value } = e.target;
 
         if (name === "shippingPhone") {
-            // Remove all non-digit characters
             const digitsOnly = value.replace(/\D/g, '');
 
-            // Check if the number exceeds 10 digits
             if (digitsOnly.length > 10) {
-                return; // Don't update if more than 10 digits
+                return;
             }
 
             setFormData(prev => ({
@@ -375,12 +361,10 @@ const CheckoutPage = () => {
                 throw new Error('Your cart is empty');
             }
 
-            // Save guest email if not logged in
             if (!userId && formData.email) {
                 localStorage.setItem(GUEST_EMAIL_KEY, formData.email);
             }
 
-            // Prepare order items from cart
             const orderItems = cartItems.map(item => ({
                 productId: item.productId,
                 quantity: item.quantity,
@@ -405,7 +389,8 @@ const CheckoutPage = () => {
                 shippingCity: formData.shippingCity,
                 shippingState: formData.shippingState,
                 shippingPostalCode: formData.shippingPostalCode,
-                shippingCountry: formData.shippingCountry,
+                // shippingCountry: formData.shippingCountry,
+                shippingCountry: "United Kingdom",
                 shippingPhone: formData.shippingPhone ? `+44${formData.shippingPhone}` : '',
                 billingFirstName: formData.useSameAddress ? null : formData.billingFirstName,
                 billingLastName: formData.useSameAddress ? null : formData.billingLastName,
@@ -419,7 +404,6 @@ const CheckoutPage = () => {
                 status: OrderStatus.CONFIRMED
             };
 
-            // Create the order
             const orderResponse = await fetch('/api/orders', {
                 method: 'POST',
                 headers: {
@@ -435,7 +419,6 @@ const CheckoutPage = () => {
 
             const { data } = await orderResponse.json();
 
-            // Return the created order ID
             return data.id;
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to create order');
@@ -447,7 +430,6 @@ const CheckoutPage = () => {
 
     const handlePaymentSuccess = async (): Promise<string | null> => {
         try {
-            // Create the order only when payment is initiated
             const newOrderId = await createOrderFromCart();
 
             if (!newOrderId) {
@@ -465,7 +447,6 @@ const CheckoutPage = () => {
         }
     };
 
-    // Primary data loading effect - consolidate main data fetching logic
     useEffect(() => {
         const fetchData = async () => {
             setLoading(true);
@@ -473,11 +454,9 @@ const CheckoutPage = () => {
             try {
                 await fetchCustomerProfile();
 
-                // If orderId exists in URL, fetch the existing order
                 if (orderId) {
                     await fetchOrder();
                 } else {
-                    // Otherwise, just fetch the cart
                     await fetchCart();
                 }
             } catch (error) {
@@ -488,9 +467,8 @@ const CheckoutPage = () => {
         };
 
         fetchData();
-    }, [session?.user?.id, orderId]); // Only depend on these important values
-    
-    // Apply customer profile data to form when available
+    }, [session?.user?.id, orderId]); 
+
     useEffect(() => {
         if (customerProfile && !formData.shippingFirstName) {
             setFormData(prev => ({
@@ -916,15 +894,7 @@ const CheckoutPage = () => {
                                             className={`w-full p-2 border ${formErrors.billingCountry ? 'border-red-500' : 'border-gray-300'} rounded`}
                                             required
                                         >
-                                            <option value="">Select Country</option>
                                             <option value="United Kingdom">United Kingdom</option>
-                                            <option value="United States">United States</option>
-                                            <option value="Canada">Canada</option>
-                                            <option value="Australia">Australia</option>
-                                            <option value="France">France</option>
-                                            <option value="Germany">Germany</option>
-                                            <option value="Italy">Italy</option>
-                                            <option value="Spain">Spain</option>
                                         </select>
                                         {formErrors.billingCountry && <p className="text-red-500 text-xs mt-1">Country is required</p>}
                                     </div>

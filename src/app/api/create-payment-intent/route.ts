@@ -63,9 +63,6 @@ export async function POST(request: NextRequest) {
         customer_id: customer.id // Store customer ID in metadata for reference
       }
     });
-
-    console.log("checkout", paymentIntent);
-
     // Return both the client secret and customer ID
     return NextResponse.json({ 
       clientSecret: paymentIntent.client_secret,
