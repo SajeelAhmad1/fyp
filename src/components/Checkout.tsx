@@ -39,7 +39,7 @@ const CheckoutPage = () => {
         shippingCity: '',
         shippingState: '',
         shippingPostalCode: '',
-        shippingCountry: '',
+        shippingCountry: 'United Kingdom',
         shippingPhone: '',
 
         useSameAddress: true,
@@ -49,7 +49,7 @@ const CheckoutPage = () => {
         billingCity: '',
         billingState: '',
         billingPostalCode: '',
-        billingCountry: '',
+        billingCountry: 'United Kingdom',
 
         paymentMethod: 'STRIPE',
         email: '',
@@ -715,8 +715,8 @@ const CheckoutPage = () => {
                                     <select
                                         id="shippingCountry"
                                         name="shippingCountry"
-                                        value={formData.shippingCountry}
-                                        onChange={handleInputChange}
+                                        value="United Kingdom"
+                                        // onChange={handleInputChange}
                                         className={`w-full p-2 border ${formErrors.shippingCountry ? 'border-red-500' : 'border-gray-300'} rounded`}
                                         required
                                     >
