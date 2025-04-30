@@ -365,8 +365,7 @@ const CheckoutPage = () => {
 
         try {
             const userId = session?.user?.id;
-            const guestEmail = localStorage.getItem(GUEST_EMAIL_KEY) || formData.email;
-            const guestCartId = getGuestCartId();
+            const guestEmail = formData.email || localStorage.getItem(GUEST_EMAIL_KEY);
 
             if (!userId && !guestEmail) {
                 throw new Error('Email is required for guest checkout');
@@ -743,15 +742,7 @@ const CheckoutPage = () => {
                                         className={`w-full p-2 border ${formErrors.shippingCountry ? 'border-red-500' : 'border-gray-300'} rounded`}
                                         required
                                     >
-                                        <option value="">Select Country</option>
                                         <option value="United Kingdom">United Kingdom</option>
-                                        <option value="United States">United States</option>
-                                        <option value="Canada">Canada</option>
-                                        <option value="Australia">Australia</option>
-                                        <option value="France">France</option>
-                                        <option value="Germany">Germany</option>
-                                        <option value="Italy">Italy</option>
-                                        <option value="Spain">Spain</option>
                                     </select>
                                     {formErrors.shippingCountry && <p className="text-red-500 text-xs mt-1">Country is required</p>}
                                 </div>

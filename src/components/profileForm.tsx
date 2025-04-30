@@ -8,10 +8,8 @@ import { Toaster } from "sonner";
 import Image from "next/image";
 import { CustomerProfile } from "@/types/customerProfile";
 import { User } from "@/types/user";
-import { Pencil, Search } from "lucide-react";
+import { Pencil } from "lucide-react";
 
-// Import a UK postal code validation library
-// For example: npm install postcode (you'll need to install this)
 import { isValid as isValidPostcode } from "postcode";
 
 const CustomerProfileForm: React.FC = () => {
@@ -27,7 +25,7 @@ const CustomerProfileForm: React.FC = () => {
     city: null,
     state: null,
     postalCode: null,
-    country: "United Kingdom", // Default country set to United Kingdom
+    country: "United Kingdom",
   });
   const [errors, setErrors] = useState({
     firstName: false,
@@ -47,7 +45,6 @@ const CustomerProfileForm: React.FC = () => {
   useEffect(() => {
     if (!user) return;
     if (user.customerProfile) {
-      // Ensure country is always UK
       setProfile({
         ...user.customerProfile,
         country: "United Kingdom"
@@ -60,17 +57,12 @@ const CustomerProfileForm: React.FC = () => {
     }
   }, [session]);
 
-  // Function to search postcodes when user types
   useEffect(() => {
     if (postcodeSearchTerm.length > 0) {
-      // In a real application, you would fetch postcodes from an API
-      // For demo purposes, we'll simulate a search with a delay
+      
       setIsSearchingPostcode(true);
       const timer = setTimeout(() => {
-        // This is where you would call a UK postcode lookup API
-        // For example: fetch(`/api/postcodes/search?q=${postcodeSearchTerm}`)
         
-        // For demo, filtering a small set of example postcodes
         const ukPostcodeExamples = [
           "SW1A 1AA", "EC1A 1BB", "W1A 0AX", "M1 1AE", 
           postcodeSearchTerm.toUpperCase().replace(/[^A-Z0-9]/g, '')
@@ -108,7 +100,6 @@ const CustomerProfileForm: React.FC = () => {
       const response = await fetch("/api/customer-profile");
       const data = await response.json();
       if (data.data) {
-        // Ensure country is always UK
         setProfile({
           ...data.data,
           country: "United Kingdom"
@@ -128,12 +119,10 @@ const CustomerProfileForm: React.FC = () => {
     const { name, value } = e.target;
 
     if (name === "phone") {
-      // Remove all non-digit characters
       const digitsOnly = value.replace(/\D/g, '');
 
-      // Check if the number exceeds 10 digits
       if (digitsOnly.length > 10) {
-        return; // Don't update if more than 10 digits
+        return;
       }
 
       setProfile((prev) => ({
@@ -141,7 +130,6 @@ const CustomerProfileForm: React.FC = () => {
         [name]: digitsOnly
       }));
     } else if (name === "country") {
-      // Do nothing - country should remain United Kingdom
       return;
     } else {
       setProfile((prev) => ({
@@ -150,7 +138,6 @@ const CustomerProfileForm: React.FC = () => {
       }));
     }
 
-    // Clear error when user types
     if (errors[name as keyof typeof errors]) {
       setErrors(prev => ({
         ...prev,
@@ -178,7 +165,6 @@ const CustomerProfileForm: React.FC = () => {
 
     setImageFile(file);
 
-    // Create preview URL
     const reader = new FileReader();
     reader.onloadend = () => {
       setImagePreview(reader.result as string);
@@ -210,7 +196,6 @@ const CustomerProfileForm: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validate before submission
     if (!validateForm()) {
       toast.error("Please fill in all required fields correctly");
       return;
@@ -222,7 +207,7 @@ const CustomerProfileForm: React.FC = () => {
       let updatedProfile = {
         ...profile,
         phone: profile.phone ? `${profile.phone}` : null,
-        country: "United Kingdom" // Ensure country is always UK
+        country: "United Kingdom"
       };
 
       if (imageFile) {
@@ -245,7 +230,6 @@ const CustomerProfileForm: React.FC = () => {
         throw new Error(data.message || "Failed to save profile");
       }
 
-      // Newsletter subscription (unchanged)
       try {
         const email = user?.email;
         if (email) {
@@ -288,7 +272,6 @@ const CustomerProfileForm: React.FC = () => {
     <div className="">
       <form onSubmit={handleSubmit} className="max-w-2xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Profile Image Upload Section (unchanged) */}
           <div className="col-span-1 md:col-span-2 flex flex-col items-center mb-4">
             <div className="relative">
               <div className="w-32 h-32 relative rounded-full overflow-hidden mb-4 bg-gray-100 border border-gray-300">
