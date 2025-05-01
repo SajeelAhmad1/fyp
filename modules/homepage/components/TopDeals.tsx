@@ -101,7 +101,7 @@ const TopDeals: React.FC = () => {
         console.log('Fetching top deals products with discount >= 20%');
         
         // Update the API endpoint to filter for products with discount >= 20%
-        const response = await fetch('/api/products?minDiscount=20&limit=10');
+        const response = await fetch('/api/products?minDiscount=30&limit=10');
         
         if (!response.ok) {
           throw new Error(`Failed to fetch top deals products: ${response.status}`);
@@ -202,7 +202,7 @@ const TopDeals: React.FC = () => {
           )}
         </div>
         <button 
-        onClick={()=>router.push("/products?type=bestchoice")}
+        onClick={()=>router.push("/products?type=topdeal")}
         className="mt-6 md:mt-8 px-6 py-2 text-lg md:text-xl bg-[#205781] text-white rounded-md hover:bg-[#1a4a70] transition-colors">
           See All
         </button>
