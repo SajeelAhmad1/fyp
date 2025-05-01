@@ -6,7 +6,6 @@ import Image from 'next/image';
 import { toast } from 'sonner';
 import { formatDate } from '@/utils/checkoutUtils';
 
-// Define TypeScript interfaces for your data structure
 interface ProductImage {
   url: string;
 }
@@ -44,8 +43,8 @@ interface OrderItem {
 interface Payment {
   id: string;
   orderId: string;
-  method: 'STRIPE' | 'PAYPAL';
-  status: 'COMPLETED' | 'PENDING' | 'FAILED';
+  method: 'STRIPE' | 'PAYPAL' | 'CREDIT_CARD' | 'CASH_ON_DELIVERY';
+  status: 'COMPLETED' | 'PENDING' | 'FAILED' | 'REFUNDED';
   amount?: number;
   createdAt: string;
   transactionId: string | null;
@@ -60,8 +59,6 @@ interface Order {
   userId: string;
   isGuestOrder: boolean;
   guestEmail: string | null;
-  
-  // Shipping information
   shippingFirstName: string;
   shippingLastName: string;
   shippingStreet: string;
@@ -70,8 +67,6 @@ interface Order {
   shippingPostalCode: string;
   shippingCountry: string;
   shippingPhone: string;
-  
-  // Billing information (may be null)
   billingFirstName: string | null;
   billingLastName: string | null;
   billingStreet: string | null;
@@ -79,17 +74,13 @@ interface Order {
   billingState: string | null;
   billingPostalCode: string | null;
   billingCountry: string | null;
-  
-  // Related data
   items: OrderItem[];
-  payment: Payment;
+  payment: Payment | null;
 }
 
-// Skeleton loading component for the order page
 const OrderSkeleton = () => {
   return (
     <div className="container mx-auto py-8 px-4">
-      {/* Header skeleton */}
       <div className="bg-gray-50 p-6 rounded-lg mb-8">
         <div className="animate-pulse">
           <div className="h-8 bg-gray-200 w-1/3 mx-auto mb-4 rounded"></div>
@@ -100,12 +91,9 @@ const OrderSkeleton = () => {
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
-          {/* Order items skeleton */}
           <div className="bg-white p-6 rounded-lg shadow-md mb-8">
             <div className="animate-pulse">
               <div className="h-6 bg-gray-200 w-1/4 mb-6 rounded"></div>
-              
-              {/* Item 1 */}
               <div className="flex items-center space-x-4 py-4 border-b">
                 <div className="w-16 h-16 bg-gray-200 rounded-md flex-shrink-0"></div>
                 <div className="flex-grow">
@@ -116,8 +104,6 @@ const OrderSkeleton = () => {
                   <div className="h-4 bg-gray-200 w-full rounded"></div>
                 </div>
               </div>
-              
-              {/* Item 2 */}
               <div className="flex items-center space-x-4 py-4 border-b">
                 <div className="w-16 h-16 bg-gray-200 rounded-md flex-shrink-0"></div>
                 <div className="flex-grow">
@@ -132,7 +118,6 @@ const OrderSkeleton = () => {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Shipping info skeleton */}
             <div className="bg-white p-6 rounded-lg shadow-md">
               <div className="animate-pulse">
                 <div className="h-6 bg-gray-200 w-3/4 mb-4 rounded"></div>
@@ -145,7 +130,6 @@ const OrderSkeleton = () => {
               </div>
             </div>
             
-            {/* Payment info skeleton */}
             <div className="bg-white p-6 rounded-lg shadow-md">
               <div className="animate-pulse">
                 <div className="h-6 bg-gray-200 w-3/4 mb-4 rounded"></div>
@@ -159,28 +143,23 @@ const OrderSkeleton = () => {
           </div>
         </div>
         
-        {/* Order summary skeleton */}
         <div className="lg:col-span-1">
           <div className="bg-white p-6 rounded-lg shadow-md">
             <div className="animate-pulse">
               <div className="h-6 bg-gray-200 w-1/2 mb-6 rounded"></div>
-              
               <div className="space-y-3">
                 <div className="flex justify-between">
                   <div className="h-4 bg-gray-200 w-1/3 rounded"></div>
                   <div className="h-4 bg-gray-200 w-16 rounded"></div>
                 </div>
-                
                 <div className="flex justify-between">
                   <div className="h-4 bg-gray-200 w-1/4 rounded"></div>
                   <div className="h-4 bg-gray-200 w-16 rounded"></div>
                 </div>
-                
                 <div className="flex justify-between">
                   <div className="h-4 bg-gray-200 w-1/5 rounded"></div>
                   <div className="h-4 bg-gray-200 w-16 rounded"></div>
                 </div>
-                
                 <div className="pt-2 mt-2 border-t border-gray-200">
                   <div className="flex justify-between mt-2">
                     <div className="h-5 bg-gray-200 w-1/4 rounded"></div>
@@ -188,7 +167,6 @@ const OrderSkeleton = () => {
                   </div>
                 </div>
               </div>
-              
               <div className="mt-8 space-y-4">
                 <div className="h-10 bg-gray-200 w-full rounded-md"></div>
                 <div className="h-10 bg-gray-200 w-full rounded-md"></div>
@@ -206,73 +184,73 @@ export default function OrderConfirmationPage() {
   const router = useRouter();
   const [order, setOrder] = useState<Order | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
   useEffect(() => {
     const fetchOrder = async () => {
       try {
         const orderId = params.id as string;
-        const response = await fetch(`/api/orders/get-order-by-id/${orderId}`);
-        const data = await response.json();
-        
-        if (response.ok) {
-          setOrder(data.data);
-          console.log(data);
-        } else {
-          toast.error(data.error || 'Failed to load order details');
+        if (!orderId) {
+          throw new Error('Order ID is missing');
         }
-      } catch (error) {
-        console.error('Error fetching order:', error);
-        toast.error('An error occurred while loading your order');
+
+        const response = await fetch(`/api/orders/get-order-by-id/${orderId}`);
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to fetch order');
+        }
+
+        const data = await response.json();
+        setOrder(data.data);
+      } catch (err) {
+        console.error('Error fetching order:', err);
+        setError(err instanceof Error ? err.message : 'An unknown error occurred');
+        toast.error('Failed to load order details');
       } finally {
         setIsLoading(false);
       }
     };
     
-    if (params.id) {
-      fetchOrder();
-    }
-  }, [params.id, router]);
-  
-  // Calculate subtotals and other metrics
+    fetchOrder();
+  }, [params.id]);
+
   const calculateOrderDetails = (order: Order) => {
     const subtotal = order.items.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
-    // Assuming 8% tax rate and $5 flat shipping - adjust according to your business rules
-    const shippingCost = 5;
-    const taxRate = 0.08;
+    const shippingCost = 5; // Flat rate shipping
+    const taxRate = 0.08; // 8% tax
     const tax = subtotal * taxRate;
     const total = parseFloat(order.totalPrice);
     
     return { subtotal, shippingCost, tax, total };
   };
   
-  // Calculate discounted price if available
   const getDiscountedPrice = (originalPrice: string, discount: string) => {
     if (!discount || discount === "0") return parseFloat(originalPrice);
-    
     const discountPercent = parseFloat(discount);
     const price = parseFloat(originalPrice);
     return price - (price * (discountPercent / 100));
   };
-  
+
   if (isLoading) {
     return <OrderSkeleton />;
   }
-  
-  if (!order) {
+
+  if (error || !order) {
     return (
       <div className="container mx-auto py-16 px-4 text-center">
         <h1 className="text-2xl font-bold mb-4">Order not found</h1>
-        <p className="mb-8">We couldn't find the order you're looking for.</p>
+        <p className="mb-8">{error || 'We couldn\'t find the order you\'re looking for.'}</p>
         <button
           onClick={() => router.push('/')}
-          className="bg-blue-600 text-white py-2 px-4 rounded-md"
+          className="bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
         >
           Return to Home
         </button>
       </div>
     );
   }
-  
+
   const { subtotal, shippingCost, tax, total } = calculateOrderDetails(order);
   
   return (
@@ -296,12 +274,13 @@ export default function OrderConfirmationPage() {
               {order.items.map((item) => (
                 <div key={item.id} className="flex items-center space-x-4 py-2 border-b last:border-b-0">
                   <div className="w-16 h-16 relative bg-gray-100 rounded-md flex-shrink-0">
-                    {item.product.images && item.product.images.length > 0 ? (
+                    {item.product.images?.length > 0 ? (
                       <Image
                         src={item.product.images[0]}
                         alt={item.product.name}
                         fill
                         className="object-cover rounded-md"
+                        sizes="64px"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-gray-400">
@@ -334,7 +313,6 @@ export default function OrderConfirmationPage() {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Shipping Information */}
             <div className="bg-white p-6 rounded-lg shadow-md">
               <h2 className="text-xl font-semibold mb-4">Shipping Information</h2>
               <div className="space-y-2">
@@ -356,36 +334,57 @@ export default function OrderConfirmationPage() {
               </div>
             </div>
             
-            {/* Payment Information */}
             <div className="bg-white p-6 rounded-lg shadow-md">
               <h2 className="text-xl font-semibold mb-4">Payment Information</h2>
               <div className="space-y-2">
-                <p>
-                  <span className="font-medium">Payment Method:</span>{' '}
-                  {order.payment.method === 'STRIPE' ? 'Credit/Debit Card' : 'PayPal'}
-                </p>
-                <p>
-                  <span className="font-medium">Status:</span>{' '}
-                  <span className={`font-medium ${order.payment.status === 'COMPLETED' ? 'text-green-600' : 'text-yellow-600'}`}>
-                    {order.payment.status === 'COMPLETED' ? 'Paid' : 'Pending'}
-                  </span>
-                </p>
+                {order.payment ? (
+                  <>
+                    <p>
+                      <span className="font-medium">Payment Method:</span>{' '}
+                      {order.payment.method === 'STRIPE' ? 'Credit/Debit Card' : 
+                       order.payment.method === 'PAYPAL' ? 'PayPal' : 
+                       order.payment.method === 'CREDIT_CARD' ? 'Credit Card' : 
+                       'Cash on Delivery'}
+                    </p>
+                    <p>
+                      <span className="font-medium">Status:</span>{' '}
+                      <span className={`font-medium ${
+                        order.payment.status === 'COMPLETED' ? 'text-green-600' : 
+                        order.payment.status === 'FAILED' ? 'text-red-600' : 
+                        'text-yellow-600'
+                      }`}>
+                        {order.payment.status === 'COMPLETED' ? 'Paid' : 
+                         order.payment.status === 'FAILED' ? 'Failed' : 
+                         order.payment.status === 'REFUNDED' ? 'Refunded' : 
+                         'Pending'}
+                      </span>
+                    </p>
+                    {order.payment.transactionId && (
+                      <p>
+                        <span className="font-medium">Transaction ID:</span>{' '}
+                        <span className="text-sm font-mono">{order.payment.transactionId}</span>
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <p className="text-yellow-600">Payment information not available</p>
+                )}
                 <p>
                   <span className="font-medium">Order Status:</span>{' '}
-                  <span className="font-medium text-blue-600">{order.status}</span>
+                  <span className={`font-medium ${
+                    order.status === 'DELIVERED' ? 'text-green-600' :
+                    order.status === 'CANCELLED' ? 'text-red-600' :
+                    order.status === 'SHIPPED' ? 'text-blue-600' :
+                    'text-yellow-600'
+                  }`}>
+                    {order.status.charAt(0) + order.status.slice(1).toLowerCase()}
+                  </span>
                 </p>
-                {order.payment.transactionId && (
-                  <p>
-                    <span className="font-medium">Transaction ID:</span>{' '}
-                    <span className="text-sm font-mono">{order.payment.transactionId}</span>
-                  </p>
-                )}
               </div>
             </div>
           </div>
         </div>
         
-        {/* Order Summary */}
         <div className="lg:col-span-1">
           <div className="bg-white p-6 rounded-lg shadow-md sticky top-8">
             <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
@@ -417,14 +416,14 @@ export default function OrderConfirmationPage() {
             <div className="mt-8 space-y-4">
               <button
                 onClick={() => router.push('/orders')}
-                className="w-full bg-gray-100 text-gray-800 py-2 px-4 rounded-md hover:bg-gray-200"
+                className="w-full bg-gray-100 text-gray-800 py-2 px-4 rounded-md hover:bg-gray-200 transition-colors"
               >
                 View All Orders
               </button>
               
               <button
                 onClick={() => router.push('/')}
-                className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700"
+                className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
               >
                 Continue Shopping
               </button>

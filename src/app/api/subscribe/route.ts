@@ -24,6 +24,9 @@ async function sendSubscriptionEmail(email: string, token: string) {
     }
   });
   
+  // Generate secure unsubscribe URL with token and email
+  const unsubscribeUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/unsubscribe?token=${token}&email=${encodeURIComponent(email)}`;
+  
   await transporter.sendMail({
     from: '"Lyalla and Lora" <sajeelashiq1@gmail.com>',
     to: email,
@@ -34,7 +37,7 @@ async function sendSubscriptionEmail(email: string, token: string) {
         <p>Thank you for subscribing to Lyalla and Lora newsletter!</p>
         <p>Your subscription has been confirmed.</p>
         <p>If you did not request this subscription, you can unsubscribe by clicking the link below:</p>
-        <a href="${process.env.NEXT_PUBLIC_BASE_URL}/unsubscribe?token=${token}">Unsubscribe</a>
+        <a href="${unsubscribeUrl}">Unsubscribe</a>
         <p>© 2025 Lyalla and Lora. All rights reserved.</p>
       </div>
     `,
@@ -59,19 +62,22 @@ export async function POST(request: Request) {
       where: { email }
     });
 
+    // Generate unique token for unsubscribe verification
+    const token = uuidv4();
+
     if (existingSubscriber) {
-      // If already subscribed but unsubscribed before
-      if (existingSubscriber.status !== 'active') {
+      // If already subscribed but unsubscribed before (unsubscribeDate is not null)
+      if (existingSubscriber.unsubscribeDate) {
         await prisma.subscriber.update({
           where: { email },
           data: {
-            status: 'active',
-            unsubscribeDate: null
+            token: token, // Update token for security
+            unsubscribeDate: null // Set to null to indicate active status
           }
         });
         
-        // Send resubscription email
-        await sendSubscriptionEmail(email, existingSubscriber.token);
+        // Send resubscription email with new token
+        await sendSubscriptionEmail(email, token);
         
         return NextResponse.json(
           { message: 'Subscription reactivated' }, 
@@ -85,13 +91,11 @@ export async function POST(request: Request) {
       );
     }
 
-    // Generate confirmation token
-    const token = uuidv4();
-
-    // Create new subscriber
+    // Create new subscriber with token
     await prisma.subscriber.create({
       data: {
-        email
+        email,
+        token
       }
     });
 

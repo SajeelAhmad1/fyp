@@ -261,10 +261,12 @@ model Review {
 }
 
 model Subscriber {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             String    @id @default(uuid())
+  email          String    @unique
+  token          String?   // Token for unsubscribe verification
+  unsubscribeDate DateTime? // Date when unsubscribed (null means active)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 }
 
 //// ==================== ENUMS ==================== ////

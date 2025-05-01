@@ -26,9 +26,9 @@ export default function Orders() {
         try {
             let response;
             if (session?.user.id) {
-                response = await fetch(`/api/orders?userId=${session.user.id}`);
+                response = await fetch(`/api/orders/get-all-orders?userId=${session.user.id}`);
             } else if (email) {
-                response = await fetch(`/api/orders?guestEmail=${email}`);
+                response = await fetch(`/api/orders/get-all-orders?guestEmail=${email}`);
             } else {
                 return;
             }
@@ -167,7 +167,9 @@ export default function Orders() {
                         <div className="space-y-4">
                             {orders.map((order) => (
                                 <div key={order.id} className="border rounded-lg p-4">
-                                    <div className="flex justify-between items-center mb-4">
+                                    <div 
+                                    onClick={()=>router.push(`/orders/${order.id}`)}
+                                    className="cursor-pointer flex justify-between items-center mb-4">
                                         <div>
                                             <p className="font-bold">Order #{order.id.slice(-6)}</p>
                                             <p className="text-sm text-gray-500">
