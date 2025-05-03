@@ -202,6 +202,8 @@ export default function OrderConfirmationPage() {
         }
 
         const data = await response.json();
+        console.log(data)
+
         setOrder(data.data);
       } catch (err) {
         console.error('Error fetching order:', err);

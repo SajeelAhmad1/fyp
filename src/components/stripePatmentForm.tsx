@@ -8,13 +8,15 @@ const StripePaymentForm = ({
     formData,
     onPaymentSuccess,
     validateForm,
-    totalPrice
+    totalPrice,
+    firstOrderDiscount
 }: {
     cartItems?: any[],
     formData: any,
     onPaymentSuccess: () => Promise<string | null>,
     validateForm: () => boolean,
-    totalPrice: number
+    totalPrice: number,
+    firstOrderDiscount: number
 }) => {
     const stripe = useStripe();
     const elements = useElements();
@@ -92,7 +94,7 @@ const StripePaymentForm = ({
                 disabled={!stripe || !paymentElementLoaded || loading}
                 className="w-full bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition-colors disabled:bg-blue-400 disabled:cursor-not-allowed mt-4"
             >
-                {loading ? 'Processing Payment...' : `Pay $${totalPrice}`}
+                {loading ? 'Processing Payment...' : `Pay £${(totalPrice - (firstOrderDiscount || 0)).toFixed(2)}`}
             </button>
         </form>
     );

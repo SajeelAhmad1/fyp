@@ -29,7 +29,10 @@ const CheckoutPage = () => {
     const [stripeCustId, setStripeCustId] = useState<string | null>(null);
     const [cartItems, setCartItems] = useState<any[]>([]);
     const [cartTotal, setCartTotal] = useState<number>(0);
-    
+    const [orderCount, setOrderCount] = useState<number | null>(null);
+    const [firstOrderDiscount, setFirstOrderDiscount] = useState<number | null>(null);
+    const [orderPrice, setOrderPrice] = useState<number | null>(null);
+
     const paymentIntentCreatingRef = useRef(false);
 
     const [formData, setFormData] = useState({
@@ -79,6 +82,15 @@ const CheckoutPage = () => {
         email: false
     });
 
+    const displayItems = order ? order.items : cartItems.map(item => ({
+        id: item.id,
+        quantity: item.quantity,
+        price: (item.product.price * (1 - (item.product.discount || 0) / 100)) * item.quantity,
+        product: item.product
+    }));
+
+    const displayTotal = order ? order.totalPrice : displayItems.reduce((sum, item) => sum + item.price, 0);
+
     const getGuestCartId = useCallback(() => {
         if (typeof window !== 'undefined') {
             return localStorage.getItem(GUEST_CART_ID_KEY);
@@ -121,15 +133,34 @@ const CheckoutPage = () => {
         return true;
     };
 
+    useEffect(() => {
+        const fetchOrderCount = async () => {
+            if (session?.user?.id) {
+                try {
+                    const response = await fetch(`/api/orders/count?userId=${session.user.id}`);
+                    const data = await response.json();
+                    if (data.success) {
+                        setOrderCount(data.data.count);
+                    }
+                } catch (error) {
+                    console.error('Failed to fetch order count:', error);
+                } finally {
+                }
+            }
+        };
+
+        fetchOrderCount();
+    }, [session]);
+
     const createPaymentIntent = async (amount: number, orderIdParam?: string) => {
         if (paymentIntentCreatingRef.current || clientSecret) {
             return;
         }
-        
+
         try {
             paymentIntentCreatingRef.current = true;
             console.log("Creating payment intent with amount:", amount);
-            
+
             const response = await fetch('/api/create-payment-intent', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -140,9 +171,9 @@ const CheckoutPage = () => {
                     email: formData.email || session?.user?.email,
                 }),
             });
-                        
+
             const responseData = await response.json();
-            
+
             if (responseData.clientSecret) {
                 setClientSecret(responseData.clientSecret);
             } else {
@@ -229,7 +260,7 @@ const CheckoutPage = () => {
                     email: data.email || (session?.user?.email || ''),
                     paymentMethod: 'STRIPE'
                 }));
-                
+
                 if (data.totalPrice > 0 && !clientSecret) {
                     await createPaymentIntent(data.totalPrice, data.id);
                 }
@@ -251,14 +282,14 @@ const CheckoutPage = () => {
             const response = await fetch(`/api/cart?${userId ? `userId=${userId}` : `guestCartId=${guestCartId}`}`, {
                 headers: { 'Cache-Control': 'no-cache' }
             });
-            
+
             if (!response.ok) {
                 throw new Error('Failed to fetch cart');
             }
 
             const { data: cartData } = await response.json();
             setCartItems(cartData.items || []);
-            
+
             if (!cartData?.items) {
                 console.log('Your cart is empty');
             }
@@ -271,7 +302,7 @@ const CheckoutPage = () => {
                 const quantity = item.quantity || 0;
                 return sum + (price * quantity);
             }, 0);
-            
+
             setCartTotal(calculatedTotal || 0);
 
             if (!orderId && calculatedTotal > 0 && !clientSecret) {
@@ -339,10 +370,13 @@ const CheckoutPage = () => {
         }
     };
 
-    const formatPrice = (price: number | string | null | undefined): string => {
+    const formatPrice = (price: number | string | null | undefined, discount: number): string => {
         if (price === null || price === undefined) return "0.00";
         const numPrice = typeof price === 'string' ? parseFloat(price) : price;
-        return isNaN(numPrice) ? "0.00" : numPrice.toFixed(2);
+        if (isNaN(numPrice)) return "0.00";
+        
+        // Price is already discounted at this point, so we just format it
+        return numPrice.toFixed(2);
     };
 
     const createOrderFromCart = async () => {
@@ -467,7 +501,7 @@ const CheckoutPage = () => {
         };
 
         fetchData();
-    }, [session?.user?.id, orderId]); 
+    }, [session?.user?.id, orderId]);
 
     useEffect(() => {
         if (customerProfile && !formData.shippingFirstName) {
@@ -485,6 +519,13 @@ const CheckoutPage = () => {
             }));
         }
     }, [customerProfile, session]);
+
+    useEffect(() => {
+        if (orderCount !== null && displayTotal !== null) {
+            const discount = orderCount === 0 ? displayTotal * 0.2 : 0;
+            setFirstOrderDiscount(discount);
+        }
+    }, [orderCount, displayTotal]);
 
     if (loading || isCreatingOrder) {
         return <div className="flex justify-center items-center h-64">Loading checkout...</div>;
@@ -523,15 +564,7 @@ const CheckoutPage = () => {
         );
     }
 
-    // Determine which items and total price to display based on whether we have an order or cart
-    const displayItems = order ? order.items : cartItems.map(item => ({
-        id: item.id,
-        quantity: item.quantity,
-        price: item.product.price * item.quantity,
-        product: item.product
-    }));
 
-    const displayTotal = order ? order.totalPrice : cartTotal;
 
     return (
         <div className="p-12 mx-auto">
@@ -594,15 +627,26 @@ const CheckoutPage = () => {
                                                     </div>
                                                 </td>
                                                 <td className="px-4 py-3 text-right">{item.quantity}</td>
-                                                <td className="px-4 py-3 text-right">${formatPrice(item.price)}</td>
+                                                <td className="px-4 py-3 text-right">£{formatPrice(item.price, item.product.discount)}</td>
                                             </tr>
                                         ))}
                                     </tbody>
                                     <tfoot className="bg-gray-50">
+                                        {orderCount === 0 && (
+                                            <tr>
+                                                <td colSpan={2} className="px-4 py-3 text-right font-semibold">First Order Discount:</td>
+                                                <td className="px-4 py-3 text-right font-semibold">
+                                                    -£{firstOrderDiscount !== null ? firstOrderDiscount.toFixed(2) : '0.00'}
+                                                </td>
+                                            </tr>
+                                        )}
                                         <tr>
                                             <td colSpan={2} className="px-4 py-3 text-right font-semibold">Total:</td>
-                                            <td className="px-4 py-3 text-right font-semibold">${formatPrice(displayTotal)}</td>
+                                            <td className="px-4 py-3 text-right font-semibold">
+                                                £{(displayTotal - (firstOrderDiscount || 0)).toFixed(2)}
+                                            </td>
                                         </tr>
+
                                     </tfoot>
                                 </table>
                             </div>
@@ -912,6 +956,7 @@ const CheckoutPage = () => {
                                     onPaymentSuccess={handlePaymentSuccess}
                                     validateForm={validateForm}
                                     totalPrice={displayTotal}
+                                    firstOrderDiscount={firstOrderDiscount}
                                 />
                             </div>
                         </div>
