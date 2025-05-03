@@ -56,6 +56,9 @@ export async function POST(request: Request) {
                     shippingPostalCode: body.shippingPostalCode || "",
                     shippingCountry: body.shippingCountry || "",
                     shippingPhone: body.shippingPhone || "",
+                    paymentIntentId: body.paymentIntentId,
+                    paymentMethodId: body.paymentMethodId,
+                    clientSecret: body.clientSecret,
                     items: {
                         create: body.items.map((item: any) => ({
                             productId: item.productId,

@@ -331,7 +331,7 @@ const CheckoutPage = () => {
                 console.log('Your cart is empty');
             }
 
-            const calculatedTotal = cartData.items?.reduce((sum, item) => {
+            const calculatedTotal = cartData.items?.reduce((sum: number, item) => {
                 const price = typeof item.product?.price === 'string'
                     ? parseFloat(item.product.price)
                     : (item.product?.price || 0);
@@ -416,7 +416,11 @@ const CheckoutPage = () => {
         return numPrice.toFixed(2);
     };
 
-    const createOrderFromCart = async () => {
+    const createOrderFromCart = async (paymentData?: {
+        paymentIntentId: string;
+        paymentMethodId: string;
+        clientSecret: string;
+    }) => {
         setIsCreatingOrder(true);
         setError(null);
 
@@ -460,7 +464,6 @@ const CheckoutPage = () => {
                 shippingCity: formData.shippingCity,
                 shippingState: formData.shippingState,
                 shippingPostalCode: formData.shippingPostalCode,
-                // shippingCountry: formData.shippingCountry,
                 shippingCountry: "United Kingdom",
                 shippingPhone: formData.shippingPhone ? `+44${formData.shippingPhone}` : '',
                 billingFirstName: formData.useSameAddress ? null : formData.billingFirstName,
@@ -472,7 +475,12 @@ const CheckoutPage = () => {
                 billingCountry: formData.useSameAddress ? null : formData.billingCountry,
                 email: formData.email,
                 paymentMethod: 'STRIPE',
-                status: OrderStatus.CONFIRMED
+                status: OrderStatus.CONFIRMED,
+                ...(paymentData ? {
+                    paymentIntentId: paymentData.paymentIntentId,
+                    paymentMethodId: paymentData.paymentMethodId,
+                    clientSecret: paymentData.clientSecret
+                } : {})
             };
 
             const orderResponse = await fetch('/api/orders', {
@@ -499,9 +507,13 @@ const CheckoutPage = () => {
         }
     };
 
-    const handlePaymentSuccess = async (): Promise<string | null> => {
+    const handlePaymentSuccess = async (paymentData: {
+        paymentIntentId: string;
+        paymentMethodId: string;
+        clientSecret: string;
+    }): Promise<string | null> => {
         try {
-            const newOrderId = await createOrderFromCart();
+            const newOrderId = await createOrderFromCart(paymentData);
 
             if (!newOrderId) {
                 throw new Error('Failed to create order');

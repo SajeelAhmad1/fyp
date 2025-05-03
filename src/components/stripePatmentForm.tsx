@@ -13,7 +13,11 @@ const StripePaymentForm = ({
 }: {
     cartItems?: any[],
     formData: any,
-    onPaymentSuccess: () => Promise<string | null>,
+    onPaymentSuccess: (paymentData: {
+        paymentIntentId: string;
+        clientSecret: string | null;
+        paymentMethodId: string;
+    }) => Promise<string | null>,
     validateForm: () => boolean,
     totalPrice: number,
     firstOrderDiscount: number
@@ -27,47 +31,48 @@ const StripePaymentForm = ({
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-
+    
         if (!validateForm()) {
             return;
         }
-
+    
         if (!stripe || !elements || !paymentElementLoaded) {
             setErrorMessage('Payment system is not ready yet. Please wait...');
             return;
         }
-
+    
         setLoading(true);
         setErrorMessage(undefined);
-
+    
         try {
-            // First submit the payment elements to Stripe
             const { error: submitError } = await elements.submit();
             if (submitError) {
                 throw submitError;
             }
-
-            // Confirm the payment with Stripe
             const { error, paymentIntent } = await stripe.confirmPayment({
                 elements,
                 confirmParams: {
                     return_url: `${window.location.origin}/payment-success`,
                 },
-                redirect: 'if_required' // Don't redirect automatically
+                redirect: 'if_required'
             });
-
+    
             if (error) {
                 throw error;
             }
-
+    
             // Only if payment was successful, create the order
             if (paymentIntent && paymentIntent.status === 'succeeded') {
-                const orderId = await onPaymentSuccess();
+                const orderId = await onPaymentSuccess({
+                    paymentIntentId: paymentIntent.id,
+                    clientSecret: paymentIntent.client_secret,
+                    paymentMethodId: paymentIntent.payment_method as string
+                });
                 
                 if (!orderId) {
                     throw new Error('Failed to create order after successful payment');
                 }
-
+    
                 // Redirect to success page with order ID
                 router.push(`/payment-success?orderId=${orderId}`);
             } else {
