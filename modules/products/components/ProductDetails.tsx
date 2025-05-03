@@ -9,6 +9,8 @@ import { useRouter } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
 import { useCart } from '@/components/context/CartContext';
 import { useSession } from 'next-auth/react';
+import { toast } from 'sonner';
+import { Toaster } from 'sonner';
 
 // Define TypeScript interfaces
 interface Review {
@@ -220,7 +222,7 @@ const ProductDetails: React.FC = () => {
     }
 
     setIsCartLoading(true);
-    if(!inCart && !isBuyNow){
+    if(!inCart && isBuyNow){
       router.refresh()
       setTimeout(() => {
         openCart();
@@ -250,6 +252,7 @@ const ProductDetails: React.FC = () => {
           setCartItemId(undefined);
           setCartQuantity(0);
           setQuantity(1);
+          toast.success("Successfully removed item from cart")
         } else {
           const errorData = await response.json();
           console.error('Delete Cart Item Error:', errorData);
@@ -268,6 +271,7 @@ const ProductDetails: React.FC = () => {
           setInCart(true);
           setCartItemId(data.data.cartItem.id);
           setCartQuantity(quantity);
+          toast.success("Successfully added item to cart")
         } else {
           const errorData = await response.json();
           console.error("Error adding to cart:", errorData.message);
@@ -280,97 +284,19 @@ const ProductDetails: React.FC = () => {
     }
   };
 
-  const updateCartQuantity = async (newQuantity: number) => {
-    if (!userId && !guestCartId || !cartItemId || !inCart) return;
-
-    try {
-      const queryParams = userId
-        ? { userId }
-        : { guestCartId };
-
-      const response = await fetch(`/api/cart/${cartItemId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...queryParams,
-          quantity: newQuantity
-        }),
-      });
-
-      if (response.ok) {
-        setCartQuantity(newQuantity);
-      } else {
-        setQuantity(cartQuantity);
-        const errorData = await response.json();
-        console.error("Error updating cart quantity:", errorData.message);
-      }
-    } catch (error) {
-      console.error("Error updating cart quantity:", error);
-      setQuantity(cartQuantity);
-    }
-  };
-
-  const validateEmail = (email: string) => {
-    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return re.test(email);
-  };
-
   const createOrder = async (guestEmail?: string) => {
     if (!product) return;
 
     try {
-      setIsCreatingOrder(true);
       setError(null);
 
-      // Validate guest email if not logged in
-      if (!session?.user && !guestEmail) {
-        throw new Error('Email is required for guest checkout');
-      }
-
-      if (guestEmail && !validateEmail(guestEmail)) {
-        throw new Error('Please enter a valid email address');
-      }
-
-      // First ensure product is in cart
       if (!inCart) {
         await handleCartToggle();
       }
-
-      const orderItems = [{
-        productId: product.id,
-        quantity: quantity,
-        unitPrice: product.price,
-        discountPercentage: product.discount || 0
-      }];
-
-      const requestBody = {
-        items: orderItems,
-        ...(session?.user
-          ? { userId: session.user.id }
-          : { guestEmail: guestEmail?.toLowerCase().trim() })
-      };
-
-      const response = await fetch('/api/orders', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || errorData.message || 'Failed to create order');
-      }
-
-      const { data } = await response.json();
-      router.push(`/checkout?orderId=${data.id}`);
+      
+      router.push(`/checkout`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create order');
-    } finally {
-      setIsCreatingOrder(false);
+      setError(err instanceof Error ? err.message : 'Failed due to unknown error');
     }
   };
 
@@ -384,22 +310,7 @@ const ProductDetails: React.FC = () => {
       return;
     }
 
-    if (!session?.user) {
-      setShowEmailModal(true);
-      return;
-    }
-
     await createOrder();
-  };
-
-  const handleEmailSubmit = () => {
-    if (!validateEmail(email)) {
-      setEmailError('Please enter a valid email address');
-      return;
-    }
-    setEmailError('');
-    localStorage.setItem('guestEmail', email.toLowerCase().trim());
-    createOrder(email);
   };
 
   useEffect(() => {
@@ -777,38 +688,7 @@ const ProductDetails: React.FC = () => {
           )}
         </Card>
       </div>
-
-      {/* Email modal for guest checkout */}
-      {showEmailModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg max-w-md w-full">
-            <h3 className="text-lg font-semibold mb-4">Enter Your Email</h3>
-            <p className="text-gray-600 mb-4">Please provide your email address to proceed with checkout.</p>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="your@email.com"
-              className="w-full p-2 border border-gray-300 rounded mb-2"
-            />
-            {emailError && <p className="text-red-500 text-sm mb-2">{emailError}</p>}
-            <div className="flex justify-end space-x-2">
-              <button
-                onClick={() => setShowEmailModal(false)}
-                className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-100"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleEmailSubmit}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-              >
-                Continue
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <Toaster position='top-right' />
     </div>
   )
 }
