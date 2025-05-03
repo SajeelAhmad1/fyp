@@ -202,9 +202,6 @@ model Order {
 
   guestEmail          String?      
   isGuestOrder        Boolean      @default(false)
-
-  clientSecret        String
-  paymentMethod       String
   
   createdAt           DateTime     @default(now())
   updatedAt           DateTime     @updatedAt

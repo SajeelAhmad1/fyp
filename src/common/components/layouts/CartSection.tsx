@@ -20,6 +20,7 @@ const CartSection: React.FC = () => {
     const router = useRouter();
     const { data: session } = useSession();
     const [cartCount, setCartCount] = useState<number>(0);
+    const [orderCount, setOrderCount] = useState<number>(0);
     const [wishlistCount, setWishlistCount] = useState<number>(0);
     const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
@@ -48,12 +49,19 @@ const CartSection: React.FC = () => {
                 const cartResponse = await fetch(`/api/cart/count?guestCartId=${guestCartId}`);
                 if (cartResponse.ok) {
                     const cartData = await cartResponse.json();
-                    console.log("cart datta", cartData)
-                    console.log(guestCartId)
                     setCartCount(cartData.count);
                 }
 
-                // Only fetch wishlist if logged in
+                const orderResponse = await fetch(
+                    session
+                        ? `/api/orders/count?userId=${session.user.id}`
+                        : `/api/orders/count?guestCartId=${guestCartId}`
+                );
+                if (orderResponse.ok) {
+                    const orderData = await orderResponse.json();
+                    setOrderCount(orderData.count || 0);
+                }
+
                 if (session) {
                     const wishlistResponse = await fetch('/api/wishlist/count');
                     if (wishlistResponse.ok) {
@@ -68,18 +76,24 @@ const CartSection: React.FC = () => {
 
         fetchCounts();
 
-        // Set up event listener for cart updates
         const handleCartUpdate = (event: CustomEvent) => {
             if (event.detail && typeof event.detail.cartItemCount === 'number') {
                 setCartCount(event.detail.cartItemCount);
             }
         };
 
-        // Listen for custom cart update events
+        const handleOrderUpdate = (event: CustomEvent) => {
+            if (event.detail && typeof event.detail.orderCount === 'number') {
+                setOrderCount(event.detail.orderCount);
+            }
+        };
+
         window.addEventListener('cart-updated', handleCartUpdate as EventListener);
+        window.addEventListener('order-updated', handleOrderUpdate as EventListener);
 
         return () => {
             window.removeEventListener('cart-updated', handleCartUpdate as EventListener);
+            window.removeEventListener('order-updated', handleOrderUpdate as EventListener);
         };
     }, [session]);
 
@@ -88,7 +102,6 @@ const CartSection: React.FC = () => {
         setIsDropdownOpen(!isDropdownOpen);
     };
 
-    // Simple logout function using next-auth signOut
     const handleLogout = () => {
         signOut({ redirect: true, callbackUrl: '/login' });
     };
@@ -117,7 +130,7 @@ const CartSection: React.FC = () => {
                 </svg>
             ),
             onClick: (e: React.MouseEvent) => router.push("/cart"),
-            count: cartCount // Remove session condition, always show cart count
+            count: cartCount
         },
         {
             name: "Orders",
@@ -133,9 +146,8 @@ const CartSection: React.FC = () => {
                 </svg>
             ),
             onClick: (e: React.MouseEvent) => router.push("/orders"),
-            count: null
+            count: orderCount
         },
-        // Profile item with dropdown
         {
             name: session ? "Account" : "Sign in",
             tooltip: session ? "Manage your account" : "Sign in to your account",
@@ -160,7 +172,6 @@ const CartSection: React.FC = () => {
                     name: "Browsing History",
                     onClick: () => router.push("/account/history")
                 },
-                // Add the Logout option
                 {
                     name: "Logout",
                     onClick: handleLogout
@@ -168,7 +179,6 @@ const CartSection: React.FC = () => {
             ] : undefined
         },
     ];
-
 
     return (
         <div className="flex items-center justify-end space-x-4">
@@ -203,10 +213,10 @@ const CartSection: React.FC = () => {
 
                         {/* Text Label */}
                         <span className="ml-2 text-sm font-medium hidden sm:inline-block">{item.name}</span>
-                        
+
                         {/* Tooltip */}
                         {activeTooltip === index && (
-                            <div 
+                            <div
                                 className="absolute left-1/2 transform -translate-x-1/2 bottom-full mb-2 px-3 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap z-50 shadow-lg"
                                 style={{ minWidth: 'max-content' }}
                             >

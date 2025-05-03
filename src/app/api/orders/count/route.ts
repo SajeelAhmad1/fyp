@@ -5,18 +5,32 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     
-    // Get query parameters
     const userId = searchParams.get('userId');
+    const guestCartId = searchParams.get('guestCartId');
 
-    // Build where clause
     const where: any = {};
-    if (userId) where.userId = userId;
+
+    if (userId) {
+      where.userId = userId;
+    } else if (guestCartId) {
+      const guestEmail = localStorage.getItem("guestEmail");
+      
+      where.OR = [
+        { guestEmail: guestEmail || undefined },
+        { isGuestOrder: true }
+      ];
+    } else {
+      return NextResponse.json({
+        success: true,
+        count: 0
+      });
+    }
 
     const count = await prisma.order.count({ where });
 
     return NextResponse.json({
       success: true,
-      data: { count }
+      count
     });
   } catch (error: any) {
     return NextResponse.json(

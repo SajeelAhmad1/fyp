@@ -9,6 +9,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 import StripePaymentForm from './stripePatmentForm';
 import { Order, CustomerProfile } from '@/types/checkout';
+import { isValid as isValidPostcode } from "postcode";
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 const GUEST_EMAIL_KEY = 'guestEmail';
@@ -32,6 +33,42 @@ const CheckoutPage = () => {
     const [orderCount, setOrderCount] = useState<number | null>(null);
     const [firstOrderDiscount, setFirstOrderDiscount] = useState<number | null>(null);
     const [orderPrice, setOrderPrice] = useState<number | null>(null);
+    const [postcodeSearchTerm, setPostcodeSearchTerm] = useState("");
+    const [filteredPostcodes, setFilteredPostcodes] = useState<string[]>([]);
+    const [isSearchingPostcode, setIsSearchingPostcode] = useState(false);
+    useEffect(() => {
+        if (postcodeSearchTerm.length > 0) {
+            setIsSearchingPostcode(true);
+            const timer = setTimeout(() => {
+                const ukPostcodeExamples = [
+                    "SW1A 1AA", "EC1A 1BB", "W1A 0AX", "M1 1AE",
+                    postcodeSearchTerm.toUpperCase().replace(/[^A-Z0-9]/g, '')
+                ];
+
+                const filtered = ukPostcodeExamples.filter(code =>
+                    code.includes(postcodeSearchTerm.toUpperCase())
+                );
+
+                setFilteredPostcodes(filtered);
+                setIsSearchingPostcode(false);
+            }, 300);
+
+            return () => clearTimeout(timer);
+        } else {
+            setFilteredPostcodes([]);
+        }
+    }, [postcodeSearchTerm]);
+    const handlePostcodeSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setPostcodeSearchTerm(e.target.value);
+    };
+    const selectPostcode = (postcode: string, field: 'shippingPostalCode' | 'billingPostalCode') => {
+        setFormData(prev => ({
+            ...prev,
+            [field]: postcode
+        }));
+        setPostcodeSearchTerm("");
+        setFilteredPostcodes([]);
+    };
 
     const paymentIntentCreatingRef = useRef(false);
 
@@ -105,15 +142,15 @@ const CheckoutPage = () => {
             shippingStreet: !formData.shippingStreet.trim(),
             shippingCity: !formData.shippingCity.trim(),
             shippingState: !formData.shippingState.trim(),
-            shippingPostalCode: !formData.shippingPostalCode.trim(),
+            shippingPostalCode: !formData.shippingPostalCode.trim() || !isValidPostcode(formData.shippingPostalCode),
             shippingCountry: !formData.shippingCountry.trim(),
-            shippingPhone: !formData.shippingPhone.trim() || formData.shippingPhone.length !== 10, // Must be exactly 10 digits
+            shippingPhone: !formData.shippingPhone.trim() || formData.shippingPhone.length !== 10,
             billingFirstName: !formData.useSameAddress && !formData.billingFirstName.trim(),
             billingLastName: !formData.useSameAddress && !formData.billingLastName.trim(),
             billingStreet: !formData.useSameAddress && !formData.billingStreet.trim(),
             billingCity: !formData.useSameAddress && !formData.billingCity.trim(),
             billingState: !formData.useSameAddress && !formData.billingState.trim(),
-            billingPostalCode: !formData.useSameAddress && !formData.billingPostalCode.trim(),
+            billingPostalCode: !formData.useSameAddress && (!formData.billingPostalCode.trim() || !isValidPostcode(formData.billingPostalCode)),
             billingCountry: !formData.useSameAddress && !formData.billingCountry.trim(),
             email: !formData.email.trim() || !/^\S+@\S+\.\S+$/.test(formData.email)
         };
@@ -374,7 +411,7 @@ const CheckoutPage = () => {
         if (price === null || price === undefined) return "0.00";
         const numPrice = typeof price === 'string' ? parseFloat(price) : price;
         if (isNaN(numPrice)) return "0.00";
-        
+
         // Price is already discounted at this point, so we just format it
         return numPrice.toFixed(2);
     };
@@ -736,7 +773,7 @@ const CheckoutPage = () => {
                                     />
                                     {formErrors.shippingState && <p className="text-red-500 text-xs mt-1">State/Province is required</p>}
                                 </div>
-                                <div>
+                                <div className="relative">
                                     <label htmlFor="shippingPostalCode" className="block text-sm font-medium text-gray-700 mb-1">
                                         Postal Code *
                                     </label>
@@ -745,11 +782,24 @@ const CheckoutPage = () => {
                                         id="shippingPostalCode"
                                         name="shippingPostalCode"
                                         placeholder="Enter Postal Code"
-                                        value={formData.shippingPostalCode}
-                                        onChange={handleInputChange}
+                                        value={postcodeSearchTerm || formData.shippingPostalCode}
+                                        onChange={handlePostcodeSearch}
                                         className={`w-full p-2 border ${formErrors.shippingPostalCode ? 'border-red-500' : 'border-gray-300'} rounded`}
                                         required
                                     />
+                                    {filteredPostcodes.length > 0 && (
+                                        <div className="absolute z-10 mt-1 w-full bg-white shadow-lg rounded-md border border-gray-300 max-h-60 overflow-auto">
+                                            {filteredPostcodes.map((postcode, index) => (
+                                                <div
+                                                    key={index}
+                                                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                                                    onClick={() => selectPostcode(postcode, 'shippingPostalCode')}
+                                                >
+                                                    {postcode}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
                                     {formErrors.shippingPostalCode && <p className="text-red-500 text-xs mt-1">Postal code is required</p>}
                                 </div>
                                 <div>
@@ -910,7 +960,7 @@ const CheckoutPage = () => {
                                         />
                                         {formErrors.billingState && <p className="text-red-500 text-xs mt-1">State/Province is required</p>}
                                     </div>
-                                    <div>
+                                    <div className="relative">
                                         <label htmlFor="billingPostalCode" className="block text-sm font-medium text-gray-700 mb-1">
                                             Postal Code *
                                         </label>
@@ -919,11 +969,24 @@ const CheckoutPage = () => {
                                             id="billingPostalCode"
                                             name="billingPostalCode"
                                             placeholder="Enter Postal Code"
-                                            value={formData.billingPostalCode}
-                                            onChange={handleInputChange}
+                                            value={postcodeSearchTerm || formData.billingPostalCode}
+                                            onChange={handlePostcodeSearch}
                                             className={`w-full p-2 border ${formErrors.billingPostalCode ? 'border-red-500' : 'border-gray-300'} rounded`}
                                             required
                                         />
+                                        {filteredPostcodes.length > 0 && (
+                                            <div className="absolute z-10 mt-1 w-full bg-white shadow-lg rounded-md border border-gray-300 max-h-60 overflow-auto">
+                                                {filteredPostcodes.map((postcode, index) => (
+                                                    <div
+                                                        key={index}
+                                                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                                                        onClick={() => selectPostcode(postcode, 'billingPostalCode')}
+                                                    >
+                                                        {postcode}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
                                         {formErrors.billingPostalCode && <p className="text-red-500 text-xs mt-1">Postal code is required</p>}
                                     </div>
                                     <div>
