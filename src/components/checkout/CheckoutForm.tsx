@@ -344,7 +344,7 @@ export default function CheckoutForm({ onSubmit, isLoading, cartItems }: any) {
                             className="h-4 w-4 text-blue-600"
                         />
                         <label htmlFor="standard-shipping" className="ml-2 block text-sm font-medium text-gray-700">
-                            Standard Shipping ($5.00) - 3-5 business days
+                            Standard Shipping (£5.00) - 3-5 business days
                         </label>
                     </div>
 
@@ -359,7 +359,7 @@ export default function CheckoutForm({ onSubmit, isLoading, cartItems }: any) {
                             className="h-4 w-4 text-blue-600"
                         />
                         <label htmlFor="express-shipping" className="ml-2 block text-sm font-medium text-gray-700">
-                            Express Shipping ($15.00) - 1-2 business days
+                            Express Shipping (£15.00) - 1-2 business days
                         </label>
                     </div>
                 </div>
@@ -416,7 +416,7 @@ export default function CheckoutForm({ onSubmit, isLoading, cartItems }: any) {
                                         <span className="font-medium">{item.quantity}x</span>
                                         <span className="ml-2">{item.name}</span>
                                     </div>
-                                    <span>${(item.price * item.quantity).toFixed(2)}</span>
+                                    <span>£{(item.price * item.quantity).toFixed(2)}</span>
                                 </div>
                             ))}
                         </div>
@@ -424,15 +424,15 @@ export default function CheckoutForm({ onSubmit, isLoading, cartItems }: any) {
                         <div className="space-y-2 pt-4">
                             <div className="flex justify-between">
                                 <span>Subtotal</span>
-                                <span>${subtotal.toFixed(2)}</span>
+                                <span>£{subtotal.toFixed(2)}</span>
                             </div>
                             <div className="flex justify-between">
                                 <span>Shipping</span>
-                                <span>${shippingCost.toFixed(2)}</span>
+                                <span>£{shippingCost.toFixed(2)}</span>
                             </div>
                             <div className="flex justify-between font-bold text-lg pt-2 border-t">
                                 <span>Total</span>
-                                <span>${total.toFixed(2)}</span>
+                                <span>£{total.toFixed(2)}</span>
                             </div>
                         </div>
                     </div>

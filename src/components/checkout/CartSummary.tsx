@@ -30,7 +30,7 @@ export default function CartSummary({ items }:any) {
             </div>
             
             <div className="text-right">
-              <p className="font-medium">${(item.product.price * item.quantity).toFixed(2)}</p>
+              <p className="font-medium">£{(item.product.price * item.quantity).toFixed(2)}</p>
             </div>
           </div>
         ))}

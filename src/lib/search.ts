@@ -125,7 +125,7 @@ export function highlightSearchTerms(text: string, query: string): string {
   
   for (const term of terms) {
     const regex = new RegExp(`(${term})`, 'gi');
-    result = result.replace(regex, '<mark>$1</mark>');
+    result = result.replace(regex, '<mark>£1</mark>');
   }
   
   return result;

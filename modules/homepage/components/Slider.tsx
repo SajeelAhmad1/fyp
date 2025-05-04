@@ -7,9 +7,9 @@ const sliderData = [
     {
         title: "Xbox Consoles",
         subtitle: "THE BEST PLACE TO PLAY",
-        description: "Save up to 50% on select Xbox games. Get 3 months of PC Game Pass for $2 USD.",
+        description: "Save up to 50% on select Xbox games. Get 3 months of PC Game Pass for £2 GBP.",
         image: "/assets/img/xbox-console.png",
-        price: "$299",
+        price: "£299",
         buttonText: "SHOP NOW"
     },
     // Add more slides as needed
@@ -18,7 +18,7 @@ const sliderData = [
         subtitle: "NEXT GEN GAMING",
         description: "Experience lightning-fast loading with an ultra-high speed SSD and immersive gameplay.",
         image: "/assets/img/ps5-console.png",
-        price: "$499",
+        price: "£499",
         buttonText: "SHOP NOW"
     },
     {
@@ -26,7 +26,7 @@ const sliderData = [
         subtitle: "PLAY ANYWHERE",
         description: "Play at home or on the go with the versatile Nintendo Switch gaming system.",
         image: "/assets/img/switch-console.png",
-        price: "$299",
+        price: "£299",
         buttonText: "SHOP NOW"
     }
 ];
@@ -43,7 +43,7 @@ const rightProducts = [
     {
         title: "Xiaomi FlipBuds Pro",
         image: "/assets/img/flipbuds-pro.png",
-        price: "$299 USD",
+        price: "£299 GBP",
         buttonText: "SHOP NOW"
     }
 ];

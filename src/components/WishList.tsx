@@ -206,15 +206,15 @@ export default function Wishlist() {
                         {item.product.discount && item.product.discount > 0 ? (
                           <>
                             <span className="text-red-500 font-bold">
-                              ${(Number(item.product.price) - (Number(item.product.discount)*Number(item.product.price)/100)).toFixed(2)}
+                              £{(Number(item.product.price) - (Number(item.product.discount)*Number(item.product.price)/100)).toFixed(2)}
                             </span>
                             <span className="text-gray-500 line-through text-sm">
-                              ${Number(item.product.price).toFixed(2)}
+                              £{Number(item.product.price).toFixed(2)}
                             </span>
                           </>
                         ) : (
                           <span className="font-bold">
-                            ${Number(item.product.price).toFixed(2)}
+                            £{Number(item.product.price).toFixed(2)}
                           </span>
                         )}
                       </div>

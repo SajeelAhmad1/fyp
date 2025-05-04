@@ -137,7 +137,7 @@ export default function Account() {
                                 </div>
                                 <div className="border p-4 rounded">
                                     <p className="text-gray-500 text-sm">Member Since</p>
-                                    <p className="font-medium">{safeProfile.createdAt ? new Date(safeProfile.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : "Not available"}</p>
+                                    <p className="font-medium">{safeProfile.createdAt ? new Date(safeProfile.createdAt).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }) : "Not available"}</p>
                                 </div>
                             </div>
 

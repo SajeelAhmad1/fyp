@@ -16,7 +16,7 @@ const TopSeller = () => {
                     <div className="flex-col justify-center items-center lg:items-start gap-6 lg:gap-9 inline-flex">
                         <div className="flex-col justify-center items-center lg:items-start gap-3 lg:gap-4 flex">
                             <div className="text-sky-900 text-xl font-semibold text-center lg:text-left">JBL bar 2.1 deep bass</div>
-                            <div className="text-neutral-600 text-lg font-semibold">$11,70</div>
+                            <div className="text-neutral-600 text-lg font-semibold">£11,70</div>
                             <Star count={5} />
                         </div>
                         <div className="justify-center items-center gap-2 lg:gap-3 flex flex-wrap">
@@ -60,7 +60,7 @@ const TopSeller = () => {
                             <img className="w-full sm:w-60 lg:w-72 h-auto sm:h-36 lg:h-44 p-2 relative rounded-2xl" src="https://source.unsplash.com/288x176?gaming" alt="Gaming" />
                             <div className="flex-col justify-center items-center sm:items-start gap-2 sm:gap-4 inline-flex mt-3 sm:mt-0">
                                 <div className="text-sky-900 text-lg font-medium text-center sm:text-left">Play game</div>
-                                <div className="text-neutral-600 text-lg font-semibold">$11,70</div>
+                                <div className="text-neutral-600 text-lg font-semibold">£11,70</div>
                                 <Star count={5} />
                             </div>
                         </div>
@@ -70,7 +70,7 @@ const TopSeller = () => {
                             <img className="w-full sm:w-60 lg:w-72 h-auto sm:h-36 lg:h-44 p-2 relative rounded-2xl" src="https://source.unsplash.com/288x176?laptop" alt="Laptop" />
                             <div className="flex-col justify-center items-center sm:items-start gap-2 sm:gap-4 inline-flex mt-3 sm:mt-0">
                                 <div className="text-sky-900 text-lg font-medium text-center sm:text-left">Play game</div>
-                                <div className="text-neutral-600 text-lg font-semibold">$11,70</div>
+                                <div className="text-neutral-600 text-lg font-semibold">£11,70</div>
                                 <Star count={5} />
                             </div>
                         </div>

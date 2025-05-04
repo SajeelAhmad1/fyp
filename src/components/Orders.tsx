@@ -202,7 +202,7 @@ export default function Orders() {
                                                         SKU: {item.product.sku} | Quantity: {item.quantity}
                                                     </p>
                                                     <p className="text-sm font-semibold">
-                                                        ${(item.price * item.quantity)}
+                                                    £{(item.price * item.quantity)}
                                                     </p>
                                                 </div>
                                             </div>
@@ -210,7 +210,7 @@ export default function Orders() {
                                     </div>
                                     <div className="mt-4 text-right">
                                         <p className="text-lg font-bold">
-                                            Total: ${order.totalPrice}
+                                            Total: £{order.totalPrice}
                                         </p>
                                     </div>
                                 </div>

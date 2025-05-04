@@ -10,7 +10,7 @@ interface ProductImage {
   url: string;
 }
 
-type PaymentMethod = {
+export type PaymentMethod = {
   type: string;
   card?: {
     brand: string;
@@ -342,10 +342,10 @@ export default function OrderConfirmationPage() {
                     {item.product.discount && parseFloat(item.product.discount) > 0 ? (
                       <>
                         <p className="font-medium">${(getDiscountedPrice(item.price, item.product.discount) * item.quantity).toFixed(2)}</p>
-                        <p className="text-xs text-gray-500 line-through">${(parseFloat(item.price) * item.quantity).toFixed(2)}</p>
+                        <p className="text-xs text-gray-500 line-through">£{(parseFloat(item.price) * item.quantity).toFixed(2)}</p>
                       </>
                     ) : (
-                      <p className="font-medium">${(parseFloat(item.price) * item.quantity).toFixed(2)}</p>
+                      <p className="font-medium">£{(parseFloat(item.price) * item.quantity).toFixed(2)}</p>
                     )}
                   </div>
                 </div>
@@ -421,23 +421,23 @@ export default function OrderConfirmationPage() {
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span className="text-gray-600">Subtotal</span>
-                <span>${subtotal.toFixed(2)}</span>
+                <span>£{subtotal.toFixed(2)}</span>
               </div>
               
               <div className="flex justify-between">
                 <span className="text-gray-600">Shipping</span>
-                <span>${shippingCost.toFixed(2)}</span>
+                <span>£{shippingCost.toFixed(2)}</span>
               </div>
               
               <div className="flex justify-between">
                 <span className="text-gray-600">Tax</span>
-                <span>${tax.toFixed(2)}</span>
+                <span>£{tax.toFixed(2)}</span>
               </div>
               
               <div className="pt-2 mt-2 border-t border-gray-200">
                 <div className="flex justify-between font-semibold">
                   <span>Total</span>
-                  <span>${total.toFixed(2)}</span>
+                  <span>£{total.toFixed(2)}</span>
                 </div>
               </div>
             </div>

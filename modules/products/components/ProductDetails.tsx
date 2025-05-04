@@ -495,7 +495,7 @@ const ProductDetails: React.FC = () => {
                   </div>
                 </div>
               ) : (
-                <div className="text-neutral-600 text-2xl font-semibold">${product.price}</div>
+                <div className="text-neutral-600 text-2xl font-semibold">£{product.price}</div>
               )}
             </div>
 

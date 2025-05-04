@@ -7,7 +7,7 @@
  */
 export function formatDate(dateString: string | Date): string {
     const date = new Date(dateString);
-    return new Intl.DateTimeFormat('en-US', {
+    return new Intl.DateTimeFormat('en-GB', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -17,10 +17,10 @@ export function formatDate(dateString: string | Date): string {
   /**
    * Formats price as currency
    * @param price - Price to format
-   * @returns Formatted price string (e.g. "$19.99")
+   * @returns Formatted price string (e.g. "£19.99")
    */
   export function formatPrice(price: number): string {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-GB', {
       style: 'currency',
       currency: 'GBP',
     }).format(price);

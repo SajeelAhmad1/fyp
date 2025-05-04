@@ -314,11 +314,11 @@ const CartSidebar = () => {
                       <h3 className="font-medium">{item.product.name}</h3>
                       <div className="flex items-center mt-1">
                         <span className="text-gray-900 font-medium">
-                          ${item.priceAfterDiscount.toFixed(2)}
+                        £{item.priceAfterDiscount.toFixed(2)}
                         </span>
                         {item.discountPercentage > 0 && (
                           <span className="ml-2 text-sm text-gray-500 line-through">
-                            ${item.price.toFixed(2)}
+                            £{item.price.toFixed(2)}
                           </span>
                         )}
                       </div>
@@ -347,7 +347,7 @@ const CartSidebar = () => {
                       </div>
                       {item.discountPercentage > 0 && (
                         <div className="mt-1 text-sm text-green-600">
-                          You save ${(item.price * item.quantity - item.itemTotal).toFixed(2)} ({item.discountPercentage}% off)
+                          You save £{(item.price * item.quantity - item.itemTotal).toFixed(2)} ({item.discountPercentage}% off)
                         </div>
                       )}
                     </div>
@@ -361,7 +361,7 @@ const CartSidebar = () => {
             <div className="border-t p-4">
               <div className="flex justify-between mb-4">
                 <span className="font-medium">Subtotal</span>
-                <span className="font-bold">${calculations.total.toFixed(2)}</span>
+                <span className="font-bold">£{calculations.total.toFixed(2)}</span>
               </div>
               <button
                 onClick={handleProceedToCheckout}

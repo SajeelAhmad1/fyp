@@ -56,11 +56,11 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products }) => {
               <div className="flex items-center space-x-2">
                 {product.discount ? (
                   <>
-                    <span className="font-bold text-sm">${(product.price * (1 - Number(product.discount) / 100)).toFixed(2)}</span>
-                    <span className="text-gray-500 text-xs line-through">${Number(product.price).toFixed(2)}</span>
+                    <span className="font-bold text-sm">£{(product.price * (1 - Number(product.discount) / 100)).toFixed(2)}</span>
+                    <span className="text-gray-500 text-xs line-through">£{Number(product.price).toFixed(2)}</span>
                   </>
                 ) : (
-                  <span className="font-bold text-sm">${Number(product.price).toFixed(2)}</span>
+                  <span className="font-bold text-sm">£{Number(product.price).toFixed(2)}</span>
                 )}
               </div>
             </Link>
