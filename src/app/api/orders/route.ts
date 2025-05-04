@@ -17,14 +17,6 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "Valid email is required for guest orders" }, { status: 400 });
         }
 
-        // Calculate totalPrice from items with precise decimal calculation
-        const totalPrice = body.items.reduce((acc: Prisma.Decimal, item: any) => {
-            const finalPrice = new Prisma.Decimal(item.unitPrice)
-                .mul(item.quantity)
-                .mul(new Prisma.Decimal(1).sub(new Prisma.Decimal(item.discountPercentage || 0).div(100)));
-            return acc.add(finalPrice);
-        }, new Prisma.Decimal(0));
-
         // Check product availability and stock
         for (const item of body.items) {
             const product = await prisma.product.findUnique({
@@ -47,7 +39,7 @@ export async function POST(request: Request) {
                     userId: body.userId || undefined,
                     isGuestOrder: !body.userId,
                     guestEmail: !body.userId ? body.guestEmail : undefined,
-                    totalPrice,
+                    totalPrice: body.totalPrice,
                     status: body.status,
                     shippingFirstName: body.shippingFirstName || "",
                     shippingLastName: body.shippingLastName || "",

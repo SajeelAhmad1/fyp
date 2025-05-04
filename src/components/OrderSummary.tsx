@@ -55,31 +55,11 @@ interface OrderSummaryProps {
 }
 
 export default function OrderSummary({ order, paymentMethod }: OrderSummaryProps) {
-  const [orderCount, setOrderCount] = useState<number>(0);
   const { data: session }: any = useSession();
 
   // Calculate subtotal from order items
   const subtotal = order.items.reduce((total, item) =>
     total + (item.quantity * item.price), 0);
-
-  useEffect(() => {
-    const fetchOrderCount = async () => {
-      if (session?.user?.id) {
-        try {
-          const response = await fetch(`/api/orders/count?userId=${session.user.id}`);
-          const data = await response.json();
-          if (data.success) {
-            setOrderCount(data.data.count);
-          }
-        } catch (error) {
-          console.error('Failed to fetch order count:', error);
-        } finally {
-        }
-      }
-    };
-
-    fetchOrderCount();
-  }, [session]);
 
   return (
     <div className="bg-gray-50 p-6 rounded-lg border border-gray-400">
@@ -142,23 +122,12 @@ export default function OrderSummary({ order, paymentMethod }: OrderSummaryProps
               <td colSpan={2} className="text-right py-2 font-semibold">Discount:</td>
               <td className="text-right py-2">{formatCurrency(subtotal - order.totalPrice)}</td>
             </tr>
-            {(orderCount === 0) ? (
-              <>
-                <tr>
-                  <td colSpan={2} className="text-right py-2 font-semibold">First Order Discount:</td>
-                  <td className="text-right py-2">{formatCurrency(order.totalPrice * 0.2)}</td>
-                </tr>
-                <tr className="font-bold">
-                  <td colSpan={2} className="text-right py-2 text-xl">Total:</td>
-                  <td className="text-right py-2 text-xl">{formatCurrency(order.totalPrice - (order.totalPrice * 0.2) + (subtotal - order.totalPrice))}</td>
-                </tr>
-              </>
-            ):(
-              <tr className="font-bold">
-                  <td colSpan={2} className="text-right py-2 text-xl">Total:</td>
-                  <td className="text-right py-2 text-xl">{formatCurrency(order.totalPrice)}</td>
-                </tr>
-            )}
+
+            <tr className="font-bold">
+              <td colSpan={2} className="text-right py-2 text-xl">Total:</td>
+              <td className="text-right py-2 text-xl">{formatCurrency(order.totalPrice)}</td>
+            </tr>
+
           </tfoot>
         </table>
       </div>

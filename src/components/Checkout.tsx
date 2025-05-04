@@ -15,6 +15,16 @@ const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
 const GUEST_EMAIL_KEY = 'guestEmail';
 const GUEST_CART_ID_KEY = 'guestCartId';
 
+interface OrderCountResponse {
+    success: boolean;
+    count: number;
+}
+
+interface PaymentIntentResponse {
+    clientSecret: string;
+    amount: number;
+}
+
 const CheckoutPage = () => {
     const { data: session } = useSession();
     const router = useRouter();
@@ -126,8 +136,16 @@ const CheckoutPage = () => {
         product: item.product
     }));
 
-    const displayTotal = order ? order.totalPrice : displayItems.reduce((sum, item) => sum + item.price, 0);
-
+    const displayTotal = order ? order.totalPrice : cartItems.reduce((sum, item) => {
+        const price = typeof item.product.price === 'string' 
+            ? parseFloat(item.product.price) 
+            : item.product.price || 0;
+        const discount = item.product.discount || 0;
+        return sum + (price * (1 - discount / 100)) * item.quantity;
+    }, 0);
+    
+    // Calculate final total with first order discount
+    const finalTotal = orderCount === 0 ? displayTotal * 0.8 : displayTotal;
     const getGuestCartId = useCallback(() => {
         if (typeof window !== 'undefined') {
             return localStorage.getItem(GUEST_CART_ID_KEY);
@@ -175,42 +193,48 @@ const CheckoutPage = () => {
             if (session?.user?.id) {
                 try {
                     const response = await fetch(`/api/orders/count?userId=${session.user.id}`);
-                    const data = await response.json();
-                    if (data.success) {
-                        setOrderCount(data.data.count);
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch order count');
                     }
+                    const data = await response.json();
+                    // Make sure this matches your actual API response structure
+                    setOrderCount(data.count || 0); // Changed from data.data.count to data.count
                 } catch (error) {
                     console.error('Failed to fetch order count:', error);
-                } finally {
+                    setOrderCount(0); // Fallback to 0 on error
                 }
+            } else {
+                setOrderCount(0); // Guests always have order count 0
             }
         };
 
         fetchOrderCount();
-    }, [session]);
+    }, [session?.user?.id]); // More specific dependency
 
     const createPaymentIntent = async (amount: number, orderIdParam?: string) => {
         if (paymentIntentCreatingRef.current || clientSecret) {
             return;
         }
-
+    
         try {
             paymentIntentCreatingRef.current = true;
-            console.log("Creating payment intent with amount:", amount);
-
+            // Apply first order discount if applicable
+            const finalAmount = orderCount === 0 ? amount * 0.8 : amount;
+            console.log("Creating payment intent with amount:", finalAmount);
+    
             const response = await fetch('/api/create-payment-intent', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    amount: Math.round(amount * 100),
+                    amount: Math.round(finalAmount * 100), // Apply discount here
                     currency: 'gbp',
                     orderId: orderIdParam,
                     email: formData.email || session?.user?.email,
                 }),
             });
-
+    
             const responseData = await response.json();
-
+    
             if (responseData.clientSecret) {
                 setClientSecret(responseData.clientSecret);
             } else {
@@ -474,6 +498,7 @@ const CheckoutPage = () => {
                 billingPostalCode: formData.useSameAddress ? null : formData.billingPostalCode,
                 billingCountry: formData.useSameAddress ? null : formData.billingCountry,
                 email: formData.email,
+                totalPrice: orderCount === 0 ? displayTotal - (displayTotal * 0.2) : displayTotal,
                 paymentMethod: 'STRIPE',
                 status: OrderStatus.CONFIRMED,
                 ...(paymentData ? {
@@ -573,8 +598,34 @@ const CheckoutPage = () => {
         if (orderCount !== null && displayTotal !== null) {
             const discount = orderCount === 0 ? displayTotal * 0.2 : 0;
             setFirstOrderDiscount(discount);
+            console.log('Order count:', orderCount, 'Discount:', discount);
+
+            // Update the payment intent if needed
+            if (clientSecret && discount > 0) {
+                const newAmount = Math.round((displayTotal - discount) * 100);
+                updatePaymentIntent(newAmount);
+            }
         }
-    }, [orderCount, displayTotal]);
+    }, [orderCount, displayTotal, clientSecret]);
+
+    const updatePaymentIntent = async (amount: number) => {
+        try {
+            const response = await fetch('/api/update-payment-intent', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    amount,
+                    clientSecret
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to update payment intent');
+            }
+        } catch (error) {
+            console.error('Error updating payment intent:', error);
+        }
+    };
 
     if (loading || isCreatingOrder) {
         return <div className="flex justify-center items-center h-64">Loading checkout...</div>;
@@ -681,14 +732,32 @@ const CheckoutPage = () => {
                                         ))}
                                     </tbody>
                                     <tfoot className="bg-gray-50">
+
                                         {orderCount === 0 && (
-                                            <tr>
-                                                <td colSpan={2} className="px-4 py-3 text-right font-semibold">First Order Discount:</td>
-                                                <td className="px-4 py-3 text-right font-semibold">
-                                                    -£{firstOrderDiscount !== null ? firstOrderDiscount.toFixed(2) : '0.00'}
+                                            <tr className="bg-green-50 border-l-4 border-green-400 p-4 mb-4">
+                                                <td>
+                                                    <div className="flex">
+                                                        <div className="flex-shrink-0">
+                                                            <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                                                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                                            </svg>
+                                                        </div>
+                                                        <div className="ml-3">
+                                                            <p className="text-sm text-green-700">
+                                                                You qualify for a 20% first-order discount!
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>
+
+                                                </td>
+                                                <td className='px-4 py-3 text-right font-semibold'>
+                                                    -£{(displayTotal * 0.2).toFixed(2)}
                                                 </td>
                                             </tr>
                                         )}
+
                                         <tr>
                                             <td colSpan={2} className="px-4 py-3 text-right font-semibold">Total:</td>
                                             <td className="px-4 py-3 text-right font-semibold">
@@ -1031,7 +1100,7 @@ const CheckoutPage = () => {
                                     onPaymentSuccess={handlePaymentSuccess}
                                     validateForm={validateForm}
                                     totalPrice={displayTotal}
-                                    firstOrderDiscount={firstOrderDiscount}
+                                    orderCount={orderCount}
                                 />
                             </div>
                         </div>

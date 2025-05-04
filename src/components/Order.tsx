@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { toast } from 'sonner';
 import { formatDate } from '@/utils/checkoutUtils';
+import { useSession } from 'next-auth/react';
 
 interface ProductImage {
   url: string;
@@ -86,6 +87,7 @@ interface Order {
   billingCountry: string | null;
   items: OrderItem[];
   payment: Payment | null;
+  paymentIntentId?: string;
 }
 
 const OrderSkeleton = () => {
@@ -98,7 +100,7 @@ const OrderSkeleton = () => {
           <div className="h-3 bg-gray-200 w-1/2 mx-auto rounded"></div>
         </div>
       </div>
-      
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
           <div className="bg-white p-6 rounded-lg shadow-md mb-8">
@@ -126,7 +128,7 @@ const OrderSkeleton = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="bg-white p-6 rounded-lg shadow-md">
               <div className="animate-pulse">
@@ -139,7 +141,7 @@ const OrderSkeleton = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-white p-6 rounded-lg shadow-md">
               <div className="animate-pulse">
                 <div className="h-6 bg-gray-200 w-3/4 mb-4 rounded"></div>
@@ -152,7 +154,7 @@ const OrderSkeleton = () => {
             </div>
           </div>
         </div>
-        
+
         <div className="lg:col-span-1">
           <div className="bg-white p-6 rounded-lg shadow-md">
             <div className="animate-pulse">
@@ -197,7 +199,8 @@ export default function OrderConfirmationPage() {
   const [error, setError] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null);
   const [paymentMethodId, setPaymentMethodId] = useState<string | null>(null);
-  
+  const { data: session }: any = useSession();
+
   useEffect(() => {
     const fetchOrder = async () => {
       try {
@@ -207,15 +210,14 @@ export default function OrderConfirmationPage() {
         }
 
         const response = await fetch(`/api/orders/get-order-by-id/${orderId}`);
-        
+
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(errorData.error || 'Failed to fetch order');
         }
 
         const data = await response.json();
-        setPaymentMethodId(data.data.paymentMethodId)
-
+        setPaymentMethodId(data.data.paymentMethodId);
         setOrder(data.data);
       } catch (err) {
         console.error('Error fetching order:', err);
@@ -225,7 +227,7 @@ export default function OrderConfirmationPage() {
         setIsLoading(false);
       }
     };
-    
+
     fetchOrder();
   }, [params.id]);
 
@@ -233,20 +235,19 @@ export default function OrderConfirmationPage() {
     const fetchPaymentMethod = async (paymentMethodId: string | null) => {
       try {
         if (!paymentMethodId) return;
-        
+
         const res = await fetch('/api/get-payment-method', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ paymentMethodId }),
         });
-        
+
         if (!res.ok) {
           throw new Error('Failed to fetch payment method');
         }
-        
+
         const data = await res.json();
         setPaymentMethod(data);
-        console.log(paymentMethod)
       } catch (err) {
         console.error('Failed to load payment method:', err);
         toast.error('Failed to load payment details');
@@ -256,21 +257,24 @@ export default function OrderConfirmationPage() {
     fetchPaymentMethod(paymentMethodId);
   }, [paymentMethodId]);
 
-  const calculateOrderDetails = (order: Order) => {
-    const subtotal = order.items.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
-    const shippingCost = 5; // Flat rate shipping
-    const taxRate = 0.08; // 8% tax
-    const tax = subtotal * taxRate;
-    const total = parseFloat(order.totalPrice);
-    
-    return { subtotal, shippingCost, tax, total };
-  };
-  
   const getDiscountedPrice = (originalPrice: string, discount: string) => {
     if (!discount || discount === "0") return parseFloat(originalPrice);
     const discountPercent = parseFloat(discount);
     const price = parseFloat(originalPrice);
     return price - (price * (discountPercent / 100));
+  };
+
+  const calculateOrderDetails = (order: Order) => {
+    // Calculate subtotal with discounts applied
+    const subtotal = order.items.reduce((sum, item) => {
+      const itemPrice = getDiscountedPrice(item.price, item.product.discount || "0");
+      return sum + (itemPrice * item.quantity);
+    }, 0);
+
+    return {
+      subtotal,
+      total: parseFloat(order.totalPrice)
+    };
   };
 
   if (isLoading) {
@@ -292,8 +296,8 @@ export default function OrderConfirmationPage() {
     );
   }
 
-  const { subtotal, shippingCost, tax, total } = calculateOrderDetails(order);
-  
+  const { subtotal, total } = calculateOrderDetails(order);
+
   return (
     <div className="container mx-auto py-8 px-4">
       <div className="bg-green-50 p-6 rounded-lg mb-8 text-center">
@@ -305,12 +309,12 @@ export default function OrderConfirmationPage() {
           Order #{order.id} • Placed on {formatDate(order.createdAt)}
         </p>
       </div>
-      
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
           <div className="bg-white p-6 rounded-lg shadow-md mb-8">
             <h2 className="text-xl font-semibold mb-4">Order Items</h2>
-            
+
             <div className="space-y-4">
               {order.items.map((item) => (
                 <div key={item.id} className="flex items-center space-x-4 py-2 border-b last:border-b-0">
@@ -329,19 +333,22 @@ export default function OrderConfirmationPage() {
                       </div>
                     )}
                   </div>
-                  
+
                   <div className="flex-grow">
                     <h3 className="font-medium">{item.product.name}</h3>
                     <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
                     {item.product.discount && parseFloat(item.product.discount) > 0 && (
                       <p className="text-xs text-green-600">Discount: {item.product.discount}%</p>
                     )}
+                    
                   </div>
-                  
+
                   <div className="text-right">
                     {item.product.discount && parseFloat(item.product.discount) > 0 ? (
                       <>
-                        <p className="font-medium">${(getDiscountedPrice(item.price, item.product.discount) * item.quantity).toFixed(2)}</p>
+                        <p className="font-medium">£
+                          {(getDiscountedPrice(item.price, item.product.discount) * item.quantity).toFixed(2)}
+                        </p>
                         <p className="text-xs text-gray-500 line-through">£{(parseFloat(item.price) * item.quantity).toFixed(2)}</p>
                       </>
                     ) : (
@@ -352,7 +359,7 @@ export default function OrderConfirmationPage() {
               ))}
             </div>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="bg-white p-6 rounded-lg shadow-md">
               <h2 className="text-xl font-semibold mb-4">Shipping Information</h2>
@@ -374,25 +381,40 @@ export default function OrderConfirmationPage() {
                 </p>
               </div>
             </div>
-            
+
             <div className="bg-white p-6 rounded-lg shadow-md">
               <h2 className="text-xl font-semibold mb-4">Payment Information</h2>
               <div className="space-y-2">
-                {order ? (
+                {paymentMethod ? (
                   <>
-                    
-                    
-                    {order.paymentIntentId && paymentMethod && (
-                      <>
+                    <p>
+                      <span className="font-medium">Payment Method:</span>{' '}
+                      <span className="text-sm font-mono capitalize">
+                        {paymentMethod.type.toLowerCase()}
+                      </span>
+                    </p>
+                    {paymentMethod.card && (
                       <p>
-                        <span className="font-medium">Payment Method:</span>{' '}
-                        <span className="text-sm font-mono">{paymentMethod.type}</span>
+                        <span className="font-medium">Card:</span>{' '}
+                        <span className="text-sm font-mono">
+                          **** **** **** {paymentMethod.card.last4}
+                        </span>
                       </p>
+                    )}
+                  </>
+                ) : order.payment ? (
+                  <>
+                    <p>
+                      <span className="font-medium">Payment Method:</span>{' '}
+                      <span className="text-sm font-mono capitalize">
+                        {order.payment.method.toLowerCase().replace(/_/g, ' ')}
+                      </span>
+                    </p>
+                    {order.payment.transactionId && (
                       <p>
                         <span className="font-medium">Transaction ID:</span>{' '}
-                        <span className="text-sm font-mono">{order.paymentIntentId}</span>
+                        <span className="text-sm font-mono">{order.payment.transactionId}</span>
                       </p>
-                      </>
                     )}
                   </>
                 ) : (
@@ -400,12 +422,11 @@ export default function OrderConfirmationPage() {
                 )}
                 <p>
                   <span className="font-medium">Order Status:</span>{' '}
-                  <span className={`font-medium ${
-                    order.status === 'DELIVERED' ? 'text-green-600' :
+                  <span className={`font-medium ${order.status === 'DELIVERED' ? 'text-green-600' :
                     order.status === 'CANCELLED' ? 'text-red-600' :
-                    order.status === 'SHIPPED' ? 'text-blue-600' :
-                    'text-yellow-600'
-                  }`}>
+                      order.status === 'SHIPPED' ? 'text-blue-600' :
+                        'text-yellow-600'
+                    }`}>
                     {order.status.charAt(0) + order.status.slice(1).toLowerCase()}
                   </span>
                 </p>
@@ -413,35 +434,43 @@ export default function OrderConfirmationPage() {
             </div>
           </div>
         </div>
-        
+
         <div className="lg:col-span-1">
           <div className="bg-white p-6 rounded-lg shadow-md sticky top-8">
             <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
-            
+
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span className="text-gray-600">Subtotal</span>
-                <span>£{subtotal.toFixed(2)}</span>
+                <span>£{order.items.reduce((total, item) => total + (parseFloat(item.price) * item.quantity), 0).toFixed(2)}</span>
               </div>
-              
-              <div className="flex justify-between">
-                <span className="text-gray-600">Shipping</span>
-                <span>£{shippingCost.toFixed(2)}</span>
-              </div>
-              
-              <div className="flex justify-between">
-                <span className="text-gray-600">Tax</span>
-                <span>£{tax.toFixed(2)}</span>
-              </div>
-              
+
+              {/* Display individual item discounts if any */}
+              {order.items.some(item => item.product.discount && parseFloat(item.product.discount) > 0) && (
+                <div className="border-t pt-2 mt-2">
+                  <p className="text-sm font-medium mb-1">Item Discounts:</p>
+                  {order.items.map(item => (
+                    item.product.discount && parseFloat(item.product.discount) > 0 && (
+                      <div key={item.id} className="flex justify-between text-sm text-green-600">
+                        <span>Discount</span>
+                        <span>-£{(order.items.reduce((total, item) => total + (parseFloat(item.price) * item.quantity), 0)) - Number(order?.totalPrice)}</span>
+                      </div>
+                    )
+                  ))}
+                </div>
+              )}
               <div className="pt-2 mt-2 border-t border-gray-200">
                 <div className="flex justify-between font-semibold">
                   <span>Total</span>
-                  <span>£{total.toFixed(2)}</span>
+                  <span>£
+                    <span>
+                      {order.totalPrice}
+                    </span>
+                  </span>
                 </div>
               </div>
             </div>
-            
+
             <div className="mt-8 space-y-4">
               <button
                 onClick={() => router.push('/orders')}
@@ -449,7 +478,7 @@ export default function OrderConfirmationPage() {
               >
                 View All Orders
               </button>
-              
+
               <button
                 onClick={() => router.push('/')}
                 className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"

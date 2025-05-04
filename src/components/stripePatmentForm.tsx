@@ -9,7 +9,7 @@ const StripePaymentForm = ({
     onPaymentSuccess,
     validateForm,
     totalPrice,
-    firstOrderDiscount
+    orderCount
 }: {
     cartItems?: any[],
     formData: any,
@@ -20,7 +20,7 @@ const StripePaymentForm = ({
     }) => Promise<string | null>,
     validateForm: () => boolean,
     totalPrice: number,
-    firstOrderDiscount: number
+    orderCount: number
 }) => {
     const stripe = useStripe();
     const elements = useElements();
@@ -31,19 +31,20 @@ const StripePaymentForm = ({
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-    
+
         if (!validateForm()) {
             return;
         }
-    
+
         if (!stripe || !elements || !paymentElementLoaded) {
             setErrorMessage('Payment system is not ready yet. Please wait...');
             return;
         }
-    
+
         setLoading(true);
         setErrorMessage(undefined);
-    
+        
+
         try {
             const { error: submitError } = await elements.submit();
             if (submitError) {
@@ -56,11 +57,11 @@ const StripePaymentForm = ({
                 },
                 redirect: 'if_required'
             });
-    
+
             if (error) {
                 throw error;
             }
-    
+
             // Only if payment was successful, create the order
             if (paymentIntent && paymentIntent.status === 'succeeded') {
                 const orderId = await onPaymentSuccess({
@@ -68,11 +69,11 @@ const StripePaymentForm = ({
                     clientSecret: paymentIntent.client_secret,
                     paymentMethodId: paymentIntent.payment_method as string
                 });
-                
+
                 if (!orderId) {
                     throw new Error('Failed to create order after successful payment');
                 }
-    
+
                 // Redirect to success page with order ID
                 router.push(`/payment-success?orderId=${orderId}`);
             } else {
@@ -82,6 +83,18 @@ const StripePaymentForm = ({
             setErrorMessage(err instanceof Error ? err.message : 'Payment processing failed');
         } finally {
             setLoading(false);
+        }
+    };
+    const getButtonText = () => {
+        if (loading) {
+            return 'Processing Payment...';
+        } else {
+            // Apply 20% discount if customer has previous orders
+            if (orderCount === 0) {
+                return `Pay £${(totalPrice - (totalPrice * 0.2)).toFixed(2)}`;
+            } else {
+                return `Pay £${totalPrice.toFixed(2)}`;
+            }
         }
     };
 
@@ -99,7 +112,7 @@ const StripePaymentForm = ({
                 disabled={!stripe || !paymentElementLoaded || loading}
                 className="w-full bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition-colors disabled:bg-blue-400 disabled:cursor-not-allowed mt-4"
             >
-                {loading ? 'Processing Payment...' : `Pay £${(totalPrice - (firstOrderDiscount || 0)).toFixed(2)}`}
+                {getButtonText()}
             </button>
         </form>
     );
