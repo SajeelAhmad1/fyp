@@ -21,7 +21,7 @@ export default function Orders() {
 
     const fetchOrders = useCallback(async (email = null) => {
         if (hasFetched.current) return;
-        
+
         setIsLoading(true);
         try {
             let response;
@@ -32,7 +32,7 @@ export default function Orders() {
             } else {
                 return;
             }
-            
+
             const result = await response.json();
 
             if (response.ok) {
@@ -57,7 +57,7 @@ export default function Orders() {
         };
 
         document.addEventListener('visibilitychange', handleVisibilityChange);
-        
+
         // Initial fetch
         if (status === "unauthenticated") {
             const storedEmail = localStorage.getItem("guestEmail");
@@ -167,9 +167,9 @@ export default function Orders() {
                         <div className="space-y-4">
                             {orders.map((order) => (
                                 <div key={order.id} className="border rounded-lg p-4">
-                                    <div 
-                                    onClick={()=>router.push(`/orders/${order.id}`)}
-                                    className="cursor-pointer flex justify-between items-center mb-4">
+                                    <div
+                                        onClick={() => router.push(`/orders/${order.id}`)}
+                                        className="cursor-pointer flex justify-between items-center mb-4">
                                         <div>
                                             <p className="font-bold">Order #{order.id.slice(-6)}</p>
                                             <p className="text-sm text-gray-500">
@@ -202,7 +202,7 @@ export default function Orders() {
                                                         SKU: {item.product.sku} | Quantity: {item.quantity}
                                                     </p>
                                                     <p className="text-sm font-semibold">
-                                                    £{(item.price * item.quantity)}
+                                                        £{(item.price * item.quantity)}
                                                     </p>
                                                 </div>
                                             </div>

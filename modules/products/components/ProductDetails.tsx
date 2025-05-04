@@ -152,7 +152,7 @@ const ProductDetails: React.FC = () => {
   const [cartQuantity, setCartQuantity] = useState<number>(0);
   const [guestCartId, setGuestCartId] = useState<string | null>(null);
   const [isBuyNow, setIsBuyNow] = useState<boolean>(false);
-  
+
   // Zoom state
   const [isZoomed, setIsZoomed] = useState(false);
   const [zoomPosition, setZoomPosition] = useState({ x: 0, y: 0 });
@@ -222,7 +222,7 @@ const ProductDetails: React.FC = () => {
     }
 
     setIsCartLoading(true);
-    if(!inCart && isBuyNow){
+    if (!inCart && isBuyNow) {
       router.refresh()
       setTimeout(() => {
         openCart();
@@ -293,7 +293,7 @@ const ProductDetails: React.FC = () => {
       if (!inCart) {
         await handleCartToggle();
       }
-      
+
       router.push(`/checkout`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed due to unknown error');
@@ -405,17 +405,18 @@ const ProductDetails: React.FC = () => {
             {product.images && product.images.length > 0 && (
               <div
                 className="w-full h-full relative"
-                style={{
-                  transform: isZoomed ? 'scale(2)' : 'scale(1)',
-                  transformOrigin: `${zoomPosition.x}% ${zoomPosition.y}%`,
-                  transition: 'transform 0.2s ease-out',
-                  cursor: isZoomed ? 'zoom-in' : 'zoom-in'
-                }}
+
               >
                 <img
                   src={product.images[currentImageIndex]}
                   alt={`${product.name} - Image ${currentImageIndex + 1}`}
                   className="w-full h-full object-contain p-5"
+                  style={{
+                    transform: isZoomed ? 'scale(2)' : 'scale(1)',
+                    transformOrigin: `${zoomPosition.x}% ${zoomPosition.y}%`,
+                    transition: 'transform 0.2s ease-out',
+                    cursor: isZoomed ? 'zoom-in' : 'zoom-in'
+                  }}
                 />
               </div>
             )}
@@ -638,7 +639,7 @@ const ProductDetails: React.FC = () => {
       </div>
 
       {/* Product description and reviews */}
-      <div className='p-5 flex flex-col justify-center items-center m-auto'>
+      <div className='p-0 md:p-5 flex flex-col justify-center items-center m-auto'>
         <Card className="w-[85%] p-8 flex flex-col gap-3 border border-grey-200">
           <span className='font-semibold text-sky-900 text-2xl mb-2'>Product Description</span>
           <div className="text-gray-800">
