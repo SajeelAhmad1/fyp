@@ -30,7 +30,6 @@ export async function GET(
                         product: true
                     }
                 },
-                payment: true
             },
         });
         console.log("here")

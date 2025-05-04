@@ -10,6 +10,16 @@ interface ProductImage {
   url: string;
 }
 
+type PaymentMethod = {
+  type: string;
+  card?: {
+    brand: string;
+    last4: string;
+    exp_month: number;
+    exp_year: number;
+  };
+};
+
 interface Product {
   id: string;
   name: string;
@@ -185,6 +195,8 @@ export default function OrderConfirmationPage() {
   const [order, setOrder] = useState<Order | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null);
+  const [paymentMethodId, setPaymentMethodId] = useState<string | null>(null);
   
   useEffect(() => {
     const fetchOrder = async () => {
@@ -202,7 +214,7 @@ export default function OrderConfirmationPage() {
         }
 
         const data = await response.json();
-        console.log(data)
+        setPaymentMethodId(data.data.paymentMethodId)
 
         setOrder(data.data);
       } catch (err) {
@@ -216,6 +228,33 @@ export default function OrderConfirmationPage() {
     
     fetchOrder();
   }, [params.id]);
+
+  useEffect(() => {
+    const fetchPaymentMethod = async (paymentMethodId: string | null) => {
+      try {
+        if (!paymentMethodId) return;
+        
+        const res = await fetch('/api/get-payment-method', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ paymentMethodId }),
+        });
+        
+        if (!res.ok) {
+          throw new Error('Failed to fetch payment method');
+        }
+        
+        const data = await res.json();
+        setPaymentMethod(data);
+        console.log(paymentMethod)
+      } catch (err) {
+        console.error('Failed to load payment method:', err);
+        toast.error('Failed to load payment details');
+      }
+    };
+
+    fetchPaymentMethod(paymentMethodId);
+  }, [paymentMethodId]);
 
   const calculateOrderDetails = (order: Order) => {
     const subtotal = order.items.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
@@ -339,33 +378,21 @@ export default function OrderConfirmationPage() {
             <div className="bg-white p-6 rounded-lg shadow-md">
               <h2 className="text-xl font-semibold mb-4">Payment Information</h2>
               <div className="space-y-2">
-                {order.payment ? (
+                {order ? (
                   <>
-                    <p>
-                      <span className="font-medium">Payment Method:</span>{' '}
-                      {order.payment.method === 'STRIPE' ? 'Credit/Debit Card' : 
-                       order.payment.method === 'PAYPAL' ? 'PayPal' : 
-                       order.payment.method === 'CREDIT_CARD' ? 'Credit Card' : 
-                       'Cash on Delivery'}
-                    </p>
-                    <p>
-                      <span className="font-medium">Status:</span>{' '}
-                      <span className={`font-medium ${
-                        order.payment.status === 'COMPLETED' ? 'text-green-600' : 
-                        order.payment.status === 'FAILED' ? 'text-red-600' : 
-                        'text-yellow-600'
-                      }`}>
-                        {order.payment.status === 'COMPLETED' ? 'Paid' : 
-                         order.payment.status === 'FAILED' ? 'Failed' : 
-                         order.payment.status === 'REFUNDED' ? 'Refunded' : 
-                         'Pending'}
-                      </span>
-                    </p>
-                    {order.payment.transactionId && (
+                    
+                    
+                    {order.paymentIntentId && paymentMethod && (
+                      <>
+                      <p>
+                        <span className="font-medium">Payment Method:</span>{' '}
+                        <span className="text-sm font-mono">{paymentMethod.type}</span>
+                      </p>
                       <p>
                         <span className="font-medium">Transaction ID:</span>{' '}
-                        <span className="text-sm font-mono">{order.payment.transactionId}</span>
+                        <span className="text-sm font-mono">{order.paymentIntentId}</span>
                       </p>
+                      </>
                     )}
                   </>
                 ) : (

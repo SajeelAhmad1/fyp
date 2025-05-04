@@ -156,7 +156,6 @@ export async function GET(request: Request, { params }: { params: { orderId: str
                         product: true
                     }
                 },
-                payment: true
             },
         });
 
@@ -244,7 +243,6 @@ export async function PUT(req: Request, { params }: { params: { orderId: string 
             },
             include: {
                 items: { include: { product: true } },
-                payment: true
             },
         });
 

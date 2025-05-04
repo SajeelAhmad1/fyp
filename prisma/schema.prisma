@@ -195,7 +195,6 @@ model Order {
   
   totalPrice          Decimal
   status              OrderStatus  @default(PENDING)
-  payment             Payment?
   shipment            Shipment?
 
   stripeCustomerId    String?
@@ -219,16 +218,6 @@ model OrderItem {
   product   Product  @relation(fields: [productId], references: [id])
   quantity  Int
   price     Decimal
-}
-
-model Payment {
-  id        String   @id @default(uuid())
-  orderId   String   @unique
-  order     Order    @relation(fields: [orderId], references: [id])
-  method    PaymentMethod
-  status    PaymentStatus @default(PENDING)
-  transactionId String?
-  createdAt DateTime @default(now())
 }
 
 model Shipment {
