@@ -160,10 +160,8 @@ const ProductDetails: React.FC = () => {
 
   // Order and email state
   const [isCreatingOrder, setIsCreatingOrder] = useState(false);
-  const [showEmailModal, setShowEmailModal] = useState(false);
-  const [email, setEmail] = useState('');
-  const [emailError, setEmailError] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [currentThumbnailStart, setCurrentThumbnailStart] = useState(0);
 
   useEffect(() => {
     const storedGuestCartId = localStorage.getItem('guestCartId');
@@ -222,7 +220,7 @@ const ProductDetails: React.FC = () => {
     }
 
     setIsCartLoading(true);
-    if (!inCart && isBuyNow) {
+    if (!inCart) {
       router.refresh()
       setTimeout(() => {
         openCart();
@@ -395,81 +393,111 @@ const ProductDetails: React.FC = () => {
       <div className='min-h-full flex flex-col lg:flex-row py-14'>
         {/* Product images section */}
         <div className="w-full lg:w-1/2 h-full justify-center items-center gap-5 flex flex-col">
+  {/* Main Image */}
+  <div
+    ref={imageContainerRef}
+    className="w-full max-w-[600px] h-[500px] relative overflow-hidden group"
+    onMouseEnter={() => setIsZoomed(true)}
+    onMouseLeave={() => setIsZoomed(false)}
+    onMouseMove={handleMouseMove}
+  >
+    {product.images && product.images.length > 0 && (
+      <div className="w-full h-full relative">
+        <img
+          src={product.images[currentImageIndex]}
+          alt={`${product.name} - Image ${currentImageIndex + 1}`}
+          className="w-full h-full object-contain p-5"
+          style={{
+            transform: isZoomed ? 'scale(4)' : 'scale(1)',
+            transformOrigin: `${zoomPosition.x}% ${zoomPosition.y}%`,
+            transition: 'transform 0.2s ease-out',
+            cursor: isZoomed ? 'zoom-in' : 'zoom-in'
+          }}
+        />
+      </div>
+    )}
+  </div>
+
+  {/* Thumbnail Carousel */}
+  {product.images && product.images.length > 0 && (
+  <div className="flex items-center gap-2 w-full max-w-[600px]">
+    <button
+      onClick={() => {
+        const newIndex = currentImageIndex === 0 ? product.images!.length - 1 : currentImageIndex - 1;
+        setCurrentImageIndex(newIndex);
+        // Auto-scroll thumbnails if needed
+        if (newIndex < currentThumbnailStart) {
+          setCurrentThumbnailStart(Math.max(0, newIndex));
+        }
+      }}
+      className="w-8 h-8 flex items-center justify-center text-gray-600 hover:text-gray-900 disabled:opacity-50"
+      disabled={product.images.length <= 4}
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+      </svg>
+    </button>
+
+    <div className="flex-1 overflow-hidden">
+      <div 
+        className="flex gap-2 transition-transform duration-300"
+        style={{ 
+          transform: `translateX(-${Math.min(
+            currentThumbnailStart * 104, 
+            (product.images.length - 4) * 104
+          )}px)` 
+        }}
+      >
+        {product.images.map((img, index) => (
           <div
-            ref={imageContainerRef}
-            className="w-full max-w-[500px] h-96 relative overflow-hidden group"
-            onMouseEnter={() => setIsZoomed(true)}
-            onMouseLeave={() => setIsZoomed(false)}
-            onMouseMove={handleMouseMove}
+            key={index}
+            onClick={() => {
+              setCurrentImageIndex(index);
+              // Adjust thumbnail start position if needed
+              if (index >= currentThumbnailStart + 4) {
+                setCurrentThumbnailStart(Math.min(product.images.length - 4, index - 3));
+              } else if (index < currentThumbnailStart) {
+                setCurrentThumbnailStart(Math.max(0, index));
+              }
+            }}
+            className={`w-24 h-24 flex-shrink-0 justify-center items-center flex relative cursor-pointer 
+              ${currentImageIndex === index
+                ? 'ring-2 ring-sky-900'
+                : 'hover:bg-slate-100'
+              }`}
           >
-            {product.images && product.images.length > 0 && (
-              <div
-                className="w-full h-full relative"
-
-              >
-                <img
-                  src={product.images[currentImageIndex]}
-                  alt={`${product.name} - Image ${currentImageIndex + 1}`}
-                  className="w-full h-full object-contain p-5"
-                  style={{
-                    transform: isZoomed ? 'scale(2)' : 'scale(1)',
-                    transformOrigin: `${zoomPosition.x}% ${zoomPosition.y}%`,
-                    transition: 'transform 0.2s ease-out',
-                    cursor: isZoomed ? 'zoom-in' : 'zoom-in'
-                  }}
-                />
-              </div>
-            )}
-
-            <button
-              onClick={() => {
-                if (!product?.images?.length) return;
-                setCurrentImageIndex(prev =>
-                  prev === 0 ? product.images!.length - 1 : prev - 1
-                );
-              }}
-              className="absolute left-2 top-1/2 -translate-y-1/2 bg-white bg-opacity-70 rounded-full w-10 h-10 flex items-center justify-center hover:bg-opacity-100 z-10"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-
-            <button
-              onClick={() => {
-                if (!product?.images?.length) return;
-                setCurrentImageIndex(prev =>
-                  prev === product.images!.length - 1 ? 0 : prev + 1
-                );
-              }}
-              className="absolute right-2 top-1/2 -translate-y-1/2 bg-white bg-opacity-70 rounded-full w-10 h-10 flex items-center justify-center hover:bg-opacity-100 z-10"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
+            <img
+              src={img}
+              alt={`Product thumbnail ${index + 1}`}
+              className="max-h-full max-w-full object-contain p-1"
+            />
           </div>
+        ))}
+      </div>
+    </div>
 
-          <div className="flex m-auto flex-wrap gap-5 group">
-            {product.images && product.images.map((img, index) => (
-              <div
-                key={index}
-                onClick={() => setCurrentImageIndex(index)}
-                className={`w-28 h-28 md:w-36 md:h-32 justify-center items-center flex relative cursor-pointer 
-                  ${currentImageIndex === index
-                    ? 'ring-2 ring-sky-900'
-                    : 'hover:bg-slate-100'
-                  }`}
-              >
-                <img
-                  src={img}
-                  alt={`Product image ${index + 1}`}
-                  className="max-h-full max-w-full object-contain p-2"
-                />
-              </div>
-            ))}
-          </div>
-        </div>
+    <button
+      onClick={() => {
+        const newIndex = currentImageIndex === product.images!.length - 1 ? 0 : currentImageIndex + 1;
+        setCurrentImageIndex(newIndex);
+        // Auto-scroll thumbnails if needed
+        if (newIndex >= currentThumbnailStart + 4) {
+          setCurrentThumbnailStart(Math.min(
+            product.images!.length - 4, 
+            newIndex - 3
+          ));
+        }
+      }}
+      className="w-8 h-8 flex items-center justify-center text-gray-600 hover:text-gray-900 disabled:opacity-50"
+      disabled={product.images.length <= 4}
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+      </svg>
+    </button>
+  </div>
+)}
+</div>
 
         {/* Product details section */}
         <div className="w-full lg:w-1/2 h-full lg:h-auto lg:flex lg:ml-5">
@@ -640,16 +668,18 @@ const ProductDetails: React.FC = () => {
 
       {/* Product description and reviews */}
       <div className='p-0 md:p-5 flex flex-col justify-center items-center m-auto'>
-        <Card className="w-[85%] p-8 flex flex-col gap-3 border border-grey-200">
+        <Card className="w-[85%] md:w-full flex flex-col gap-3 border border-grey-200">
           <span className='font-semibold text-sky-900 text-2xl mb-2'>Product Description</span>
-          <div className="text-gray-800">
-            {product.shortDescription || 'No description available for this product.'}
-          </div>
-          <div className="text-gray-800">
-            {product.description || 'No description available for this product.'}
-          </div>
+          <div
+            className="text-gray-800"
+            dangerouslySetInnerHTML={{ __html: product.shortDescription || 'No description available for this product.' }}
+          />
+          <div
+            className="text-gray-800"
+            dangerouslySetInnerHTML={{ __html: product.description || 'No description available for this product.' }}
+          />
         </Card>
-        <Card className="w-[85%] p-8 flex flex-col gap-3 mt-5">
+        <Card className="w-[85%] md:w-full flex flex-col gap-3 mt-5">
           <span className='font-semibold text-sky-900 text-xl'>Customer Reviews</span>
 
           {product.reviews && product.reviews.length > 0 ? (

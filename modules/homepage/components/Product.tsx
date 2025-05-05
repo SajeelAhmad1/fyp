@@ -409,18 +409,18 @@ const Product: React.FC<ProductProps> = ({
         )}
       </button>
 
-      <div className="relative p-4 flex items-center justify-center h-64">
+      <div className="relative p-0 flex items-center justify-center h-64">
         <Image
           src={product.image}
           alt={product.title}
           width={500}
           height={500}
-          className="object-contain w-full h-full transition-transform duration-300 hover:scale-105"
+          className="object-cover w-full h-full transition-transform duration-300 hover:scale-105"
           priority={false}
         />
       </div>
 
-      <div className="p-4 mt-4">
+      <div className="p-4 mt-2">
         <h3 className="text-base font-medium text-gray-800 mb-1 line-clamp-2 h-12">
           {product.title}
         </h3>
