@@ -840,7 +840,7 @@ const CheckoutPage = () => {
                                 </div>
                                 <div>
                                     <label htmlFor="shippingState" className="block text-sm font-medium text-gray-700 mb-1">
-                                        State/Province *
+                                        State/Province/County *
                                     </label>
                                     <input
                                         type="text"

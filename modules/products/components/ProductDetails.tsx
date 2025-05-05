@@ -7,12 +7,10 @@ import { useParams } from 'next/navigation';
 import ProductSkeleton from './ProductDetailsSkeleton';
 import { useRouter } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
-import { useCart } from '@/components/context/CartContext';
 import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
 import { Toaster } from 'sonner';
 
-// Define TypeScript interfaces
 interface Review {
   id: string;
   rating: number;
@@ -41,7 +39,7 @@ interface Product {
   description?: string;
   shortDescription?: string;
   price: number;
-  discount: number; // Now represents percentage
+  discount: number;
   stock: number;
   sku?: string;
   images?: string[];
@@ -212,20 +210,12 @@ const ProductDetails: React.FC = () => {
     }
   };
 
-  const { openCart } = useCart();
-
   const handleCartToggle = async () => {
     if (!product || (product.stock <= 0 && !inCart)) {
       return;
     }
 
     setIsCartLoading(true);
-    if (!inCart) {
-      router.refresh()
-      setTimeout(() => {
-        openCart();
-      }, 200);
-    }
 
     try {
       const cartPayload = userId

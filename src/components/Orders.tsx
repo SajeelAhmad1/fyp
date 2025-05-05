@@ -210,7 +210,7 @@ export default function Orders() {
                                     </div>
                                     <div className="mt-4 text-right">
                                         <p className="text-lg font-bold">
-                                            Total: £{order.totalPrice}
+                                            Total: £{Number(order.totalPrice).toFixed(2)}
                                         </p>
                                     </div>
                                 </div>

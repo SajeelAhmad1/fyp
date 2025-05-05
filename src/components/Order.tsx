@@ -453,7 +453,7 @@ export default function OrderConfirmationPage() {
                     item.product.discount && parseFloat(item.product.discount) > 0 && (
                       <div key={item.id} className="flex justify-between text-sm text-green-600">
                         <span>Discount</span>
-                        <span>-£{(order.items.reduce((total, item) => total + (parseFloat(item.price) * item.quantity), 0)) - Number(order?.totalPrice)}</span>
+                        <span>-£{((order.items.reduce((total, item) => total + (parseFloat(item.price) * item.quantity), 0)) - Number(order?.totalPrice)).toFixed(2)}</span>
                       </div>
                     )
                   ))}
@@ -464,7 +464,7 @@ export default function OrderConfirmationPage() {
                   <span>Total</span>
                   <span>£
                     <span>
-                      {order.totalPrice}
+                      {(Number(order.totalPrice)).toFixed(2)}
                     </span>
                   </span>
                 </div>
