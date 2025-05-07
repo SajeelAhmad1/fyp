@@ -177,14 +177,11 @@ const CheckoutPage = () => {
                         throw new Error('Failed to fetch order count');
                     }
                     const data = await response.json();
-                    // Make sure this matches your actual API response structure
-                    setOrderCount(data.count || 0); // Changed from data.data.count to data.count
+                    setOrderCount(data.count || 0);
                 } catch (error) {
                     console.error('Failed to fetch order count:', error);
-                    setOrderCount(0); // Fallback to 0 on error
+                    setOrderCount(0);
                 }
-            } else {
-                setOrderCount(0); // Guests always have order count 0
             }
         };
 
@@ -273,6 +270,7 @@ const CheckoutPage = () => {
 
             const { data } = await response.json();
             setOrder(data);
+            console.log(data)
 
             if (data) {
                 const phone = data.shippingPhone?.startsWith('+44')
