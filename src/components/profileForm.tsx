@@ -9,8 +9,7 @@ import Image from "next/image";
 import { CustomerProfile } from "@/types/customerProfile";
 import { User } from "@/types/user";
 import { Pencil } from "lucide-react";
-
-import { isValid as isValidPostcode } from "postcode";
+import { validatePostcode } from "@/utils/validatePostalCode";
 
 const CustomerProfileForm: React.FC = () => {
   const { data: session, update } = useSession();
@@ -37,8 +36,7 @@ const CustomerProfileForm: React.FC = () => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [postcodeSearchTerm, setPostcodeSearchTerm] = useState("");
-  const [filteredPostcodes, setFilteredPostcodes] = useState<string[]>([]);
-  const [isSearchingPostcode, setIsSearchingPostcode] = useState(false);
+  const [postCodeError, setPostCodeError] = useState("");
 
   const user = session?.user as User;
 
@@ -52,34 +50,37 @@ const CustomerProfileForm: React.FC = () => {
       if (user.customerProfile.imageUrl) {
         setImagePreview(user.customerProfile.imageUrl);
       }
+      // Set the initial postcode search term if postalCode exists
+      if (user.customerProfile.postalCode) {
+        setPostcodeSearchTerm(user.customerProfile.postalCode);
+      }
     } else {
       fetchProfile();
     }
   }, [session]);
 
   useEffect(() => {
-    if (postcodeSearchTerm.length > 0) {
-      
-      setIsSearchingPostcode(true);
-      const timer = setTimeout(() => {
-        
-        const ukPostcodeExamples = [
-          "SW1A 1AA", "EC1A 1BB", "W1A 0AX", "M1 1AE", 
-          postcodeSearchTerm.toUpperCase().replace(/[^A-Z0-9]/g, '')
-        ];
-        
-        const filtered = ukPostcodeExamples.filter(code => 
-          code.includes(postcodeSearchTerm.toUpperCase())
-        );
-        
-        setFilteredPostcodes(filtered);
-        setIsSearchingPostcode(false);
-      }, 300);
-      
-      return () => clearTimeout(timer);
-    } else {
-      setFilteredPostcodes([]);
+    const validateCode = async (postcode: string) => {
+      if (!postcode) {
+        setPostCodeError("");
+        return;
+      }
+
+      const response = await validatePostcode(postcode);
+      if (response.isValid) {
+        setPostCodeError("");
+      } else {
+        setPostCodeError(response.error || "Invalid UK Postal Code");
+      }
     }
+
+    const timer = setTimeout(() => {
+      if (postcodeSearchTerm) {
+        validateCode(postcodeSearchTerm);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
   }, [postcodeSearchTerm]);
 
   const validateForm = () => {
@@ -87,7 +88,7 @@ const CustomerProfileForm: React.FC = () => {
       firstName: !profile.firstName.trim(),
       lastName: !profile.lastName.trim(),
       phone: !profile.phone?.trim() || profile.phone.length !== 10, // Must be exactly 10 digits
-      postalCode: profile.postalCode ? !isValidPostcode(profile.postalCode) : false,
+      postalCode: profile.postalCode ? !!postCodeError : false,
     };
 
     setErrors(newErrors);
@@ -106,6 +107,9 @@ const CustomerProfileForm: React.FC = () => {
         });
         if (data.data.imageUrl) {
           setImagePreview(data.data.imageUrl);
+        }
+        if (data.data.postalCode) {
+          setPostcodeSearchTerm(data.data.postalCode);
         }
       }
     } catch (error) {
@@ -146,17 +150,13 @@ const CustomerProfileForm: React.FC = () => {
     }
   };
 
-  const handlePostcodeSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPostcodeSearchTerm(e.target.value);
-  };
-
-  const selectPostcode = (postcode: string) => {
+  const handlePostcodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setPostcodeSearchTerm(value);
     setProfile(prev => ({
       ...prev,
-      postalCode: postcode
+      postalCode: value
     }));
-    setPostcodeSearchTerm("");
-    setFilteredPostcodes([]);
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -399,37 +399,25 @@ const CustomerProfileForm: React.FC = () => {
             />
           </div>
 
-          {/* Postcode with search/autocomplete */}
+          {/* Postcode with validation */}
           <div className="relative">
             <label className="block text-sm font-medium text-gray-700">
               Postal Code
             </label>
-            <div className="flex">
-              <input
-                type="text"
-                value={postcodeSearchTerm}
-                onChange={handlePostcodeSearch}
-                placeholder={profile.postalCode || "Search postcode..."}
-                className={`mt-1 px-2 text-black py-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 ${errors.postalCode ? "border-red-500" : ""}`}
-              />
-              
-            </div>
-            
-            {filteredPostcodes.length > 0 && (
-              <div className="absolute text-[#000000] z-10 mt-1 w-full bg-white shadow-lg rounded-md border border-gray-300 max-h-60 overflow-auto">
-                {filteredPostcodes.map((postcode, index) => (
-                  <div
-                    key={index}
-                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                    onClick={() => selectPostcode(postcode)}
-                  >
-                    {postcode}
-                  </div>
-                ))}
-              </div>
-            )}
+            <input
+              type="text"
+              name="postalCode"
+              value={postcodeSearchTerm}
+              onChange={handlePostcodeChange}
+              placeholder="Enter UK postcode"
+              className={`mt-1 px-2 py-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 ${
+                errors.postalCode ? "border-red-500" : ""
+              }`}
+            />
             {errors.postalCode && (
-              <p className="text-red-500 text-xs mt-1">Please enter a valid UK postcode</p>
+              <p className="text-red-500 text-xs mt-1">
+                {postCodeError || "Please enter a valid UK postcode"}
+              </p>
             )}
           </div>
 

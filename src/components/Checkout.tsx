@@ -9,21 +9,12 @@ import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 import StripePaymentForm from './stripePatmentForm';
 import { Order, CustomerProfile } from '@/types/checkout';
+import { validatePostcode } from '@/utils/validatePostalCode';
 import { isValid as isValidPostcode } from "postcode";
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 const GUEST_EMAIL_KEY = 'guestEmail';
 const GUEST_CART_ID_KEY = 'guestCartId';
-
-interface OrderCountResponse {
-    success: boolean;
-    count: number;
-}
-
-interface PaymentIntentResponse {
-    clientSecret: string;
-    amount: number;
-}
 
 const CheckoutPage = () => {
     const { data: session } = useSession();
@@ -42,43 +33,32 @@ const CheckoutPage = () => {
     const [cartTotal, setCartTotal] = useState<number>(0);
     const [orderCount, setOrderCount] = useState<number | null>(null);
     const [firstOrderDiscount, setFirstOrderDiscount] = useState<number | null>(null);
-    const [orderPrice, setOrderPrice] = useState<number | null>(null);
     const [postcodeSearchTerm, setPostcodeSearchTerm] = useState("");
-    const [filteredPostcodes, setFilteredPostcodes] = useState<string[]>([]);
-    const [isSearchingPostcode, setIsSearchingPostcode] = useState(false);
+    const [postCodeError, setPostCodeError] = useState("");
+
     useEffect(() => {
-        if (postcodeSearchTerm.length > 0) {
-            setIsSearchingPostcode(true);
-            const timer = setTimeout(() => {
-                const ukPostcodeExamples = [
-                    "SW1A 1AA", "EC1A 1BB", "W1A 0AX", "M1 1AE",
-                    postcodeSearchTerm.toUpperCase().replace(/[^A-Z0-9]/g, '')
-                ];
+        const validateCode = async (postcode: string) => {
+            if (!postcode) {
+                setPostCodeError("Postal code is required");
+                return;
+            }
 
-                const filtered = ukPostcodeExamples.filter(code =>
-                    code.includes(postcodeSearchTerm.toUpperCase())
-                );
-
-                setFilteredPostcodes(filtered);
-                setIsSearchingPostcode(false);
-            }, 300);
-
-            return () => clearTimeout(timer);
-        } else {
-            setFilteredPostcodes([]);
+            const response = await validatePostcode(postcode);
+            if (response.isValid) {
+                setPostCodeError("");
+            } else {
+                setPostCodeError(response.error || "Invalid UK Postal Code");
+            }
         }
+
+        const timer = setTimeout(() => {
+            if (postcodeSearchTerm) {
+                validateCode(postcodeSearchTerm);
+            }
+        }, 500);
+
+        return () => clearTimeout(timer);
     }, [postcodeSearchTerm]);
-    const handlePostcodeSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setPostcodeSearchTerm(e.target.value);
-    };
-    const selectPostcode = (postcode: string, field: 'shippingPostalCode' | 'billingPostalCode') => {
-        setFormData(prev => ({
-            ...prev,
-            [field]: postcode
-        }));
-        setPostcodeSearchTerm("");
-        setFilteredPostcodes([]);
-    };
 
     const paymentIntentCreatingRef = useRef(false);
 
@@ -137,13 +117,13 @@ const CheckoutPage = () => {
     }));
 
     const displayTotal = order ? order.totalPrice : cartItems.reduce((sum, item) => {
-        const price = typeof item.product.price === 'string' 
-            ? parseFloat(item.product.price) 
+        const price = typeof item.product.price === 'string'
+            ? parseFloat(item.product.price)
             : item.product.price || 0;
         const discount = item.product.discount || 0;
         return sum + (price * (1 - discount / 100)) * item.quantity;
     }, 0);
-    
+
     // Calculate final total with first order discount
     const finalTotal = orderCount === 0 ? displayTotal * 0.8 : displayTotal;
     const getGuestCartId = useCallback(() => {
@@ -160,8 +140,7 @@ const CheckoutPage = () => {
             shippingStreet: !formData.shippingStreet.trim(),
             shippingCity: !formData.shippingCity.trim(),
             shippingState: !formData.shippingState.trim(),
-            shippingPostalCode: !formData.shippingPostalCode.trim() || !isValidPostcode(formData.shippingPostalCode),
-            shippingCountry: !formData.shippingCountry.trim(),
+            shippingCountry: false,
             shippingPhone: !formData.shippingPhone.trim() || formData.shippingPhone.length !== 10,
             billingFirstName: !formData.useSameAddress && !formData.billingFirstName.trim(),
             billingLastName: !formData.useSameAddress && !formData.billingLastName.trim(),
@@ -170,7 +149,8 @@ const CheckoutPage = () => {
             billingState: !formData.useSameAddress && !formData.billingState.trim(),
             billingPostalCode: !formData.useSameAddress && (!formData.billingPostalCode.trim() || !isValidPostcode(formData.billingPostalCode)),
             billingCountry: !formData.useSameAddress && !formData.billingCountry.trim(),
-            email: !formData.email.trim() || !/^\S+@\S+\.\S+$/.test(formData.email)
+            email: !formData.email.trim() || !/^\S+@\S+\.\S+$/.test(formData.email),
+            shippingPostalCode: !formData.shippingPostalCode.trim() || !!postCodeError,
         };
 
         setFormErrors(newErrors);
@@ -215,13 +195,13 @@ const CheckoutPage = () => {
         if (paymentIntentCreatingRef.current || clientSecret) {
             return;
         }
-    
+
         try {
             paymentIntentCreatingRef.current = true;
             // Apply first order discount if applicable
             const finalAmount = orderCount === 0 ? amount * 0.8 : amount;
             console.log("Creating payment intent with amount:", finalAmount);
-    
+
             const response = await fetch('/api/create-payment-intent', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -232,9 +212,9 @@ const CheckoutPage = () => {
                     email: formData.email || session?.user?.email,
                 }),
             });
-    
+
             const responseData = await response.json();
-    
+
             if (responseData.clientSecret) {
                 setClientSecret(responseData.clientSecret);
             } else {
@@ -307,7 +287,7 @@ const CheckoutPage = () => {
                     shippingCity: data.shippingCity || '',
                     shippingState: data.shippingState || '',
                     shippingPostalCode: data.shippingPostalCode || '',
-                    shippingCountry: data.shippingCountry || '',
+                    shippingCountry: data.shippingCountry || 'United Kingdom',
                     shippingPhone: phone,
 
                     billingFirstName: data.billingFirstName || '',
@@ -316,7 +296,7 @@ const CheckoutPage = () => {
                     billingCity: data.billingCity || '',
                     billingState: data.billingState || '',
                     billingPostalCode: data.billingPostalCode || '',
-                    billingCountry: data.billingCountry || '',
+                    billingCountry: data.billingCountry || 'United Kingdom',
 
                     email: data.email || (session?.user?.email || ''),
                     paymentMethod: 'STRIPE'
@@ -498,7 +478,7 @@ const CheckoutPage = () => {
                 billingPostalCode: formData.useSameAddress ? null : formData.billingPostalCode,
                 billingCountry: formData.useSameAddress ? null : formData.billingCountry,
                 email: formData.email,
-                totalPrice: orderCount === 0 ? displayTotal - (displayTotal * 0.2) : displayTotal,
+                totalPrice: displayTotal - (firstOrderDiscount || 0),
                 paymentMethod: 'STRIPE',
                 status: OrderStatus.CONFIRMED,
                 ...(paymentData ? {
@@ -531,7 +511,16 @@ const CheckoutPage = () => {
             setIsCreatingOrder(false);
         }
     };
-
+    const handlePostcodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setPostcodeSearchTerm(value);
+        setFormData(prev => ({
+            ...prev,
+            shippingPostalCode: value,
+            // Also update billing postal code if same address is checked
+            ...(formData.useSameAddress && { billingPostalCode: value })
+        }));
+    };
     const handlePaymentSuccess = async (paymentData: {
         paymentIntentId: string;
         paymentMethodId: string;
@@ -862,41 +851,32 @@ const CheckoutPage = () => {
                                         type="text"
                                         id="shippingPostalCode"
                                         name="shippingPostalCode"
-                                        placeholder="Enter Postal Code"
-                                        value={postcodeSearchTerm || formData.shippingPostalCode}
-                                        onChange={handlePostcodeSearch}
+                                        value={postcodeSearchTerm}
+                                        onChange={handlePostcodeChange}
+                                        placeholder="Enter UK postcode"
                                         className={`w-full p-2 border ${formErrors.shippingPostalCode ? 'border-red-500' : 'border-gray-300'} rounded`}
                                         required
                                     />
-                                    {filteredPostcodes.length > 0 && (
-                                        <div className="absolute z-10 mt-1 w-full bg-white shadow-lg rounded-md border border-gray-300 max-h-60 overflow-auto">
-                                            {filteredPostcodes.map((postcode, index) => (
-                                                <div
-                                                    key={index}
-                                                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                                                    onClick={() => selectPostcode(postcode, 'shippingPostalCode')}
-                                                >
-                                                    {postcode}
-                                                </div>
-                                            ))}
-                                        </div>
+                                    {formErrors.shippingPostalCode && (
+                                        <p className="text-red-500 text-xs mt-1">
+                                            {postCodeError || "Postal code is required"}
+                                        </p>
                                     )}
-                                    {formErrors.shippingPostalCode && <p className="text-red-500 text-xs mt-1">Postal code is required</p>}
                                 </div>
                                 <div>
-                                    <label htmlFor="shippingCountry" className="block text-sm font-medium text-gray-700 mb-1">
-                                        Country *
-                                    </label>
-                                    <select
-                                        id="shippingCountry"
-                                        name="shippingCountry"
-                                        value="United Kingdom"
-                                        // onChange={handleInputChange}
-                                        className={`w-full p-2 border ${formErrors.shippingCountry ? 'border-red-500' : 'border-gray-300'} rounded`}
-                                        required
-                                    >
-                                        <option value="United Kingdom">United Kingdom</option>
-                                    </select>
+                                    <div>
+                                        <label htmlFor="shippingCountry" className="block text-sm font-medium text-gray-700 mb-1">
+                                            Country *
+                                        </label>
+                                        <input
+                                            type="text"
+                                            id="shippingCountry"
+                                            name="shippingCountry"
+                                            value="United Kingdom"
+                                            readOnly
+                                            className="w-full p-2 border border-gray-300 rounded bg-gray-100"
+                                        />
+                                    </div>
                                     {formErrors.shippingCountry && <p className="text-red-500 text-xs mt-1">Country is required</p>}
                                 </div>
                                 <div>
@@ -1042,48 +1022,39 @@ const CheckoutPage = () => {
                                         {formErrors.billingState && <p className="text-red-500 text-xs mt-1">State/Province is required</p>}
                                     </div>
                                     <div className="relative">
-                                        <label htmlFor="billingPostalCode" className="block text-sm font-medium text-gray-700 mb-1">
+                                        <label htmlFor="shippingPostalCode" className="block text-sm font-medium text-gray-700 mb-1">
                                             Postal Code *
                                         </label>
                                         <input
                                             type="text"
-                                            id="billingPostalCode"
-                                            name="billingPostalCode"
-                                            placeholder="Enter Postal Code"
-                                            value={postcodeSearchTerm || formData.billingPostalCode}
-                                            onChange={handlePostcodeSearch}
-                                            className={`w-full p-2 border ${formErrors.billingPostalCode ? 'border-red-500' : 'border-gray-300'} rounded`}
+                                            id="shippingPostalCode"
+                                            name="shippingPostalCode"
+                                            value={postcodeSearchTerm}
+                                            onChange={handlePostcodeChange}
+                                            placeholder="Enter UK postcode"
+                                            className={`w-full p-2 border ${formErrors.shippingPostalCode ? 'border-red-500' : 'border-gray-300'} rounded`}
                                             required
                                         />
-                                        {filteredPostcodes.length > 0 && (
-                                            <div className="absolute z-10 mt-1 w-full bg-white shadow-lg rounded-md border border-gray-300 max-h-60 overflow-auto">
-                                                {filteredPostcodes.map((postcode, index) => (
-                                                    <div
-                                                        key={index}
-                                                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                                                        onClick={() => selectPostcode(postcode, 'billingPostalCode')}
-                                                    >
-                                                        {postcode}
-                                                    </div>
-                                                ))}
-                                            </div>
+                                        {formErrors.shippingPostalCode && (
+                                            <p className="text-red-500 text-xs mt-1">
+                                                {postCodeError || "Postal code is required"}
+                                            </p>
                                         )}
-                                        {formErrors.billingPostalCode && <p className="text-red-500 text-xs mt-1">Postal code is required</p>}
                                     </div>
                                     <div>
-                                        <label htmlFor="billingCountry" className="block text-sm font-medium text-gray-700 mb-1">
-                                            Country *
-                                        </label>
-                                        <select
-                                            id="billingCountry"
-                                            name="billingCountry"
-                                            value={formData.billingCountry}
-                                            onChange={handleInputChange}
-                                            className={`w-full p-2 border ${formErrors.billingCountry ? 'border-red-500' : 'border-gray-300'} rounded`}
-                                            required
-                                        >
-                                            <option value="United Kingdom">United Kingdom</option>
-                                        </select>
+                                        <div>
+                                            <label htmlFor="shippingCountry" className="block text-sm font-medium text-gray-700 mb-1">
+                                                Country *
+                                            </label>
+                                            <input
+                                                type="text"
+                                                id="shippingCountry"
+                                                name="shippingCountry"
+                                                value="United Kingdom"
+                                                readOnly
+                                                className="w-full p-2 border border-gray-300 rounded bg-gray-100"
+                                            />
+                                        </div>
                                         {formErrors.billingCountry && <p className="text-red-500 text-xs mt-1">Country is required</p>}
                                     </div>
                                 </div>
@@ -1099,8 +1070,7 @@ const CheckoutPage = () => {
                                     formData={formData}
                                     onPaymentSuccess={handlePaymentSuccess}
                                     validateForm={validateForm}
-                                    totalPrice={displayTotal}
-                                    orderCount={orderCount}
+                                    totalPrice={displayTotal - (firstOrderDiscount || 0)}
                                 />
                             </div>
                         </div>

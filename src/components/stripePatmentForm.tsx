@@ -8,8 +8,7 @@ const StripePaymentForm = ({
     formData,
     onPaymentSuccess,
     validateForm,
-    totalPrice,
-    orderCount
+    totalPrice
 }: {
     cartItems?: any[],
     formData: any,
@@ -20,7 +19,6 @@ const StripePaymentForm = ({
     }) => Promise<string | null>,
     validateForm: () => boolean,
     totalPrice: number,
-    orderCount: number
 }) => {
     const stripe = useStripe();
     const elements = useElements();
@@ -43,7 +41,7 @@ const StripePaymentForm = ({
 
         setLoading(true);
         setErrorMessage(undefined);
-        
+
 
         try {
             const { error: submitError } = await elements.submit();
@@ -89,12 +87,7 @@ const StripePaymentForm = ({
         if (loading) {
             return 'Processing Payment...';
         } else {
-            // Apply 20% discount if customer has previous orders
-            if (orderCount === 0) {
-                return `Pay £${(totalPrice - (totalPrice * 0.2)).toFixed(2)}`;
-            } else {
-                return `Pay £${totalPrice.toFixed(2)}`;
-            }
+            return `Pay £${totalPrice.toFixed(2)}`;
         }
     };
 
