@@ -448,7 +448,7 @@ export default function OrderConfirmationPage() {
               {/* Display individual item discounts if any */}
               {order.items.some(item => item.product.discount && parseFloat(item.product.discount) > 0) && (
                 <div className="border-t pt-2 mt-2">
-                  <p className="text-sm font-medium mb-1">Item Discounts:</p>
+                  {/* <p className="text-sm font-medium mb-1">Item Discounts:</p> */}
                   {order.items.map(item => (
                     item.product.discount && parseFloat(item.product.discount) > 0 && (
                       <div key={item.id} className="flex justify-between text-sm text-green-600">
