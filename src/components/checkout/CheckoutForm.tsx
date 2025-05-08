@@ -1,599 +1,674 @@
-// components/checkout/CheckoutForm.tsx
-'use client';
+'use client'
+import React, { useEffect, useState, useCallback, useRef } from 'react';
+import { useSession } from 'next-auth/react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { OrderStatus } from '@prisma/client';
+import { Order, CustomerProfile } from '@/types/checkout';
+import { validatePostcode } from '@/utils/validatePostalCode';
+import { isValid as isValidPostcode } from "postcode";
+import { OrderSummary } from './OrderSummary';
+import { ShippingDetails } from './ShippingDetails';
+import { BillingDetails } from './BillingDetails';
+import { PaymentSection } from './PaymentSection';
 
-import { useForm } from 'react-hook-form';
-import { useState } from 'react';
+const GUEST_EMAIL_KEY = 'guestEmail';
+const GUEST_CART_ID_KEY = 'guestCartId';
 
-export default function CheckoutForm({ onSubmit, isLoading, cartItems }: any) {
-    const { register, handleSubmit, formState: { errors }, watch } = useForm();
-    const [shippingMethod, setShippingMethod] = useState('standard');
-    const paymentMethod = watch('paymentMethod', 'card');
-    const [sameAsBilling, setSameAsBilling] = useState(true);
+export const CheckoutPage: React.FC = () => {
+    const { data: session } = useSession();
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const orderId = searchParams.get('orderId');
 
-    // Calculate cart totals - this would typically come from your cart state
-    const subtotal = cartItems?.reduce((total: number, item: any) => 
-        total + (item.price * item.quantity), 0) || 0;
-    const shippingCost = shippingMethod === 'standard' ? 5 : 15;
-    const total = subtotal + shippingCost;
+    const [order, setOrder] = useState<Order | null>(null);
+    const [customerProfile, setCustomerProfile] = useState<CustomerProfile | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [isCreatingOrder, setIsCreatingOrder] = useState(false);
+    const [clientSecret, setClientSecret] = useState<string | null>(null);
+    const [stripeCustId, setStripeCustId] = useState<string | null>(null);
+    const [cartItems, setCartItems] = useState<any[]>([]);
+    const [orderCount, setOrderCount] = useState<number | null>(null);
+    const [postcodeSearchTerm, setPostcodeSearchTerm] = useState("");
+    const [postCodeError, setPostCodeError] = useState("");
+    const [payablePrice, setPayablePrice] = useState<number>(0);
 
-    const handleFormSubmit = (data: any) => {
-        // Add shipping method to form data
-        data.shippingMethod = shippingMethod;
-        data.shippingCost = shippingCost;
-        data.subtotal = subtotal;
-        data.total = total;
-        
-        // If billing same as shipping, copy shipping details to billing
-        if (sameAsBilling) {
-            data.billingAddressLine1 = data.addressLine1;
-            data.billingAddressLine2 = data.addressLine2;
-            data.billingCity = data.city;
-            data.billingState = data.state;
-            data.billingPostalCode = data.postalCode;
-            data.billingCountry = data.country;
+    const [formData, setFormData] = useState({
+        shippingFirstName: '',
+        shippingLastName: '',
+        shippingStreet: '',
+        shippingCity: '',
+        shippingState: '',
+        shippingPostalCode: '',
+        shippingCountry: 'United Kingdom',
+        shippingPhone: '',
+        useSameAddress: true,
+        billingFirstName: '',
+        billingLastName: '',
+        billingStreet: '',
+        billingCity: '',
+        billingState: '',
+        billingPostalCode: '',
+        billingCountry: 'United Kingdom',
+        paymentMethod: 'STRIPE',
+        email: '',
+        cardNumber: '',
+        cardExpiry: '',
+        cardCVV: '',
+        cardName: ''
+    });
+
+    const [formErrors, setFormErrors] = useState({
+        shippingFirstName: false,
+        shippingLastName: false,
+        shippingStreet: false,
+        shippingCity: false,
+        shippingState: false,
+        shippingPostalCode: false,
+        shippingCountry: false,
+        shippingPhone: false,
+        billingFirstName: false,
+        billingLastName: false,
+        billingStreet: false,
+        billingCity: false,
+        billingState: false,
+        billingPostalCode: false,
+        billingCountry: false,
+        email: false
+    });
+
+    const displayItems = order ? order.items : cartItems.map(item => ({
+        id: item.id,
+        quantity: item.quantity,
+        price: (item.product.price * (1 - (item.product.discount || 0) / 100)) * item.quantity,
+        product: item.product
+    }));
+
+    const calculateFinalPrice = useCallback(() => {
+        if (!order && cartItems.length === 0) return 0;
+
+        // Calculate base price with product discounts
+        const basePrice = order
+            ? order.totalPrice
+            : cartItems.reduce((sum, item) => {
+                const price = typeof item.product.price === 'string'
+                    ? parseFloat(item.product.price)
+                    : item.product.price || 0;
+                const discount = item.product.discount || 0;
+                return sum + (price * (1 - discount / 100)) * item.quantity;
+            }, 0);
+
+        let finalPrice = basePrice;
+
+        // Apply first order discount (20%)
+        if (orderCount === 0) {
+            finalPrice *= 0.8;
         }
-        
-        onSubmit(data);
+
+        // Apply bulk discount (5%) if over £75
+        if (finalPrice > 75) {
+            finalPrice *= 0.95;
+        }
+
+        return Math.round(finalPrice * 100) / 100; // Round to 2 decimal places
+    }, [order, cartItems, orderCount]);
+
+    // Calculate final price whenever dependencies change
+    useEffect(() => {
+        const calculatedPrice = calculateFinalPrice();
+        setPayablePrice(calculatedPrice);
+    }, [calculateFinalPrice]);
+
+    const getGuestCartId = useCallback(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem(GUEST_CART_ID_KEY);
+        }
+        return null;
+    }, []);
+
+    const validateForm = () => {
+        const newErrors = {
+            shippingFirstName: !formData.shippingFirstName.trim(),
+            shippingLastName: !formData.shippingLastName.trim(),
+            shippingStreet: !formData.shippingStreet.trim(),
+            shippingCity: !formData.shippingCity.trim(),
+            shippingState: !formData.shippingState.trim(),
+            shippingCountry: false,
+            shippingPhone: !formData.shippingPhone.trim() || formData.shippingPhone.length !== 10,
+            billingFirstName: !formData.useSameAddress && !formData.billingFirstName.trim(),
+            billingLastName: !formData.useSameAddress && !formData.billingLastName.trim(),
+            billingStreet: !formData.useSameAddress && !formData.billingStreet.trim(),
+            billingCity: !formData.useSameAddress && !formData.billingCity.trim(),
+            billingState: !formData.useSameAddress && !formData.billingState.trim(),
+            billingPostalCode: !formData.useSameAddress && (!formData.billingPostalCode.trim() || !isValidPostcode(formData.billingPostalCode)),
+            billingCountry: !formData.useSameAddress && !formData.billingCountry.trim(),
+            email: !formData.email.trim() || !/^\S+@\S+\.\S+$/.test(formData.email),
+            shippingPostalCode: !formData.shippingPostalCode.trim() || !!postCodeError,
+        };
+
+        setFormErrors(newErrors);
+
+        if (Object.values(newErrors).some(error => error)) {
+            const firstErrorField = Object.keys(newErrors).find(key => newErrors[key as keyof typeof newErrors]);
+            if (firstErrorField) {
+                document.getElementById(firstErrorField)?.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+            }
+            return false;
+        }
+        return true;
     };
 
-    return (
-        <form id="checkout-form" onSubmit={handleSubmit(handleFormSubmit)} className="space-y-8">
-            {/* Contact Information Section */}
-            <div className="bg-white p-6 rounded-lg shadow-md">
-                <h2 className="text-xl font-semibold mb-4">Contact Information</h2>
+    useEffect(() => {
+        const validateCode = async (postcode: string) => {
+            if (!postcode) {
+                setPostCodeError("Postal code is required");
+                return;
+            }
 
-                <div className="space-y-4">
-                    <div>
-                        <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                            Email Address
-                        </label>
-                        <input
-                            id="email"
-                            type="email"
-                            className="w-full p-2 border border-gray-300 rounded-md"
-                            {...register('email', {
-                                required: 'Email is required',
-                                pattern: {
-                                    value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                                    message: 'Invalid email address'
-                                }
-                            })}
-                        />
-                        {errors.email?.message && (
-                            <p className="text-red-500 text-sm mt-1">{String(errors.email.message)}</p>
-                        )}
-                    </div>
+            const response = await validatePostcode(postcode);
+            if (response.isValid) {
+                setPostCodeError("");
+            } else {
+                setPostCodeError(response.error || "Invalid UK Postal Code");
+            }
+        }
 
-                    <div>
-                        <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-                            Phone Number
-                        </label>
-                        <input
-                            id="phone"
-                            type="tel"
-                            className="w-full p-2 border border-gray-300 rounded-md"
-                            {...register('phone', { required: 'Phone number is required' })}
-                        />
-                        {errors.phone?.message && (
-                            <p className="text-red-500 text-sm mt-1">{String(errors.phone.message)}</p>
-                        )}
-                    </div>
-                </div>
-            </div>
+        const timer = setTimeout(() => {
+            if (postcodeSearchTerm) {
+                validateCode(postcodeSearchTerm);
+            }
+        }, 500);
 
-            {/* Shipping Information Section */}
-            <div className="bg-white p-6 rounded-lg shadow-md">
-                <h2 className="text-xl font-semibold mb-4">Shipping Information</h2>
+        return () => clearTimeout(timer);
+    }, [postcodeSearchTerm]);
 
-                <div className="space-y-4">
-                    <div>
-                        <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">
-                            Full Name
-                        </label>
-                        <input
-                            id="fullName"
-                            type="text"
-                            className="w-full p-2 border border-gray-300 rounded-md"
-                            {...register('fullName', { required: 'Full name is required' })}
-                        />
-                        {errors.fullName?.message && (
-                            <p className="text-red-500 text-sm mt-1">{String(errors.fullName.message)}</p>
-                        )}
-                    </div>
+    const paymentIntentCreatingRef = useRef(false);
 
-                    <div>
-                        <label htmlFor="addressLine1" className="block text-sm font-medium text-gray-700 mb-1">
-                            Address Line 1
-                        </label>
-                        <input
-                            id="addressLine1"
-                            type="text"
-                            className="w-full p-2 border border-gray-300 rounded-md"
-                            {...register('addressLine1', { required: 'Address is required' })}
-                        />
-                        {errors.addressLine1?.message && (
-                            <p className="text-red-500 text-sm mt-1">{String(errors.addressLine1.message)}</p>
-                        )}
-                    </div>
+    const createPaymentIntent = async (amount: number, orderIdParam?: string) => {
+        if (paymentIntentCreatingRef.current || clientSecret) {
+            return;
+        }
 
-                    <div>
-                        <label htmlFor="addressLine2" className="block text-sm font-medium text-gray-700 mb-1">
-                            Address Line 2 (Optional)
-                        </label>
-                        <input
-                            id="addressLine2"
-                            type="text"
-                            className="w-full p-2 border border-gray-300 rounded-md"
-                            {...register('addressLine2')}
-                        />
-                    </div>
+        try {
+            paymentIntentCreatingRef.current = true;
+            const response = await fetch('/api/create-payment-intent', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    amount: Math.round(amount * 100),
+                    currency: 'gbp',
+                    orderId: orderIdParam,
+                    email: formData.email || session?.user?.email,
+                }),
+            });
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-1">
-                                City
-                            </label>
-                            <input
-                                id="city"
-                                type="text"
-                                className="w-full p-2 border border-gray-300 rounded-md"
-                                {...register('city', { required: 'City is required' })}
-                            />
-                            {errors.city?.message && (
-                                <p className="text-red-500 text-sm mt-1">{String(errors.city.message)}</p>
-                            )}
-                        </div>
+            const responseData = await response.json();
 
-                        <div>
-                            <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-1">
-                                State/Province
-                            </label>
-                            <input
-                                id="state"
-                                type="text"
-                                className="w-full p-2 border border-gray-300 rounded-md"
-                                {...register('state', { required: 'State is required' })}
-                            />
-                            {errors.state?.message && (
-                                <p className="text-red-500 text-sm mt-1">{String(errors.state.message)}</p>
-                            )}
-                        </div>
-                    </div>
+            if (responseData.clientSecret) {
+                setClientSecret(responseData.clientSecret);
+            } else {
+                throw new Error("No client secret returned");
+            }
+        } catch (err) {
+            console.error("Payment intent error:", err);
+            setError("Failed to initialize payment: " + (err instanceof Error ? err.message : String(err)));
+        } finally {
+            paymentIntentCreatingRef.current = false;
+        }
+    };
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label htmlFor="postalCode" className="block text-sm font-medium text-gray-700 mb-1">
-                                Postal Code
-                            </label>
-                            <input
-                                id="postalCode"
-                                type="text"
-                                className="w-full p-2 border border-gray-300 rounded-md"
-                                {...register('postalCode', { required: 'Postal code is required' })}
-                            />
-                            {errors.postalCode?.message && (
-                                <p className="text-red-500 text-sm mt-1">{String(errors.postalCode.message)}</p>
-                            )}
-                        </div>
+    const fetchCustomerProfile = async () => {
+        if (!session?.user?.id) return;
 
-                        <div>
-                            <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-1">
-                                Country
-                            </label>
-                            <select
-                                id="country"
-                                className="w-full p-2 border border-gray-300 rounded-md"
-                                {...register('country', { required: 'Country is required' })}
-                            >
-                                <option value="">Select Country</option>
-                                <option value="US">United States</option>
-                                <option value="CA">Canada</option>
-                                <option value="UK">United Kingdom</option>
-                                <option value="AU">Australia</option>
-                                <option value="DE">Germany</option>
-                                <option value="FR">France</option>
-                                <option value="JP">Japan</option>
-                                <option value="IN">India</option>
-                                <option value="BR">Brazil</option>
-                            </select>
-                            {errors.country?.message && (
-                                <p className="text-red-500 text-sm mt-1">{String(errors.country.message)}</p>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            </div>
+        try {
+            const response = await fetch('/api/customer-profile');
 
-            {/* Billing Information Section */}
-            <div className="bg-white p-6 rounded-lg shadow-md">
-                <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-xl font-semibold">Billing Information</h2>
-                    <div className="flex items-center">
-                        <input
-                            id="same-as-shipping"
-                            type="checkbox"
-                            checked={sameAsBilling}
-                            onChange={() => setSameAsBilling(!sameAsBilling)}
-                            className="h-4 w-4 text-blue-600"
-                        />
-                        <label htmlFor="same-as-shipping" className="ml-2 block text-sm font-medium text-gray-700">
-                            Same as shipping address
-                        </label>
-                    </div>
-                </div>
+            if (!response.ok) {
+                return;
+            }
 
-                {!sameAsBilling && (
-                    <div className="space-y-4">
-                        <div>
-                            <label htmlFor="billingAddressLine1" className="block text-sm font-medium text-gray-700 mb-1">
-                                Address Line 1
-                            </label>
-                            <input
-                                id="billingAddressLine1"
-                                type="text"
-                                className="w-full p-2 border border-gray-300 rounded-md"
-                                {...register('billingAddressLine1', { required: !sameAsBilling && 'Billing address is required' })}
-                            />
-                            {errors.billingAddressLine1?.message && (
-                                <p className="text-red-500 text-sm mt-1">{String(errors.billingAddressLine1.message)}</p>
-                            )}
-                        </div>
+            const { data } = await response.json();
+            setCustomerProfile(data);
+        } catch (err) {
+            console.error('Error fetching customer profile:', err);
+        }
+    };
 
-                        <div>
-                            <label htmlFor="billingAddressLine2" className="block text-sm font-medium text-gray-700 mb-1">
-                                Address Line 2 (Optional)
-                            </label>
-                            <input
-                                id="billingAddressLine2"
-                                type="text"
-                                className="w-full p-2 border border-gray-300 rounded-md"
-                                {...register('billingAddressLine2')}
-                            />
-                        </div>
+    const fetchOrder = async () => {
+        if (!orderId) {
+            return;
+        }
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label htmlFor="billingCity" className="block text-sm font-medium text-gray-700 mb-1">
-                                    City
-                                </label>
-                                <input
-                                    id="billingCity"
-                                    type="text"
-                                    className="w-full p-2 border border-gray-300 rounded-md"
-                                    {...register('billingCity', { required: !sameAsBilling && 'City is required' })}
-                                />
-                                {errors.billingCity?.message && (
-                                    <p className="text-red-500 text-sm mt-1">{String(errors.billingCity.message)}</p>
-                                )}
-                            </div>
+        try {
+            const queryParams = new URLSearchParams();
 
-                            <div>
-                                <label htmlFor="billingState" className="block text-sm font-medium text-gray-700 mb-1">
-                                    State/Province
-                                </label>
-                                <input
-                                    id="billingState"
-                                    type="text"
-                                    className="w-full p-2 border border-gray-300 rounded-md"
-                                    {...register('billingState', { required: !sameAsBilling && 'State is required' })}
-                                />
-                                {errors.billingState?.message && (
-                                    <p className="text-red-500 text-sm mt-1">{String(errors.billingState.message)}</p>
-                                )}
-                            </div>
-                        </div>
+            if (session?.user?.id) {
+                queryParams.append('userId', session.user.id);
+            } else {
+                const guestEmail = localStorage.getItem(GUEST_EMAIL_KEY);
+                if (guestEmail) {
+                    queryParams.append('guestEmail', guestEmail);
+                } else {
+                    throw new Error('Guest email is required for guest checkout');
+                }
+            }
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label htmlFor="billingPostalCode" className="block text-sm font-medium text-gray-700 mb-1">
-                                    Postal Code
-                                </label>
-                                <input
-                                    id="billingPostalCode"
-                                    type="text"
-                                    className="w-full p-2 border border-gray-300 rounded-md"
-                                    {...register('billingPostalCode', { required: !sameAsBilling && 'Postal code is required' })}
-                                />
-                                {errors.billingPostalCode?.message && (
-                                    <p className="text-red-500 text-sm mt-1">{String(errors.billingPostalCode.message)}</p>
-                                )}
-                            </div>
+            const response = await fetch(`/api/orders/${orderId}?${queryParams.toString()}`);
 
-                            <div>
-                                <label htmlFor="billingCountry" className="block text-sm font-medium text-gray-700 mb-1">
-                                    Country
-                                </label>
-                                <select
-                                    id="billingCountry"
-                                    className="w-full p-2 border border-gray-300 rounded-md"
-                                    {...register('billingCountry', { required: !sameAsBilling && 'Country is required' })}
-                                >
-                                    <option value="">Select Country</option>
-                                    <option value="US">United States</option>
-                                    <option value="CA">Canada</option>
-                                    <option value="UK">United Kingdom</option>
-                                    <option value="AU">Australia</option>
-                                    <option value="DE">Germany</option>
-                                    <option value="FR">France</option>
-                                    <option value="JP">Japan</option>
-                                    <option value="IN">India</option>
-                                    <option value="BR">Brazil</option>
-                                </select>
-                                {errors.billingCountry?.message && (
-                                    <p className="text-red-500 text-sm mt-1">{String(errors.billingCountry.message)}</p>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                )}
-            </div>
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || errorData.message || 'Failed to fetch order');
+            }
 
-            {/* Shipping Method Section */}
-            <div className="bg-white p-6 rounded-lg shadow-md">
-                <h2 className="text-xl font-semibold mb-4">Shipping Method</h2>
+            const { data } = await response.json();
+            setOrder(data);
 
-                <div className="space-y-4">
-                    <div className="flex items-center">
-                        <input
-                            id="standard-shipping"
-                            type="radio"
-                            name="shippingMethod"
-                            value="standard"
-                            checked={shippingMethod === 'standard'}
-                            onChange={() => setShippingMethod('standard')}
-                            className="h-4 w-4 text-blue-600"
-                        />
-                        <label htmlFor="standard-shipping" className="ml-2 block text-sm font-medium text-gray-700">
-                            Standard Shipping (£5.00) - 3-5 business days
-                        </label>
-                    </div>
+            if (data) {
+                const phone = data.shippingPhone?.startsWith('+44')
+                    ? data.shippingPhone.substring(3)
+                    : data.shippingPhone || '';
 
-                    <div className="flex items-center">
-                        <input
-                            id="express-shipping"
-                            type="radio"
-                            name="shippingMethod"
-                            value="express"
-                            checked={shippingMethod === 'express'}
-                            onChange={() => setShippingMethod('express')}
-                            className="h-4 w-4 text-blue-600"
-                        />
-                        <label htmlFor="express-shipping" className="ml-2 block text-sm font-medium text-gray-700">
-                            Express Shipping (£15.00) - 1-2 business days
-                        </label>
-                    </div>
-                </div>
-            </div>
+                setFormData(prev => ({
+                    ...prev,
+                    shippingFirstName: data.shippingFirstName || '',
+                    shippingLastName: data.shippingLastName || '',
+                    shippingStreet: data.shippingStreet || '',
+                    shippingCity: data.shippingCity || '',
+                    shippingState: data.shippingState || '',
+                    shippingPostalCode: data.shippingPostalCode || '',
+                    shippingCountry: data.shippingCountry || 'United Kingdom',
+                    shippingPhone: phone,
+                    billingFirstName: data.billingFirstName || '',
+                    billingLastName: data.billingLastName || '',
+                    billingStreet: data.billingStreet || '',
+                    billingCity: data.billingCity || '',
+                    billingState: data.billingState || '',
+                    billingPostalCode: data.billingPostalCode || '',
+                    billingCountry: data.billingCountry || 'United Kingdom',
+                    email: data.email || (session?.user?.email || ''),
+                    paymentMethod: 'STRIPE'
+                }));
 
-            {/* Coupon Code Section */}
-            <div className="bg-white p-6 rounded-lg shadow-md">
-                <h2 className="text-xl font-semibold mb-4">Discount Code</h2>
-                <div className="flex space-x-2">
-                    <input
-                        id="couponCode"
-                        type="text"
-                        placeholder="Enter coupon code"
-                        className="flex-1 p-2 border border-gray-300 rounded-md"
-                        {...register('couponCode')}
-                    />
-                    <button 
-                        type="button"
-                        className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
-                        onClick={() => {/* Add coupon validation logic */}}
+                // Use the calculated payablePrice when creating the payment intent
+                if (data.totalPrice > 0 && !clientSecret) {
+                    await createPaymentIntent(payablePrice, data.id);
+                }
+            }
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'An error occurred while loading your order');
+        }
+    };
+
+    const fetchCart = async () => {
+        try {
+            const userId = session?.user?.id;
+            const guestCartId = getGuestCartId();
+
+            if (!userId && !guestCartId) {
+                throw new Error('No cart identified');
+            }
+
+            const response = await fetch(`/api/cart?${userId ? `userId=${userId}` : `guestCartId=${guestCartId}`}`, {
+                headers: { 'Cache-Control': 'no-cache' }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch cart');
+            }
+
+            const { data: cartData } = await response.json();
+            setCartItems(cartData.items || []);
+
+            if (!cartData?.items) {
+                console.log('Your cart is empty');
+            }
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to load your cart');
+        }
+    };
+
+    // Effect to create payment intent when cart is loaded and price is calculated
+    useEffect(() => {
+        const initializePayment = async () => {
+            if (!orderId && cartItems.length > 0 && payablePrice > 0 && !clientSecret) {
+                await createPaymentIntent(payablePrice);
+            }
+        };
+        
+        initializePayment();
+    }, [orderId, cartItems, payablePrice, clientSecret]);
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        const { name, value } = e.target;
+
+        if (name === "shippingPhone") {
+            const digitsOnly = value.replace(/\D/g, '');
+
+            if (digitsOnly.length > 10) {
+                return;
+            }
+
+            setFormData(prev => ({
+                ...prev,
+                [name]: digitsOnly
+            }));
+        } else {
+            setFormData(prev => ({
+                ...prev,
+                [name]: value
+            }));
+        }
+
+        if (formErrors[name as keyof typeof formErrors]) {
+            setFormErrors(prev => ({
+                ...prev,
+                [name]: false
+            }));
+        }
+    };
+
+    const handleSameAddressToggle = () => {
+        const useSameAddress = !formData.useSameAddress;
+        setFormData(prev => ({
+            ...prev,
+            useSameAddress,
+            billingFirstName: useSameAddress ? prev.shippingFirstName : '',
+            billingLastName: useSameAddress ? prev.shippingLastName : '',
+            billingStreet: useSameAddress ? prev.shippingStreet : '',
+            billingCity: useSameAddress ? prev.shippingCity : '',
+            billingState: useSameAddress ? prev.shippingState : '',
+            billingPostalCode: useSameAddress ? prev.shippingPostalCode : '',
+            billingCountry: useSameAddress ? prev.shippingCountry : ''
+        }));
+
+        if (useSameAddress) {
+            setFormErrors(prev => ({
+                ...prev,
+                billingFirstName: false,
+                billingLastName: false,
+                billingStreet: false,
+                billingCity: false,
+                billingState: false,
+                billingPostalCode: false,
+                billingCountry: false
+            }));
+        }
+    };
+
+    const handlePostcodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setPostcodeSearchTerm(value);
+        setFormData(prev => ({
+            ...prev,
+            shippingPostalCode: value,
+            ...(formData.useSameAddress && { billingPostalCode: value })
+        }));
+    };
+
+    const createOrderFromCart = async (paymentData?: {
+        paymentIntentId: string;
+        paymentMethodId: string;
+        clientSecret: string;
+    }) => {
+        setIsCreatingOrder(true);
+        setError(null);
+
+        try {
+            const userId = session?.user?.id;
+            const guestEmail = formData.email || localStorage.getItem(GUEST_EMAIL_KEY);
+
+            if (!userId && !guestEmail) {
+                throw new Error('Email is required for guest checkout');
+            }
+
+            if (!cartItems || cartItems.length === 0) {
+                throw new Error('Your cart is empty');
+            }
+
+            if (!userId && formData.email) {
+                localStorage.setItem(GUEST_EMAIL_KEY, formData.email);
+            }
+
+            const orderItems = cartItems.map(item => ({
+                productId: item.productId,
+                quantity: item.quantity,
+                unitPrice: typeof item.product.price === 'string'
+                    ? parseFloat(item.product.price)
+                    : item.product.price,
+                discountPercentage: item.product.discount
+                    ? (typeof item.product.discount === 'string'
+                        ? parseFloat(item.product.discount)
+                        : item.product.discount)
+                    : 0
+            }));
+
+            const orderPayload = {
+                items: orderItems,
+                ...(userId
+                    ? { userId }
+                    : { guestEmail: formData.email.toLowerCase().trim() }),
+                shippingFirstName: formData.shippingFirstName,
+                shippingLastName: formData.shippingLastName,
+                shippingStreet: formData.shippingStreet,
+                shippingCity: formData.shippingCity,
+                shippingState: formData.shippingState,
+                shippingPostalCode: formData.shippingPostalCode,
+                shippingCountry: "United Kingdom",
+                shippingPhone: formData.shippingPhone ? `+44${formData.shippingPhone}` : '',
+                billingFirstName: formData.useSameAddress ? null : formData.billingFirstName,
+                billingLastName: formData.useSameAddress ? null : formData.billingLastName,
+                billingStreet: formData.useSameAddress ? null : formData.billingStreet,
+                billingCity: formData.useSameAddress ? null : formData.billingCity,
+                billingState: formData.useSameAddress ? null : formData.billingState,
+                billingPostalCode: formData.useSameAddress ? null : formData.billingPostalCode,
+                billingCountry: formData.useSameAddress ? null : formData.billingCountry,
+                email: formData.email,
+                totalPrice: payablePrice, // Use the payablePrice state instead of finalPrice
+                paymentMethod: 'STRIPE',
+                status: OrderStatus.CONFIRMED,
+                ...(paymentData ? {
+                    paymentIntentId: paymentData.paymentIntentId,
+                    paymentMethodId: paymentData.paymentMethodId,
+                    clientSecret: paymentData.clientSecret
+                } : {})
+            };
+
+            const orderResponse = await fetch('/api/orders', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(orderPayload),
+            });
+
+            if (!orderResponse.ok) {
+                const errorData = await orderResponse.json();
+                throw new Error(errorData.error || errorData.message || 'Failed to create order');
+            }
+
+            const { data } = await orderResponse.json();
+
+            return data.id;
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to create order');
+            return null;
+        } finally {
+            setIsCreatingOrder(false);
+        }
+    };
+
+    const handlePaymentSuccess = async (paymentData: {
+        paymentIntentId: string;
+        paymentMethodId: string;
+        clientSecret: string;
+    }): Promise<string | null> => {
+        try {
+            const newOrderId = await createOrderFromCart(paymentData);
+
+            if (!newOrderId) {
+                throw new Error('Failed to create order');
+            }
+
+            if (!session?.user?.id) {
+                localStorage.removeItem(GUEST_CART_ID_KEY);
+            }
+
+            return newOrderId;
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Payment processing failed');
+            return null;
+        }
+    };
+
+    useEffect(() => {
+        const fetchOrderCount = async () => {
+            if (session?.user?.id) {
+                try {
+                    const response = await fetch(`/api/orders/count?userId=${session.user.id}`);
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch order count');
+                    }
+                    const data = await response.json();
+                    setOrderCount(data.count || 0);
+                } catch (error) {
+                    console.error('Failed to fetch order count:', error);
+                    setOrderCount(0);
+                }
+            } else {
+                // Set default to 0 for guest users
+                setOrderCount(0);
+            }
+        };
+
+        fetchOrderCount();
+    }, [session?.user?.id]);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            setLoading(true);
+
+            try {
+                await fetchCustomerProfile();
+
+                if (orderId) {
+                    await fetchOrder();
+                } else {
+                    await fetchCart();
+                }
+            } catch (error) {
+                setError(error instanceof Error ? error.message : 'An error occurred');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, [session?.user?.id, orderId]);
+
+    useEffect(() => {
+        if (customerProfile && !formData.shippingFirstName) {
+            setFormData(prev => ({
+                ...prev,
+                shippingFirstName: customerProfile.firstName || '',
+                shippingLastName: customerProfile.lastName || '',
+                shippingStreet: customerProfile.streetAddress || '',
+                shippingCity: customerProfile.city || '',
+                shippingState: customerProfile.state || '',
+                shippingPostalCode: customerProfile.postalCode || '',
+                shippingCountry: customerProfile.country || '',
+                shippingPhone: customerProfile.phone || '',
+                email: session?.user?.email || ''
+            }));
+        }
+    }, [customerProfile, session]);
+
+    if (loading || isCreatingOrder) {
+        return <div className="flex justify-center items-center h-64">Loading checkout...</div>;
+    }
+
+    if (error) {
+        return (
+            <div className="p-12 mx-auto">
+                <div className="text-red-500 p-4 bg-red-50 rounded">{error}</div>
+                <div className="text-center mt-4">
+                    <button
+                        onClick={() => router.push('/cart')}
+                        className="text-blue-600 hover:text-blue-800 transition-colors"
                     >
-                        Apply
+                        Return to Cart
                     </button>
                 </div>
             </div>
+        );
+    }
 
-            {/* Special Instructions */}
-            <div className="bg-white p-6 rounded-lg shadow-md">
-                <h2 className="text-xl font-semibold mb-4">Special Instructions</h2>
-                <div>
-                    <label htmlFor="specialInstructions" className="block text-sm font-medium text-gray-700 mb-1">
-                        Order Notes (Optional)
-                    </label>
-                    <textarea
-                        id="specialInstructions"
-                        rows={3}
-                        className="w-full p-2 border border-gray-300 rounded-md"
-                        placeholder="Special delivery instructions, gift message, etc."
-                        {...register('specialInstructions')}
-                    ></textarea>
+    if (!cartItems.length && !order) {
+        return (
+            <div className="p-12 mx-auto">
+                <div className="bg-white p-6 rounded-lg text-center">
+                    <h2 className="text-xl font-semibold mb-4">Your Cart is Empty</h2>
+                    <p className="text-gray-600 mb-4">There are no items in your cart to checkout.</p>
+                    <button
+                        onClick={() => router.push('/products')}
+                        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
+                    >
+                        Continue Shopping
+                    </button>
                 </div>
             </div>
+        );
+    }
 
-            {/* Order Summary */}
-            <div className="bg-white p-6 rounded-lg shadow-md">
-                <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
-                
-                {cartItems && cartItems.length > 0 ? (
-                    <div className="space-y-4">
-                        <div className="max-h-64 overflow-y-auto">
-                            {cartItems.map((item: any, index: number) => (
-                                <div key={index} className="flex justify-between items-center py-2 border-b">
-                                    <div className="flex items-center">
-                                        <span className="font-medium">{item.quantity}x</span>
-                                        <span className="ml-2">{item.name}</span>
-                                    </div>
-                                    <span>£{(item.price * item.quantity).toFixed(2)}</span>
-                                </div>
-                            ))}
-                        </div>
-                        
-                        <div className="space-y-2 pt-4">
-                            <div className="flex justify-between">
-                                <span>Subtotal</span>
-                                <span>£{subtotal.toFixed(2)}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span>Shipping</span>
-                                <span>£{shippingCost.toFixed(2)}</span>
-                            </div>
-                            <div className="flex justify-between font-bold text-lg pt-2 border-t">
-                                <span>Total</span>
-                                <span>£{total.toFixed(2)}</span>
-                            </div>
-                        </div>
-                    </div>
+    return (
+        <div className="p-12 mx-auto">
+            <div className="bg-white p-6 rounded-lg mb-6">
+                <h1 className="text-2xl font-semibold mb-6">Checkout</h1>
+
+                {clientSecret ? (
+                    <>
+                        <OrderSummary
+                            items={displayItems}
+                            orderCount={orderCount}
+                            finalPrice={payablePrice}
+                        />
+
+                        <ShippingDetails
+                            formData={formData}
+                            formErrors={formErrors}
+                            handleInputChange={handleInputChange}
+                            postcodeSearchTerm={postcodeSearchTerm}
+                            postCodeError={postCodeError}
+                            handlePostcodeChange={handlePostcodeChange}
+                        />
+
+                        <BillingDetails
+                            formData={formData}
+                            formErrors={formErrors}
+                            handleInputChange={handleInputChange}
+                            handleSameAddressToggle={handleSameAddressToggle}
+                            postcodeSearchTerm={postcodeSearchTerm}
+                            postCodeError={postCodeError}
+                            handlePostcodeChange={handlePostcodeChange}
+                        />
+
+                        <PaymentSection
+                            clientSecret={clientSecret}
+                            cartItems={cartItems}
+                            formData={formData}
+                            onPaymentSuccess={handlePaymentSuccess}
+                            validateForm={validateForm}
+                            totalPrice={payablePrice}
+                        />
+                    </>
                 ) : (
-                    <p className="text-gray-500">Your cart is empty</p>
+                    <div className="flex justify-center items-center h-64">
+                        <p>Initializing payment system...</p>
+                    </div>
                 )}
             </div>
-
-            {/* Payment Method Section */}
-            <div className="bg-white p-6 rounded-lg shadow-md">
-                <h2 className="text-xl font-semibold mb-4">Payment Method</h2>
-
-                <div className="space-y-6">
-                    <div className="flex items-center space-x-4">
-                        <div className="flex items-center">
-                            <input
-                                id="card-payment"
-                                type="radio"
-                                value="card"
-                                {...register('paymentMethod', { required: true })}
-                                className="h-4 w-4 text-blue-600"
-                            />
-                            <label htmlFor="card-payment" className="ml-2 block text-sm font-medium text-gray-700">
-                                Credit/Debit Card
-                            </label>
-                        </div>
-
-                        <div className="flex items-center">
-                            <input
-                                id="paypal-payment"
-                                type="radio"
-                                value="paypal"
-                                {...register('paymentMethod', { required: true })}
-                                className="h-4 w-4 text-blue-600"
-                            />
-                            <label htmlFor="paypal-payment" className="ml-2 block text-sm font-medium text-gray-700">
-                                PayPal
-                            </label>
-                        </div>
-                    </div>
-
-                    {paymentMethod === 'card' && (
-                        <div className="space-y-4">
-                            <div>
-                                <label htmlFor="cardNumber" className="block text-sm font-medium text-gray-700 mb-1">
-                                    Card Number
-                                </label>
-                                <input
-                                    id="cardNumber"
-                                    type="text"
-                                    placeholder="1234 1234 1234 1234"
-                                    className="w-full p-2 border border-gray-300 rounded-md"
-                                    {...register('cardNumber', {
-                                        required: 'Card number is required',
-                                        pattern: {
-                                            value: /^[0-9]{16}$/,
-                                            message: 'Please enter a valid 16-digit card number'
-                                        }
-                                    })}
-                                />
-                                {errors.cardNumber?.message && (
-                                    <p className="text-red-500 text-sm mt-1">{String(errors.cardNumber.message)}</p>
-                                )}
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label htmlFor="cardExpiry" className="block text-sm font-medium text-gray-700 mb-1">
-                                        Expiry Date (MM/YY)
-                                    </label>
-                                    <input
-                                        id="cardExpiry"
-                                        type="text"
-                                        placeholder="MM/YY"
-                                        className="w-full p-2 border border-gray-300 rounded-md"
-                                        {...register('cardExpiry', {
-                                            required: 'Expiry date is required',
-                                            pattern: {
-                                                value: /^(0[1-9]|1[0-2])\/([0-9]{2})$/,
-                                                message: 'Please enter a valid expiry date (MM/YY)'
-                                            }
-                                        })}
-                                    />
-                                    {errors.cardExpiry?.message && (
-                                        <p className="text-red-500 text-sm mt-1">{String(errors.cardExpiry.message)}</p>
-                                    )}
-                                </div>
-
-                                <div>
-                                    <label htmlFor="cardCvc" className="block text-sm font-medium text-gray-700 mb-1">
-                                        CVC
-                                    </label>
-                                    <input
-                                        id="cardCvc"
-                                        type="text"
-                                        placeholder="123"
-                                        className="w-full p-2 border border-gray-300 rounded-md"
-                                        {...register('cardCvc', {
-                                            required: 'CVC is required',
-                                            pattern: {
-                                                value: /^[0-9]{3,4}$/,
-                                                message: 'Please enter a valid CVC'
-                                            }
-                                        })}
-                                    />
-                                    {errors.cardCvc?.message && (
-                                        <p className="text-red-500 text-sm mt-1">{String(errors.cardCvc.message)}</p>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {paymentMethod === 'paypal' && (
-                        <div className="bg-gray-50 p-4 rounded-md">
-                            <p className="text-sm text-gray-600">
-                                You will be redirected to PayPal to complete your payment after reviewing your order.
-                            </p>
-                        </div>
-                    )}
-                </div>
-            </div>
-
-            {/* Terms and Conditions */}
-            <div className="bg-white p-6 rounded-lg shadow-md">
-                <div className="flex items-start">
-                    <div className="flex items-center h-5">
-                        <input
-                            id="terms"
-                            type="checkbox"
-                            className="h-4 w-4 text-blue-600 border-gray-300 rounded"
-                            {...register('termsAccepted', { 
-                                required: 'You must accept the terms and conditions' 
-                            })}
-                        />
-                    </div>
-                    <div className="ml-3 text-sm">
-                        <label htmlFor="terms" className="font-medium text-gray-700">
-                            I agree to the terms and conditions
-                        </label>
-                        {errors.termsAccepted?.message && (
-                            <p className="text-red-500 text-sm mt-1">{String(errors.termsAccepted.message)}</p>
-                        )}
-                    </div>
-                </div>
-            </div>
-
-            {/* Submit Button */}
-            <div className="flex justify-end">
-                <button
-                    type="submit"
-                    disabled={isLoading}
-                    className="bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 disabled:bg-blue-300"
-                >
-                    {isLoading ? (
-                        <span>Processing...</span>
-                    ) : (
-                        <span>Complete Order</span>
-                    )}
-                </button>
-            </div>
-        </form>
+        </div>
     );
-}
+};
