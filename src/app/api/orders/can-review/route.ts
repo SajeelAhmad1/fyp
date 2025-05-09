@@ -14,8 +14,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    // Check if user has any delivered orders containing this product
-    const deliveredOrders = await prisma.order.findFirst({
+    const deliveredOrders = await prisma.order.findMany({
       where: {
         userId,
         status: 'DELIVERED',
@@ -23,21 +22,38 @@ export async function GET(request: Request) {
           some: {
             productId
           }
+        },
+        NOT: {
+          reviews: {
+            some: {
+              productId,
+              userId
+            }
+          }
         }
+      },
+      include: {
+        items: {
+          where: {
+            productId
+          }
+        }
+      },
+      orderBy: {
+        createdAt: 'desc'
       }
     })
 
-    // Check if user already reviewed this product
-    const existingReview = await prisma.review.findFirst({
-      where: {
-        userId,
-        productId
-      }
-    })
+    const eligibleOrders = deliveredOrders.map(order => ({
+      orderId: order.id,
+      orderDate: order.createdAt,
+      hasReviewed: false,
+      canReview: true
+    }))
 
     return NextResponse.json({
-      canReview: !!deliveredOrders && !existingReview,
-      hasReviewed: !!existingReview
+      eligibleOrders,
+      canReview: eligibleOrders.length > 0
     })
   } catch (error) {
     console.error('Error checking review eligibility:', error)

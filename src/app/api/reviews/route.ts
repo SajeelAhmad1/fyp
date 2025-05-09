@@ -3,18 +3,19 @@ import prisma from '@/lib/prisma'
 
 export async function POST(request: Request) {
   try {
-    const { userId, productId, rating, comment } = await request.json()
+    const { userId, productId, rating, comment, orderId } = await request.json()
 
-    if (!userId || !productId || !rating) {
+    if (!userId || !productId || !rating || !orderId) {
       return NextResponse.json(
         { message: 'Missing required fields' },
         { status: 400 }
       )
     }
 
-    // Check if user has any delivered orders containing this product
-    const hasDeliveredOrder = await prisma.order.findFirst({
+    // Verify the order exists, is delivered, and contains the product
+    const validOrder = await prisma.order.findFirst({
       where: {
+        id: orderId,
         userId,
         status: 'DELIVERED',
         items: {
@@ -22,36 +23,41 @@ export async function POST(request: Request) {
             productId
           }
         }
+      },
+      include: {
+        items: true
       }
     })
 
-    if (!hasDeliveredOrder) {
+    if (!validOrder) {
       return NextResponse.json(
-        { message: 'You can only review products from orders you have received' },
+        { message: 'No valid delivered order found for this product' },
         { status: 403 }
       )
     }
 
-    // Check if user already reviewed this product
+    // Check if user already reviewed this product for this specific order
     const existingReview = await prisma.review.findFirst({
       where: {
         userId,
-        productId
+        productId,
+        orderId
       }
     })
 
     if (existingReview) {
       return NextResponse.json(
-        { message: 'You have already reviewed this product' },
+        { message: 'You have already reviewed this product for this order' },
         { status: 400 }
       )
     }
 
-    // Create the review
+    // Create the review with order reference
     const review = await prisma.review.create({
       data: {
         userId,
         productId,
+        orderId,
         rating: Number(rating),
         comment
       }

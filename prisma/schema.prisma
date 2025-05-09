@@ -205,6 +205,8 @@ model Order {
   paymentIntentId     String
   paymentMethodId     String
   clientSecret        String
+
+  reviews             Review[]
   
   createdAt           DateTime     @default(now())
   updatedAt           DateTime     @updatedAt
@@ -248,6 +250,8 @@ model Review {
   user      User     @relation(fields: [userId], references: [id])
   productId String
   product   Product  @relation(fields: [productId], references: [id])
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id])
   rating    Float
   comment   String?
   createdAt DateTime @default(now())

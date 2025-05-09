@@ -22,6 +22,13 @@ interface Review {
   };
 }
 
+interface EligibleOrder {
+  orderId: string;
+  orderDate: string;
+  hasReviewed: boolean;
+  canReview: boolean;
+}
+
 interface Category {
   id: string;
   name: string;
@@ -163,19 +170,22 @@ const ProductDetails: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [currentThumbnailStart, setCurrentThumbnailStart] = useState(0);
 
+  const [eligibleOrders, setEligibleOrders] = useState<EligibleOrder[]>([]);
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [canReview, setCanReview] = useState(false);
-  const [hasReviewed, setHasReviewed] = useState(false);
+  const [reviewSubmitLoading, setReviewSubmitLoading] = useState<
+    boolean | null
+  >(null);
   const [reviewForm, setReviewForm] = useState({
     rating: 0,
     comment: "",
   });
 
-  // Add this useEffect to check review eligibility
   useEffect(() => {
-    if (userId && product?.id) {
-      checkReviewEligibility();
+    if (eligibleOrders.length > 0) {
+      setSelectedOrderId(eligibleOrders[0].orderId);
     }
-  }, [userId, product?.id]);
+  }, [eligibleOrders]);
 
   const checkReviewEligibility = async () => {
     try {
@@ -185,18 +195,21 @@ const ProductDetails: React.FC = () => {
       );
       if (response.ok) {
         const data = await response.json();
+        setEligibleOrders(data.eligibleOrders);
         setCanReview(data.canReview);
-        setHasReviewed(data.hasReviewed);
       }
     } catch (error) {
       console.error("Error checking review eligibility:", error);
     }
   };
 
+  // Update review submission
   const handleReviewSubmit = async () => {
-    if (!userId || !product?.id || reviewForm.rating === 0) return;
+    if (!userId || !product?.id || reviewForm.rating === 0 || !selectedOrderId)
+      return;
 
     try {
+      setReviewSubmitLoading(true);
       const response = await fetch("/api/reviews", {
         method: "POST",
         headers: {
@@ -205,6 +218,7 @@ const ProductDetails: React.FC = () => {
         body: JSON.stringify({
           userId,
           productId: product.id,
+          orderId: selectedOrderId,
           rating: reviewForm.rating,
           comment: reviewForm.comment,
         }),
@@ -221,8 +235,17 @@ const ProductDetails: React.FC = () => {
     } catch (error) {
       console.error("Error submitting review:", error);
       toast.error("Failed to submit review");
+    } finally {
+      setReviewSubmitLoading(false);
     }
   };
+
+  // Add this useEffect to check review eligibility
+  useEffect(() => {
+    if (userId && product?.id) {
+      checkReviewEligibility();
+    }
+  }, [userId, product?.id]);
 
   useEffect(() => {
     const storedGuestCartId = localStorage.getItem("guestCartId");
@@ -725,7 +748,7 @@ const ProductDetails: React.FC = () => {
               <button
                 onClick={handleCartToggle}
                 disabled={product.stock <= 0 && !inCart}
-                className={`w-full sm:w-56 h-16 text-white text-lg font-medium disabled:bg-gray-400 disabled:cursor-not-allowed ${
+                className={`w-full sm:w-56 h-12 md:h-16 text-white text-lg font-medium disabled:bg-gray-400 disabled:cursor-not-allowed ${
                   inCart
                     ? "bg-red-500 hover:bg-red-600"
                     : "bg-amber-500 hover:bg-amber-600"
@@ -742,7 +765,7 @@ const ProductDetails: React.FC = () => {
               <button
                 onClick={handleBuyNow}
                 disabled={product.stock <= 0 || isCreatingOrder}
-                className="w-full sm:w-56 h-16 bg-amber-500 hover:bg-amber-600 text-white text-lg font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
+                className="w-full sm:w-56 h-12 md:h-16 bg-amber-500 hover:bg-amber-600 text-white text-lg font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
               >
                 {isCreatingOrder ? "Processing..." : "Buy it now"}
               </button>
@@ -799,11 +822,21 @@ const ProductDetails: React.FC = () => {
             }}
           />
         </Card>
-        {canReview && (
+        {canReview && eligibleOrders.length > 0 && (
           <Card className="w-[85%] md:w-full flex flex-col gap-3 mt-5 p-6">
             <h3 className="text-xl font-semibold text-sky-900">
               Write a Review
             </h3>
+
+            {/* <div className="mb-4">
+              <p className="block text-gray-700 mb-1">Your Latest Order:</p>
+              <p className="text-sky-700 font-medium">
+                Order from{" "}
+                {new Date(eligibleOrders[0].orderDate).toLocaleDateString()}
+              </p>
+            </div> */}
+
+            {/* Rating and comment fields */}
             <div className="flex items-center gap-2 mb-4">
               <p className="text-gray-700">Your Rating:</p>
               <div className="flex">
@@ -820,6 +853,7 @@ const ProductDetails: React.FC = () => {
                 ))}
               </div>
             </div>
+
             <textarea
               value={reviewForm.comment}
               onChange={(e) =>
@@ -828,32 +862,25 @@ const ProductDetails: React.FC = () => {
               placeholder="Share your thoughts about this product..."
               className="w-full p-3 border border-gray-300 rounded-md min-h-[120px]"
             />
+
             <button
               onClick={handleReviewSubmit}
-              disabled={reviewForm.rating === 0}
+              disabled={reviewForm.rating === 0 || eligibleOrders.length === 0}
               className="mt-2 bg-amber-500 hover:bg-amber-600 text-white font-medium py-2 px-4 rounded disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
-              Submit Review
+              {reviewSubmitLoading ? "Submitting Review..." : "Submit Review"}
             </button>
           </Card>
         )}
 
-        {/* {hasReviewed && (
-          <Card className="w-[85%] md:w-full flex flex-col gap-3 mt-5 p-6">
-            <div className="text-center text-green-600">
-              You've already reviewed this product. Thank you for your feedback!
-            </div>
-          </Card>
-        )} */}
-
-        {!canReview && !hasReviewed && userId && (
+        {/* {!canReview && !hasReviewed && userId && (
           <Card className="w-[85%] md:w-full flex flex-col gap-3 mt-5 p-6">
             <div className="text-center text-gray-600">
               You can review this product after receiving it in a delivered
               order.
             </div>
           </Card>
-        )}
+        )} */}
         <Card className="w-[85%] md:w-full flex flex-col gap-3 mt-10">
           <span className="font-semibold text-sky-900 text-xl">
             Customer Reviews
