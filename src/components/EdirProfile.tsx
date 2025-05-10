@@ -272,7 +272,7 @@ export default function EditProfile() {
                         </div>
                         <div>
                             <label htmlFor="state" className="block text-gray-700 text-sm font-bold mb-2">
-                                State/Province
+                                State/Province/County
                             </label>
                             <input
                                 type="text"

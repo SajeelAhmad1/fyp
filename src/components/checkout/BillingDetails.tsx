@@ -103,19 +103,19 @@ export const BillingDetails: React.FC<BillingDetailsProps> = ({
           </div>
           <div>
             <label htmlFor="billingState" className="block text-sm font-medium text-gray-700 mb-1">
-              State/Province *
+              State/Province/County *
             </label>
             <input
               type="text"
               id="billingState"
               name="billingState"
-              placeholder="Enter State/Province"
+              placeholder="Enter State/Province/County"
               value={formData.billingState}
               onChange={handleInputChange}
               className={`w-full p-2 border ${formErrors.billingState ? 'border-red-500' : 'border-gray-300'} rounded`}
               required
             />
-            {formErrors.billingState && <p className="text-red-500 text-xs mt-1">State/Province is required</p>}
+            {formErrors.billingState && <p className="text-red-500 text-xs mt-1">State/Province/County is required</p>}
           </div>
           <div className="relative">
             <label htmlFor="billingPostalCode" className="block text-sm font-medium text-gray-700 mb-1">

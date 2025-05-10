@@ -93,13 +93,13 @@ export const ShippingDetails: React.FC<ShippingDetailsProps> = ({
             type="text"
             id="shippingState"
             name="shippingState"
-            placeholder="Enter State/Province"
+            placeholder="Enter State/Province/County"
             value={formData.shippingState}
             onChange={handleInputChange}
             className={`w-full p-2 border ${formErrors.shippingState ? 'border-red-500' : 'border-gray-300'} rounded`}
             required
           />
-          {formErrors.shippingState && <p className="text-red-500 text-xs mt-1">State/Province is required</p>}
+          {formErrors.shippingState && <p className="text-red-500 text-xs mt-1">State/Province/County is required</p>}
         </div>
         <div className="relative">
           <label htmlFor="shippingPostalCode" className="block text-sm font-medium text-gray-700 mb-1">

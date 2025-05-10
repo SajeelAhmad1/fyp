@@ -111,7 +111,6 @@ export const authOptions = {
   callbacks: {
     async signIn({ user, account, profile }) {
       if (account?.provider === "google") {
-        // Check if user exists in your database
         const existingUser = await prisma.user.findUnique({
           where: { email: user.email },
           include: { customerProfile: true },
@@ -209,9 +208,7 @@ export const authOptions = {
       return session;
     },
     async redirect({ url, baseUrl }) {
-      // Allows relative callback URLs
-      if (url.startsWith("/")) return `${baseUrl}${url}`;
-      // Allows callback URLs on the same origin
+      if (url.startsWith("/profile")) return `${baseUrl}${url}`;
       else if (new URL(url).origin === baseUrl) return url;
       return baseUrl;
     },
