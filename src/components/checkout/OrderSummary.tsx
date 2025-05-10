@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import React from 'react';
+import { useSession } from 'next-auth/react';
 
 interface Product {
   id: string;
@@ -22,6 +23,9 @@ interface OrderSummaryProps {
 }
 
 export const OrderSummary: React.FC<OrderSummaryProps> = ({ items, orderCount }) => {
+  const { data: session, status } = useSession();
+  const isAuthenticated = status === 'authenticated';
+  
   const calculateSubtotal = () => {
     return items.reduce((sum, item) => {
       return sum + item.price;
@@ -32,7 +36,8 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({ items, orderCount })
     let discounts = [];
     let total = subtotal;
     
-    if (orderCount === 0) {
+    // Only apply first order discount if user is authenticated and has no previous orders
+    if (isAuthenticated && orderCount === 0) {
       const firstOrderDiscount = subtotal * 0.2;
       discounts.push({
         name: "First Order Discount (20%)",
