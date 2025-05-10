@@ -51,6 +51,7 @@ export async function POST(request: Request) {
                     paymentIntentId: body.paymentIntentId,
                     paymentMethodId: body.paymentMethodId,
                     clientSecret: body.clientSecret,
+                    stripeCustomerId: body.stripeCustomerId,
                     items: {
                         create: body.items.map((item: any) => ({
                             productId: item.productId,
