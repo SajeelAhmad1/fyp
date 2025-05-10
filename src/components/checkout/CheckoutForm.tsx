@@ -466,7 +466,7 @@ export const CheckoutPage: React.FC = () => {
                 billingPostalCode: formData.useSameAddress ? null : formData.billingPostalCode,
                 billingCountry: formData.useSameAddress ? null : formData.billingCountry,
                 email: formData.email,
-                totalPrice: payablePrice, // Use the payablePrice state instead of finalPrice
+                totalPrice: payablePrice,
                 paymentMethod: 'STRIPE',
                 status: OrderStatus.CONFIRMED,
                 ...(paymentData ? {
