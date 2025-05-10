@@ -236,9 +236,12 @@ export default function Orders() {
                             <p className="text-sm text-gray-500">
                               SKU: {item.product.sku} | Quantity: {item.quantity}
                             </p>
-                            <p className="text-sm font-semibold">
-                              £{item.price * item.quantity}
-                            </p>
+                            <span className="text-sm font-semibold">
+                              £{item.price - (item.price * (item.product.discount / 100))}
+                            </span>
+                            <span className="text-xs ml-2 text-gray-500 line-through">
+                              £{item.price}
+                            </span>
                           </div>
                         </div>
                         
@@ -250,7 +253,7 @@ export default function Orders() {
                               e.stopPropagation(); // Prevent order click event
                               router.push(`/products/${item.product.id}`);
                             }}
-                            className="w-full md:w-auto px-4 py-2 bg-orange-500 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+                            className="w-full md:w-auto px-4 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
                           >
                             Write a Review
                           </button>

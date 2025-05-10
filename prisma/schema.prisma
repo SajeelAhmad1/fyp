@@ -270,6 +270,7 @@ model Subscriber {
 enum OrderStatus {
   PENDING
   CONFIRMED
+  DISPATCHED
   SHIPPED
   DELIVERED
   CANCELLED
