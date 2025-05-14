@@ -3,6 +3,7 @@ import LoginPic from "@/assets/images/login-page.png";
 import PasswordPic from "@/assets/images/password.png";
 import verifyPic from "@/assets/myImages/otp.png";
 import RegisterP from "@/assets/images/login-bg.jpeg";
+import Login from "@/assets/myImages/loginbg.png";
 import Image from "next/image";
 
 import { usePathname } from "next/navigation";
@@ -25,7 +26,7 @@ const AuthLayout = ({ children }: AuthLayoutProps) => {
         imgUrl = `${RegisterP.src}`;
         break;
       case "/login":
-        imgUrl = `${RegisterP.src}`;
+        imgUrl = `${Login.src}`;
         break;
 
       case "/verification":

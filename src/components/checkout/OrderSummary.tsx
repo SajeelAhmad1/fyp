@@ -20,9 +20,14 @@ interface OrderItem {
 interface OrderSummaryProps {
   items: OrderItem[];
   orderCount: number | null;
+  finalPrice: number;
 }
 
-export const OrderSummary: React.FC<OrderSummaryProps> = ({ items, orderCount }) => {
+export const OrderSummary: React.FC<OrderSummaryProps> = ({ 
+  items, 
+  orderCount,
+  finalPrice 
+}) => {
   const { data: session, status } = useSession();
   const isAuthenticated = status === 'authenticated';
   
@@ -36,7 +41,6 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({ items, orderCount })
     let discounts = [];
     let total = subtotal;
     
-    // Only apply first order discount if user is authenticated and has no previous orders
     if (isAuthenticated && orderCount === 0) {
       const firstOrderDiscount = subtotal * 0.2;
       discounts.push({
@@ -59,7 +63,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({ items, orderCount })
   };
 
   const subtotal = calculateSubtotal();
-  const { discounts, total } = calculateDiscounts(subtotal);
+  const { discounts } = calculateDiscounts(subtotal);
 
   return (
     <div className="mb-6">
@@ -128,7 +132,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({ items, orderCount })
             <tr>
               <td colSpan={2} className="px-4 py-3 text-right font-semibold">Total:</td>
               <td className="px-4 py-3 text-right font-semibold">
-                £{total.toFixed(2)}
+                £{subtotal.toFixed(2)}
               </td>
             </tr>
           </tfoot>

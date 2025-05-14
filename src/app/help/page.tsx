@@ -3,14 +3,14 @@ import Footer from "@/common/components/layouts/FooterMenu";
 import HeaderBottom from "@/common/components/layouts/HeaderBottom";
 import HeaderTop from "@/common/components/layouts/HeaderTop";
 import Navigation from "@/common/components/layouts/Navigation";
-import AboutUs from "@/components/AboutUs";
+import Help from "@/common/components/Help";
 
 export const metadata: Metadata = {
-  title: "About Us - Lyalla and Lora",
-  description: "Learn more about Lyalla and Lora and our story.",
+  title: "Help - Lyalla and Lora",
+  description: "Need help? Check this out or contact our team directly, if you have any query | Lyalla and Lora",
   openGraph: {
-    title: "About Us - Lyalla and Lora",
-    description: "Learn more about Lyalla and Lora and our story.",
+    title: "Help - Lyalla and Lora",
+    description: "Need help? Check this out or contact our team directly, if you have any query | Lyalla and Lora",
     images: ["/path-to-about-us-image.jpg"],
   },
 };
@@ -21,7 +21,7 @@ const Page = () => {
       <HeaderTop />
       <HeaderBottom />
       <Navigation />
-      <AboutUs />
+      <Help />
       <Footer />
     </>
   );

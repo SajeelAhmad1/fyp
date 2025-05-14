@@ -45,16 +45,16 @@ function ClientLoginForm() {
     try {
       const result = await signIn("google", {
         redirect: false,
-        callbackUrl: from || "/"
+        callbackUrl: from || "/",
       });
-  
+
       if (result?.error) {
         toast.error(result.error || "Failed to sign in with Google");
       } else {
         // Wait for session to update
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise((resolve) => setTimeout(resolve, 500));
         const updatedSession = await update();
-        
+
         if (updatedSession?.user) {
           redirectBasedOnRole(updatedSession.user);
         } else {
@@ -112,16 +112,16 @@ function ClientLoginForm() {
               callbackUrl: "/",
             });
             setSubmitting(false);
-        
+
             if (result?.error) {
               toast.error("Error", {
                 description: "Incorrect email or password",
               });
             } else {
               // Wait for session to update
-              await new Promise(resolve => setTimeout(resolve, 500));
+              await new Promise((resolve) => setTimeout(resolve, 500));
               const updatedSession = await update();
-              
+
               if (updatedSession?.user) {
                 redirectBasedOnRole(updatedSession.user);
               } else {
@@ -136,12 +136,12 @@ function ClientLoginForm() {
         }}
       >
         {({ errors, touched, isSubmitting, handleSubmit }) => (
-          <Form onSubmit={handleSubmit} className="w-full">
-            <div className="flex flex-col relative w-full space-y-1 font-custom">
-              <div className="my-2">
+          <Form onSubmit={handleSubmit} className="w-full space-y-4">
+            <div className="flex flex-col relative w-full space-y-4">
+              <div>
                 <label
                   htmlFor="email"
-                  className="text-black font-semibold text-sm mb-2 block leading-[13.7px] -tracking-3"
+                  className="block text-sm font-medium text-gray-700 mb-1"
                 >
                   Email <span className="text-red-500">*</span>
                 </label>
@@ -150,21 +150,21 @@ function ClientLoginForm() {
                   name="email"
                   type="email"
                   placeholder="Enter your email address"
-                  className={`h-[42px] mb-[2px] py-4 px-6 rounded-[6.56px] border-blue-300 border-[0.51px] w-full text-sm :focus:ring-0 ring-0 outline-none ${
+                  className={`w-full px-4 py-3 rounded-lg border-2 focus:ring-0 focus:border-[#F19B12] outline-none transition ${
                     errors.email && touched.email
                       ? "border-red-500"
-                      : "border-blue-300"
+                      : "border-gray-300"
                   }`}
                 />
                 {errors?.email && touched?.email && (
-                  <p className="text-red-500">{errors.email}</p>
+                  <p className="mt-1 text-sm text-red-600">{errors.email}</p>
                 )}
               </div>
 
-              <div className="relative my-2">
+              <div className="relative">
                 <label
                   htmlFor="password"
-                  className="text-black font-semibold text-sm block mb-2 leading-[13.7px] -tracking--10"
+                  className="block text-sm font-medium text-gray-700 mb-1"
                 >
                   Password <span className="text-red-500">*</span>
                 </label>
@@ -174,59 +174,70 @@ function ClientLoginForm() {
                     name="password"
                     type={showPassword ? "text" : "password"}
                     placeholder="Enter your password"
-                    className={`h-[42px] mb-[2px] py-4 px-6 rounded-[6.56px] border-[0.51px] border-blue-300 w-full text-sm :focus:ring-0 ring-0 outline-none ${
+                    className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-[#F19B12] focus:border-[#F19B12] outline-none transition ${
                       errors.password && touched.password
                         ? "border-red-500"
-                        : "border-blue-300"
+                        : "border-gray-300"
                     }`}
                   />
-                  <div
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer"
+                  <button
+                    type="button"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                     onClick={togglePasswordVisibility}
                   >
                     {showPassword ? (
-                      <EyeOffIcon className="h-6 w-6 text-gray-400" />
+                      <EyeOffIcon className="h-5 w-5" />
                     ) : (
-                      <EyeIcon className="h-6 w-6 text-gray-400" />
+                      <EyeIcon className="h-5 w-5" />
                     )}
-                  </div>
+                  </button>
                 </div>
                 {errors.password && touched.password && (
-                  <p className="text-red-500">{errors.password}</p>
+                  <p className="mt-1 text-sm text-red-600">{errors.password}</p>
                 )}
               </div>
 
-              <div onClick={() => router.push("/forget-password")}>
-                <p className="py-2 text-xs underline text-right font-medium leading-[13.7px] cursor-pointer text-black">
-                  Forget Password?
-                </p>
+              <div className="flex justify-end mb-4">
+                {" "}
+                {/* Added margin-bottom */}
+                <button
+                  type="button"
+                  onClick={() => router.push("/forget-password")}
+                  className="text-sm font-medium text-[#F19B12] hover:text-[#d48a10] transition underline" // Added underline
+                >
+                  Forgot Password?
+                </button>
               </div>
 
               <button
                 type="submit"
-                className={`bg-[#F19B12] rounded-md text-base font-medium text-white py-2 ${
-                  isSubmitting || loading ? "opacity-50 cursor-not-allowed" : ""
+                className={`w-full bg-[#F19B12] hover:bg-[#d48a10] text-white font-medium py-3 px-4 rounded-lg transition ${
+                  isSubmitting || loading ? "opacity-70 cursor-not-allowed" : ""
                 }`}
                 disabled={isSubmitting || loading}
               >
-                {loading ? "Loading..." : isSubmitting ? "Logging in..." : "Login"}
+                {loading
+                  ? "Loading..."
+                  : isSubmitting
+                  ? "Logging in..."
+                  : "Login"}
               </button>
             </div>
           </Form>
         )}
       </Formik>
 
-      <div className="py-3 flex items-center justify-center">
-        <div className="border-t-[1px] border-solid border-black flex-grow"></div>
-        <span className="mx-2 text-black text-base font-normal">Or</span>
-        <div className="border-t-[1px] border-solid border-black flex-grow"></div>
+      <div className="my-6 flex items-center">
+        <div className="flex-grow border-t border-gray-300"></div>
+        <span className="mx-4 text-sm text-gray-500">or continue with</span>
+        <div className="flex-grow border-t border-gray-300"></div>
       </div>
 
       <button
         onClick={handleGoogleSignIn}
         disabled={googleLoading}
-        className={`flex justify-center items-center py-2 w-full bg-white font-custom text-base font-normal text-black border-[#F19B12] border-2 rounded-md ${
-          googleLoading ? "opacity-50 cursor-not-allowed" : ""
+        className={`w-full flex items-center justify-center py-3 px-4 border-2 border-gray-300 rounded-lg bg-white hover:bg-gray-50 transition ${
+          googleLoading ? "opacity-70 cursor-not-allowed" : ""
         }`}
       >
         {googleLoading ? (
@@ -234,27 +245,31 @@ function ClientLoginForm() {
         ) : (
           <>
             <Image
-              width={24}
-              height={24}
+              width={20}
+              height={20}
               src={googleLogo.src}
               alt="Google Logo"
-              className="w-6 h-6 mr-2"
+              className="w-5 h-5 mr-3"
             />
-            <span>Continue with Google</span>
+            <span className="text-gray-700 font-medium">
+              Continue with Google
+            </span>
           </>
         )}
       </button>
 
-      <p className="text-center text-black leading-[25.48px] pt-3">
-        Do not have an account?{" "}
+      <div className="mt-8 text-center text-sm text-gray-600">
+        {" "}
+        {/* Increased margin-top */}
+        Don't have an account?{" "}
         <Link
-          href="./register"
-          className="text-black cursor-pointer text-base font-normal"
+          href="/register"
+          className="font-medium text-[#F19B12] hover:text-[#d48a10] transition underline" // Added underline
         >
-          Sign Up
+          Sign up
         </Link>
-      </p>
-      <Toaster position="top-right"/>
+      </div>
+      <Toaster position="top-right" />
     </div>
   );
 }

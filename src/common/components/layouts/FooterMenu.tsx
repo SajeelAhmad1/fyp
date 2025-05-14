@@ -144,28 +144,20 @@ const Footer = () => {
                 </h3>
                 <ul className="space-y-2">
                   <li>
-                    <a
-                      href="#"
-                      className="text-sm md:text-base hover:text-[#F19B12] transition-colors"
+                    <span
+                      onClick={() => router.push("/about-us")}
+                      className="text-sm md:text-base hover:text-[#F19B12] transition-colors cursor-pointer"
                     >
-                      About
-                    </a>
+                      About Us
+                    </span>
                   </li>
                   <li>
-                    <a
-                      href="#"
-                      className="text-sm md:text-base hover:text-[#F19B12] transition-colors"
+                    <span
+                      onClick={() => router.push("/contact-us")}
+                      className="text-sm md:text-base hover:text-[#F19B12] transition-colors cursor-pointer"
                     >
                       Contact
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="#"
-                      className="text-sm md:text-base hover:text-[#F19B12] transition-colors"
-                    >
-                      Career
-                    </a>
+                    </span>
                   </li>
                   <li>
                     <a
@@ -185,12 +177,12 @@ const Footer = () => {
                 </h3>
                 <ul className="space-y-2">
                   <li>
-                    <a
-                      href="#"
-                      className="text-sm md:text-base hover:text-[#F19B12] transition-colors"
+                    <span
+                      onClick={() => router.push("/help")}
+                      className="text-sm md:text-base hover:text-[#F19B12] transition-colors cursor-pointer"
                     >
                       Help
-                    </a>
+                    </span>
                   </li>
                   <li>
                     <span

@@ -3,33 +3,33 @@ import React from 'react';
 const AboutUs = () => {
     const sections = [
         { 
-            title: "About 2 Guys", 
-            content: "At 2 Guys, we are dedicated to enhancing your everyday life by offering high-quality, innovative, and practical products. Our goal is to make shopping effortless, enjoyable, and rewarding by providing a carefully curated selection of trusted essentials."
+            title: "Who We Are", 
+            content: "Welcome to 2 Guys, your trusted destination for [briefly describe your product range, e.g., 'premium home essentials' or 'the latest in fashion trends']. Founded in [Year] in [City, UK], our mission is to provide high-quality products that enhance your daily life. We believe in exceptional customer service, affordability, and a seamless shopping experience."
         },
         { 
-            title: "Our Values", 
+            title: "Our Journey", 
+            content: "What began as a small venture has grown into a thriving online store, thanks to our loyal customers. We continuously strive to expand our product offerings and improve our services to meet your needs."
+        },
+        { 
+            title: "Our Commitment", 
             subsections: [
                 {
-                    subtitle: "Quality & Reliability",
-                    content: "We prioritize premium products that meet rigorous standards of durability and performance."
+                    subtitle: "Quality Products",
+                    content: "We source our products from reputable suppliers to ensure durability and satisfaction."
                 },
                 {
-                    subtitle: "Customer First",
-                    content: "Your satisfaction is at the core of everything we do. From seamless shopping experiences to responsive customer support, we are committed to putting you first."
+                    subtitle: "Customer Satisfaction",
+                    content: "Your happiness is our priority. We offer easy returns and responsive support."
                 },
                 {
-                    subtitle: "Trust & Transparency",
-                    content: "Honest pricing, clear product information, and dependable service are the foundation of our business."
-                },
-                {
-                    subtitle: "Fast & Efficient Delivery",
-                    content: "With UK-based fulfillment, we ensure your orders arrive quickly, safely, and reliably."
+                    subtitle: "Secure Shopping",
+                    content: "Our website uses advanced security measures to protect your personal information."
                 }
             ]
         },
         { 
-            title: "Our Commitment", 
-            content: "At 2 Guys, we aim to simplify your shopping experience by offering products that bring value, convenience, and style to your life. Thank you for choosing us — we are excited to be part of your journey!"
+            title: "Join Our Community", 
+            content: "Stay connected with us on social media and subscribe to our newsletter for the latest updates and exclusive offers."
         }
     ];
 
@@ -65,7 +65,7 @@ const AboutUs = () => {
             ))}
 
             <div className="mt-8 text-center text-gray-600 text-sm">
-                <p>Last Updated: {new Date().toLocaleDateString()}</p>
+                <p>Last Updated: May 10, 2025</p>
             </div>
         </div>
     )

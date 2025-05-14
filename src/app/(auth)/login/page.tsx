@@ -1,6 +1,8 @@
 "use client";
 import React, { useEffect } from "react";
 import ClientPasswordForm from "@/components/loginForm";
+import Login from "@/assets/myImages/loginbg.jpg";
+import Image from "next/image";
 
 export default function Home() {
   useEffect(() => {
@@ -20,22 +22,39 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="relative min-h-screen min-w-full grid grid-cols-1 md:grid-cols-2">
-      {/* Content Section */}
-      <section className="relative z-10 w-full h-full flex flex-col justify-center items-center px-4 space-y-6">
-        <div className="flex flex-col justify-center items-center space-y-4">
-        <div className="text-center text-[40px] font-bold text-[#F19B12]">
-            Lyalla and Lora
+    <div className="min-h-screen flex flex-col md:flex-row bg-gray-50">
+      {/* Image Section - Full height, centered content */}
+      <div className="hidden md:flex md:w-1/2">
+        <div className="w-full h-full relative">
+          <Image
+            src={Login.src}
+            alt="login bg"
+            className="max-w-[80%] w-full rounded-r-3xl"
+            fill={true}
+            priority
+          />
+        </div>
+      </div>
+
+      {/* Content Section - Full height, centered content */}
+      <div className="w-full md:w-1/2 flex items-center justify-center p-6 md:p-12">
+        <div className="w-full max-w-xl bg-white rounded-2xl shadow-lg p-10">
+          {" "}
+          {/* Changed max-w-md to max-w-xl */}
+          <div className="text-center mb-8">
+            {" "}
+            {/* Added margin-bottom */}
+            <h1 className="text-3xl font-bold text-[#F19B12]">
+              Lyalla and Lora
+            </h1>
+            <p className="text-gray-600 mt-2">
+              Welcome back! Please login to your account
+            </p>
+          </div>
+          <div className="w-full">
+            <ClientPasswordForm />
           </div>
         </div>
-        <div className="max-w-[300px] sm:max-w-[360px] w-full">
-          <ClientPasswordForm />
-        </div>
-      </section>
-
-      {/* Placeholder for the second column (hidden on smaller screens) */}
-      <div className="hidden md:block">
-      
       </div>
     </div>
   );

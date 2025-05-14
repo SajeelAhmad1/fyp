@@ -1,65 +1,62 @@
 "use client";
-import React, { useEffect, useState, useCallback, useRef } from "react";
+import React, { useState } from "react";
 import { useSession } from "next-auth/react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { OrderStatus } from "@prisma/client";
-import { Order, CustomerProfile } from "@/types/checkout";
+import { useRouter } from "next/navigation";
 import { validatePostcode } from "@/utils/validatePostalCode";
 import { isValid as isValidPostcode } from "postcode";
-import { OrderSummary } from "./OrderSummary";
 import { ShippingDetails } from "./ShippingDetails";
 import { BillingDetails } from "./BillingDetails";
-import { PaymentSection } from "./PaymentSection";
 
-const GUEST_EMAIL_KEY = "guestEmail";
-const GUEST_CART_ID_KEY = "guestCartId";
+export interface CheckoutFormData {
+  shippingFirstName: string;
+  shippingLastName: string;
+  shippingStreet: string;
+  shippingCity: string;
+  shippingState: string;
+  shippingPostalCode: string;
+  shippingCountry: string;
+  shippingPhone: string;
+  useSameAddress: boolean;
+  billingFirstName: string;
+  billingLastName: string;
+  billingStreet: string;
+  billingCity: string;
+  billingState: string;
+  billingPostalCode: string;
+  billingCountry: string;
+  email: string;
+}
 
-export const CheckoutPage: React.FC = () => {
+interface CheckoutFormProps {
+  onSubmit: (formData: CheckoutFormData) => void;
+  initialData?: Partial<CheckoutFormData>;
+}
+
+export const CheckoutForm: React.FC<CheckoutFormProps> = ({ 
+  onSubmit, 
+  initialData 
+}) => {
   const { data: session } = useSession();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const orderId = searchParams.get("orderId");
-
-  const [order, setOrder] = useState<Order | null>(null);
-  const [customerProfile, setCustomerProfile] =
-    useState<CustomerProfile | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [isCreatingOrder, setIsCreatingOrder] = useState(false);
-  const [clientSecret, setClientSecret] = useState<string | null>(null);
-  const [stripeCustId, setStripeCustId] = useState<string | null>(null);
-  const [cartItems, setCartItems] = useState<any[]>([]);
-  const [orderCount, setOrderCount] = useState<number | null>(null);
-  const [postcodeSearchTerm, setPostcodeSearchTerm] = useState("");
-  const [postCodeError, setPostCodeError] = useState("");
-  const [payablePrice, setPayablePrice] = useState<number>(0);
   
-  // Ref to store the customer ID from response, to use it even before state updates
-  const stripeCustomerIdRef = useRef<string | null>(null);
-
-  const [formData, setFormData] = useState({
-    shippingFirstName: "",
-    shippingLastName: "",
-    shippingStreet: "",
-    shippingCity: "",
-    shippingState: "",
-    shippingPostalCode: "",
-    shippingCountry: "United Kingdom",
-    shippingPhone: "",
-    useSameAddress: true,
-    billingFirstName: "",
-    billingLastName: "",
-    billingStreet: "",
-    billingCity: "",
-    billingState: "",
-    billingPostalCode: "",
-    billingCountry: "United Kingdom",
-    paymentMethod: "STRIPE",
-    email: "",
-    cardNumber: "",
-    cardExpiry: "",
-    cardCVV: "",
-    cardName: "",
+  const [formData, setFormData] = useState<CheckoutFormData>({
+    shippingFirstName: initialData?.shippingFirstName || "",
+    shippingLastName: initialData?.shippingLastName || "",
+    shippingStreet: initialData?.shippingStreet || "",
+    shippingCity: initialData?.shippingCity || "",
+    shippingState: initialData?.shippingState || "",
+    shippingPostalCode: initialData?.shippingPostalCode || "",
+    shippingCountry: initialData?.shippingCountry || "United Kingdom",
+    shippingPhone: initialData?.shippingPhone || "",
+    useSameAddress: initialData?.useSameAddress ?? true,
+    billingFirstName: initialData?.billingFirstName || "",
+    billingLastName: initialData?.billingLastName || "",
+    billingStreet: initialData?.billingStreet || "",
+    billingCity: initialData?.billingCity || "",
+    billingState: initialData?.billingState || "",
+    billingPostalCode: initialData?.billingPostalCode || "",
+    billingCountry: initialData?.billingCountry || "United Kingdom",
+    email: initialData?.email || session?.user?.email || "",
   });
 
   const [formErrors, setFormErrors] = useState({
@@ -81,60 +78,8 @@ export const CheckoutPage: React.FC = () => {
     email: false,
   });
 
-  const displayItems = order
-    ? order.items
-    : cartItems.map((item) => ({
-        id: item.id,
-        quantity: item.quantity,
-        price:
-          item.product.price *
-          (1 - (item.product.discount || 0) / 100) *
-          item.quantity,
-        product: item.product,
-      }));
-
-  const calculateFinalPrice = useCallback(() => {
-    if (!order && cartItems.length === 0) return 0;
-
-    // Calculate base price with product discounts
-    const basePrice = order
-      ? order.totalPrice
-      : cartItems.reduce((sum, item) => {
-          const price =
-            typeof item.product.price === "string"
-              ? parseFloat(item.product.price)
-              : item.product.price || 0;
-          const discount = item.product.discount || 0;
-          return sum + price * (1 - discount / 100) * item.quantity;
-        }, 0);
-
-    let finalPrice = basePrice;
-
-    // Apply first order discount (20%)
-    if (orderCount === 0) {
-      finalPrice *= 0.8;
-    }
-
-    // Apply bulk discount (5%) if over £75
-    if (finalPrice > 75) {
-      finalPrice *= 0.95;
-    }
-
-    return Math.round(finalPrice * 100) / 100; // Round to 2 decimal places
-  }, [order, cartItems, orderCount]);
-
-  // Calculate final price whenever dependencies change
-  useEffect(() => {
-    const calculatedPrice = calculateFinalPrice();
-    setPayablePrice(calculatedPrice);
-  }, [calculateFinalPrice]);
-
-  const getGuestCartId = useCallback(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem(GUEST_CART_ID_KEY);
-    }
-    return null;
-  }, []);
+  const [postcodeSearchTerm, setPostcodeSearchTerm] = useState("");
+  const [postCodeError, setPostCodeError] = useState("");
 
   const validateForm = () => {
     const newErrors = {
@@ -180,225 +125,6 @@ export const CheckoutPage: React.FC = () => {
     }
     return true;
   };
-
-  useEffect(() => {
-    const validateCode = async (postcode: string) => {
-      if (!postcode) {
-        setPostCodeError("Postal code is required");
-        return;
-      }
-
-      const response = await validatePostcode(postcode);
-      if (response.isValid) {
-        setPostCodeError("");
-      } else {
-        setPostCodeError(response.error || "Invalid UK Postal Code");
-      }
-    };
-
-    const timer = setTimeout(() => {
-      if (postcodeSearchTerm) {
-        validateCode(postcodeSearchTerm);
-      }
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [postcodeSearchTerm]);
-
-  const paymentIntentCreatingRef = useRef(false);
-
-  // When stripeCustId state is updated, log it to confirm it's working
-  useEffect(() => {
-    if (stripeCustId) {
-      console.log("Stripe Customer ID updated in state:", stripeCustId);
-    }
-  }, [stripeCustId]);
-
-  const createPaymentIntent = async (amount: number, orderIdParam?: string) => {
-    if (paymentIntentCreatingRef.current || clientSecret) {
-      return;
-    }
-
-    try {
-      paymentIntentCreatingRef.current = true;
-      const response = await fetch("/api/create-payment-intent", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          amount: Math.round(amount * 100),
-          currency: "gbp",
-          orderId: orderIdParam,
-          email: formData.email || session?.user?.email,
-        }),
-      });
-
-      const responseData = await response.json();
-
-      if (responseData.clientSecret) {
-        setClientSecret(responseData.clientSecret);
-      } else {
-        throw new Error("No client secret returned");
-      }
-      
-      if (responseData.customerId) {
-        // Store in ref for immediate access
-        stripeCustomerIdRef.current = responseData.customerId;
-        // Also update state for component re-renders
-        setStripeCustId(responseData.customerId);
-        
-        console.log("Customer ID from response:", responseData.customerId);
-      } else {
-        throw new Error("No customer id returned");
-      }
-    } catch (err) {
-      console.error("Payment intent error:", err);
-      setError(
-        "Failed to initialize payment: " +
-          (err instanceof Error ? err.message : String(err))
-      );
-    } finally {
-      paymentIntentCreatingRef.current = false;
-    }
-  };
-
-  const fetchCustomerProfile = async () => {
-    if (!session?.user?.id) return;
-
-    try {
-      const response = await fetch("/api/customer-profile");
-
-      if (!response.ok) {
-        return;
-      }
-
-      const { data } = await response.json();
-      setCustomerProfile(data);
-    } catch (err) {
-      console.error("Error fetching customer profile:", err);
-    }
-  };
-
-  const fetchOrder = async () => {
-    if (!orderId) {
-      return;
-    }
-
-    try {
-      const queryParams = new URLSearchParams();
-
-      if (session?.user?.id) {
-        queryParams.append("userId", session.user.id);
-      } else {
-        const guestEmail = localStorage.getItem(GUEST_EMAIL_KEY);
-        if (guestEmail) {
-          queryParams.append("guestEmail", guestEmail);
-        } else {
-          throw new Error("Guest email is required for guest checkout");
-        }
-      }
-
-      const response = await fetch(
-        `/api/orders/${orderId}?${queryParams.toString()}`
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          errorData.error || errorData.message || "Failed to fetch order"
-        );
-      }
-
-      const { data } = await response.json();
-      setOrder(data);
-
-      if (data) {
-        const phone = data.shippingPhone?.startsWith("+44")
-          ? data.shippingPhone.substring(3)
-          : data.shippingPhone || "";
-
-        setFormData((prev) => ({
-          ...prev,
-          shippingFirstName: data.shippingFirstName || "",
-          shippingLastName: data.shippingLastName || "",
-          shippingStreet: data.shippingStreet || "",
-          shippingCity: data.shippingCity || "",
-          shippingState: data.shippingState || "",
-          shippingPostalCode: data.shippingPostalCode || "",
-          shippingCountry: data.shippingCountry || "United Kingdom",
-          shippingPhone: phone,
-          billingFirstName: data.billingFirstName || "",
-          billingLastName: data.billingLastName || "",
-          billingStreet: data.billingStreet || "",
-          billingCity: data.billingCity || "",
-          billingState: data.billingState || "",
-          billingPostalCode: data.billingPostalCode || "",
-          billingCountry: data.billingCountry || "United Kingdom",
-          email: data.email || session?.user?.email || "",
-          paymentMethod: "STRIPE",
-        }));
-
-        // Use the calculated payablePrice when creating the payment intent
-        if (data.totalPrice > 0 && !clientSecret) {
-          await createPaymentIntent(payablePrice, data.id);
-        }
-      }
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "An error occurred while loading your order"
-      );
-    }
-  };
-
-  const fetchCart = async () => {
-    try {
-      const userId = session?.user?.id;
-      const guestCartId = getGuestCartId();
-
-      if (!userId && !guestCartId) {
-        throw new Error("No cart identified");
-      }
-
-      const response = await fetch(
-        `/api/cart?${
-          userId ? `userId=${userId}` : `guestCartId=${guestCartId}`
-        }`,
-        {
-          headers: { "Cache-Control": "no-cache" },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch cart");
-      }
-
-      const { data: cartData } = await response.json();
-      setCartItems(cartData.items || []);
-
-      if (!cartData?.items) {
-        console.log("Your cart is empty");
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load your cart");
-    }
-  };
-
-  // Effect to create payment intent when cart is loaded and price is calculated
-  useEffect(() => {
-    const initializePayment = async () => {
-      if (
-        !orderId &&
-        cartItems.length > 0 &&
-        payablePrice > 0 &&
-        !clientSecret
-      ) {
-        await createPaymentIntent(payablePrice);
-      }
-    };
-
-    initializePayment();
-  }, [orderId, cartItems, payablePrice, clientSecret]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -469,310 +195,46 @@ export const CheckoutPage: React.FC = () => {
     }));
   };
 
-  const createOrderFromCart = async (paymentData?: {
-    paymentIntentId: string;
-    paymentMethodId: string;
-    clientSecret: string;
-    stripeCustId: string;
-  }) => {
-    setIsCreatingOrder(true);
-    setError(null);
-
-    try {
-      const userId = session?.user?.id;
-      const guestEmail =
-        formData.email || localStorage.getItem(GUEST_EMAIL_KEY);
-
-      if (!userId && !guestEmail) {
-        throw new Error("Email is required for guest checkout");
-      }
-
-      if (!cartItems || cartItems.length === 0) {
-        throw new Error("Your cart is empty");
-      }
-
-      if (!userId && formData.email) {
-        localStorage.setItem(GUEST_EMAIL_KEY, formData.email);
-      }
-
-      const orderItems = cartItems.map((item) => ({
-        productId: item.productId,
-        quantity: item.quantity,
-        unitPrice:
-          typeof item.product.price === "string"
-            ? parseFloat(item.product.price)
-            : item.product.price,
-        discountPercentage: item.product.discount
-          ? typeof item.product.discount === "string"
-            ? parseFloat(item.product.discount)
-            : item.product.discount
-          : 0,
-      }));
-
-      // Use the customer ID from ref if state hasn't updated yet
-      const customerIdToUse = stripeCustId || stripeCustomerIdRef.current || "";
-      
-      if (!customerIdToUse && paymentData) {
-        console.warn("No Stripe customer ID available for order");
-      }
-
-      const orderPayload = {
-        items: orderItems,
-        ...(userId
-          ? { userId }
-          : { guestEmail: formData.email.toLowerCase().trim() }),
-        shippingFirstName: formData.shippingFirstName,
-        shippingLastName: formData.shippingLastName,
-        shippingStreet: formData.shippingStreet,
-        shippingCity: formData.shippingCity,
-        shippingState: formData.shippingState,
-        shippingPostalCode: formData.shippingPostalCode,
-        shippingCountry: "United Kingdom",
-        shippingPhone: formData.shippingPhone
-          ? `+44${formData.shippingPhone}`
-          : "",
-        billingFirstName: formData.useSameAddress
-          ? null
-          : formData.billingFirstName,
-        billingLastName: formData.useSameAddress
-          ? null
-          : formData.billingLastName,
-        billingStreet: formData.useSameAddress ? null : formData.billingStreet,
-        billingCity: formData.useSameAddress ? null : formData.billingCity,
-        billingState: formData.useSameAddress ? null : formData.billingState,
-        billingPostalCode: formData.useSameAddress
-          ? null
-          : formData.billingPostalCode,
-        billingCountry: formData.useSameAddress
-          ? null
-          : formData.billingCountry,
-        email: formData.email,
-        totalPrice: payablePrice,
-        paymentMethod: "STRIPE",
-        status: OrderStatus.CONFIRMED,
-        ...(paymentData
-          ? {
-              paymentIntentId: paymentData.paymentIntentId,
-              paymentMethodId: paymentData.paymentMethodId,
-              clientSecret: paymentData.clientSecret,
-              stripeCustomerId: customerIdToUse,
-            }
-          : {}),
-      };
-
-      const orderResponse = await fetch("/api/orders", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(orderPayload),
-      });
-
-      if (!orderResponse.ok) {
-        const errorData = await orderResponse.json();
-        throw new Error(
-          errorData.error || errorData.message || "Failed to create order"
-        );
-      }
-
-      const { data } = await orderResponse.json();
-
-      return data.id;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create order");
-      return null;
-    } finally {
-      setIsCreatingOrder(false);
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (validateForm()) {
+      onSubmit(formData);
     }
   };
-
-  const handlePaymentSuccess = async (paymentData: {
-    paymentIntentId: string;
-    paymentMethodId: string;
-    clientSecret: string;
-  }): Promise<string | null> => {
-    try {
-      // Use the customer ID from ref or state
-      const customerIdToUse = stripeCustId || stripeCustomerIdRef.current || "";
-      
-      console.log("Using Stripe customer ID for payment:", customerIdToUse);
-      
-      const newOrderId = await createOrderFromCart({
-        ...paymentData,
-        stripeCustId: customerIdToUse,
-      });
-      
-      if (!newOrderId) {
-        throw new Error("Failed to create order");
-      }
-
-      if (!session?.user?.id) {
-        localStorage.removeItem(GUEST_CART_ID_KEY);
-      }
-
-      return newOrderId;
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Payment processing failed"
-      );
-      return null;
-    }
-  };
-
-  useEffect(() => {
-    const fetchOrderCount = async () => {
-      if (session?.user?.id) {
-        try {
-          const response = await fetch(
-            `/api/orders/count?userId=${session.user.id}`
-          );
-          if (!response.ok) {
-            throw new Error("Failed to fetch order count");
-          }
-          const data = await response.json();
-          setOrderCount(data.count || 0);
-        } catch (error) {
-          console.error("Failed to fetch order count:", error);
-          setOrderCount(0);
-        }
-      } else {
-        // Set default to 0 for guest users
-        setOrderCount(0);
-      }
-    };
-
-    fetchOrderCount();
-  }, [session?.user?.id]);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-
-      try {
-        await fetchCustomerProfile();
-
-        if (orderId) {
-          await fetchOrder();
-        } else {
-          await fetchCart();
-        }
-      } catch (error) {
-        setError(error instanceof Error ? error.message : "An error occurred");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [session?.user?.id, orderId]);
-
-  useEffect(() => {
-    if (customerProfile && !formData.shippingFirstName) {
-      setFormData((prev) => ({
-        ...prev,
-        shippingFirstName: customerProfile.firstName || "",
-        shippingLastName: customerProfile.lastName || "",
-        shippingStreet: customerProfile.streetAddress || "",
-        shippingCity: customerProfile.city || "",
-        shippingState: customerProfile.state || "",
-        shippingPostalCode: customerProfile.postalCode || "",
-        shippingCountry: customerProfile.country || "",
-        shippingPhone: customerProfile.phone || "",
-        email: session?.user?.email || "",
-      }));
-    }
-  }, [customerProfile, session]);
-
-  if (loading || isCreatingOrder) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        Loading checkout...
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="p-12 mx-auto">
-        <div className="text-red-500 p-4 bg-red-50 rounded">{error}</div>
-        <div className="text-center mt-4">
-          <button
-            onClick={() => router.push("/cart")}
-            className="text-blue-600 hover:text-blue-800 transition-colors"
-          >
-            Return to Cart
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (!cartItems.length && !order) {
-    return (
-      <div className="p-12 mx-auto">
-        <div className="bg-white p-6 rounded-lg text-center">
-          <h2 className="text-xl font-semibold mb-4">Your Cart is Empty</h2>
-          <p className="text-gray-600 mb-4">
-            There are no items in your cart to checkout.
-          </p>
-          <button
-            onClick={() => router.push("/products")}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
-          >
-            Continue Shopping
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className="p-12 mx-auto">
+    <form onSubmit={handleSubmit} className="p-6">
       <div className="bg-white p-6 rounded-lg mb-6">
-        <h1 className="text-2xl font-semibold mb-6">Checkout</h1>
+        <h1 className="text-2xl font-semibold mb-6">Shipping Information</h1>
+        
+        <ShippingDetails
+          formData={formData}
+          formErrors={formErrors}
+          handleInputChange={handleInputChange}
+          postcodeSearchTerm={postcodeSearchTerm}
+          postCodeError={postCodeError}
+          handlePostcodeChange={handlePostcodeChange}
+        />
 
-        {clientSecret && (stripeCustId || stripeCustomerIdRef.current) ? (
-          <>
-            <OrderSummary
-              items={displayItems}
-              orderCount={orderCount}
-              finalPrice={payablePrice}
-            />
+        <BillingDetails
+          formData={formData}
+          formErrors={formErrors}
+          handleInputChange={handleInputChange}
+          handleSameAddressToggle={handleSameAddressToggle}
+          postcodeSearchTerm={postcodeSearchTerm}
+          postCodeError={postCodeError}
+          handlePostcodeChange={handlePostcodeChange}
+        />
 
-            <ShippingDetails
-              formData={formData}
-              formErrors={formErrors}
-              handleInputChange={handleInputChange}
-              postcodeSearchTerm={postcodeSearchTerm}
-              postCodeError={postCodeError}
-              handlePostcodeChange={handlePostcodeChange}
-            />
-
-            <BillingDetails
-              formData={formData}
-              formErrors={formErrors}
-              handleInputChange={handleInputChange}
-              handleSameAddressToggle={handleSameAddressToggle}
-              postcodeSearchTerm={postcodeSearchTerm}
-              postCodeError={postCodeError}
-              handlePostcodeChange={handlePostcodeChange}
-            />
-
-            <PaymentSection
-              clientSecret={clientSecret}
-              cartItems={cartItems}
-              formData={formData}
-              onPaymentSuccess={handlePaymentSuccess}
-              validateForm={validateForm}
-              totalPrice={payablePrice}
-            />
-          </>
-        ) : (
-          <div className="flex justify-center items-center h-64">
-            <p>Initializing payment system...</p>
-          </div>
-        )}
+        <div className="mt-6 flex justify-end">
+          <button
+            type="submit"
+            className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors"
+          >
+            Continue to Payment
+          </button>
+        </div>
       </div>
-    </div>
+    </form>
   );
 };

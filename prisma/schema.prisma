@@ -121,6 +121,11 @@ model Product {
   cartItems       CartItem[]
   wishlistItems   WishlistItem[]
 
+  parcelWeight        Decimal      @default(0)
+  parcelLength        Decimal      @default(0)
+  parcelWidth         Decimal      @default(0)
+  parcelHeight        Decimal      @default(0)
+
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
 }
@@ -207,6 +212,11 @@ model Order {
   clientSecret        String
 
   reviews             Review[]
+
+  parcelWeight        Decimal      @default(0)
+  parcelLength        Decimal      @default(0)
+  parcelWidth         Decimal      @default(0)
+  parcelHeight        Decimal      @default(0)
   
   createdAt           DateTime     @default(now())
   updatedAt           DateTime     @updatedAt
