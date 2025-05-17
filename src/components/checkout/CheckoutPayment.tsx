@@ -3,10 +3,10 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { OrderStatus } from "@prisma/client";
-import { Order, CustomerProfile } from "@/types/checkout";
+import { Order } from "@/types/checkout";
 import { OrderSummary } from "./OrderSummary";
 import { PaymentSection } from "./PaymentSection";
-import { CheckoutFormData } from "./CheckoutForm";
+import { CheckoutFormData } from "../checkoutAddressDetails/CheckoutBillingForm";
 
 const GUEST_EMAIL_KEY = "guestEmail";
 const GUEST_CART_ID_KEY = "guestCartId";

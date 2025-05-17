@@ -1,11 +1,11 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { validatePostcode } from "@/utils/validatePostalCode";
 import { isValid as isValidPostcode } from "postcode";
-import { ShippingDetails } from "./ShippingDetails";
-import { BillingDetails } from "./BillingDetails";
+import AddressValidationPage from "./ShippingDetails";
+import BillingDetails from "./BillingDetails";
 
 export interface CheckoutFormData {
   shippingFirstName: string;
@@ -24,7 +24,6 @@ export interface CheckoutFormData {
   billingState: string;
   billingPostalCode: string;
   billingCountry: string;
-  email: string;
 }
 
 interface CheckoutFormProps {
@@ -32,13 +31,13 @@ interface CheckoutFormProps {
   initialData?: Partial<CheckoutFormData>;
 }
 
-export const CheckoutForm: React.FC<CheckoutFormProps> = ({ 
-  onSubmit, 
-  initialData 
+export const CheckoutForm: React.FC<CheckoutFormProps> = ({
+  onSubmit,
+  initialData,
 }) => {
   const { data: session } = useSession();
   const router = useRouter();
-  
+
   const [formData, setFormData] = useState<CheckoutFormData>({
     shippingFirstName: initialData?.shippingFirstName || "",
     shippingLastName: initialData?.shippingLastName || "",
@@ -56,7 +55,6 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({
     billingState: initialData?.billingState || "",
     billingPostalCode: initialData?.billingPostalCode || "",
     billingCountry: initialData?.billingCountry || "United Kingdom",
-    email: initialData?.email || session?.user?.email || "",
   });
 
   const [formErrors, setFormErrors] = useState({
@@ -75,7 +73,6 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({
     billingState: false,
     billingPostalCode: false,
     billingCountry: false,
-    email: false,
   });
 
   const [postcodeSearchTerm, setPostcodeSearchTerm] = useState("");
@@ -83,30 +80,30 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({
 
   const validateForm = () => {
     const newErrors = {
-      shippingFirstName: !formData.shippingFirstName.trim(),
-      shippingLastName: !formData.shippingLastName.trim(),
-      shippingStreet: !formData.shippingStreet.trim(),
-      shippingCity: !formData.shippingCity.trim(),
-      shippingState: !formData.shippingState.trim(),
-      shippingCountry: false,
+      shippingFirstName: !formData.shippingFirstName?.trim(),
+      shippingLastName: !formData.shippingLastName?.trim(),
+      shippingStreet: !formData.shippingStreet?.trim(),
+      shippingCity: !formData.shippingCity?.trim(),
+      shippingState: !formData.shippingState?.trim(),
+      shippingCountry: false, // Since it has a default value
       shippingPhone:
-        !formData.shippingPhone.trim() || formData.shippingPhone.length !== 10,
+        !formData.shippingPhone || formData.shippingPhone.length !== 10,
       billingFirstName:
-        !formData.useSameAddress && !formData.billingFirstName.trim(),
+        !formData.useSameAddress && !formData.billingFirstName?.trim(),
       billingLastName:
-        !formData.useSameAddress && !formData.billingLastName.trim(),
-      billingStreet: !formData.useSameAddress && !formData.billingStreet.trim(),
-      billingCity: !formData.useSameAddress && !formData.billingCity.trim(),
-      billingState: !formData.useSameAddress && !formData.billingState.trim(),
+        !formData.useSameAddress && !formData.billingLastName?.trim(),
+      billingStreet:
+        !formData.useSameAddress && !formData.billingStreet?.trim(),
+      billingCity: !formData.useSameAddress && !formData.billingCity?.trim(),
+      billingState: !formData.useSameAddress && !formData.billingState?.trim(),
       billingPostalCode:
         !formData.useSameAddress &&
-        (!formData.billingPostalCode.trim() ||
+        (!formData.billingPostalCode?.trim() ||
           !isValidPostcode(formData.billingPostalCode)),
       billingCountry:
-        !formData.useSameAddress && !formData.billingCountry.trim(),
-      email: !formData.email.trim() || !/^\S+@\S+\.\S+$/.test(formData.email),
+        !formData.useSameAddress && !formData.billingCountry?.trim(),
       shippingPostalCode:
-        !formData.shippingPostalCode.trim() || !!postCodeError,
+        !formData.shippingPostalCode?.trim() || !!postCodeError,
     };
 
     setFormErrors(newErrors);
@@ -205,15 +202,14 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({
   return (
     <form onSubmit={handleSubmit} className="p-6">
       <div className="bg-white p-6 rounded-lg mb-6">
-        <h1 className="text-2xl font-semibold mb-6">Shipping Information</h1>
-        
-        <ShippingDetails
+        <AddressValidationPage
           formData={formData}
           formErrors={formErrors}
           handleInputChange={handleInputChange}
           postcodeSearchTerm={postcodeSearchTerm}
           postCodeError={postCodeError}
           handlePostcodeChange={handlePostcodeChange}
+          setFormData={setFormData}
         />
 
         <BillingDetails
@@ -224,6 +220,7 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({
           postcodeSearchTerm={postcodeSearchTerm}
           postCodeError={postCodeError}
           handlePostcodeChange={handlePostcodeChange}
+          setFormData={setFormData}
         />
 
         <div className="mt-6 flex justify-end">
