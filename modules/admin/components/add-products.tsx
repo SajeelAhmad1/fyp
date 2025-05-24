@@ -1,7 +1,6 @@
 "use client"
 import { useState, useEffect, FormEvent, ChangeEvent } from 'react';
 
-// Define types
 interface ProductFormData {
   name: string;
   description: string;
@@ -17,7 +16,6 @@ const ProductCreationForm = () => {
   const [success, setSuccess] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
   
-  // Form state with proper types and categoryId set to null
   const [formData, setFormData] = useState<ProductFormData>({
     name: '',
     description: '',
@@ -28,11 +26,9 @@ const ProductCreationForm = () => {
     categoryId: null,
   });
 
-  // Handle input changes with proper type handling
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     
-    // Convert numeric inputs to their proper types
     if (name === 'stock') {
       setFormData(prevData => ({
         ...prevData,
@@ -46,7 +42,6 @@ const ProductCreationForm = () => {
     }
   };
 
-  // Handle image URL addition
   const handleImageAdd = () => {
     const imageUrl = prompt('Enter image URL:');
     if (imageUrl && imageUrl.trim()) {
@@ -57,7 +52,6 @@ const ProductCreationForm = () => {
     }
   };
 
-  // Handle image URL removal
   const handleImageRemove = (index: number) => {
     setFormData(prevData => ({
       ...prevData,
@@ -65,7 +59,6 @@ const ProductCreationForm = () => {
     }));
   };
 
-  // Handle form submission
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
@@ -73,12 +66,11 @@ const ProductCreationForm = () => {
     setSuccess(false);
     
     try {
-      // Create a submission object with properly typed values
       const submissionData = {
         ...formData,
-        price: parseFloat(formData.price), // Convert price to number
-        stock: Number(formData.stock), // Ensure stock is a number
-        categoryId: null, // Explicitly set categoryId to null
+        price: parseFloat(formData.price),
+        stock: Number(formData.stock),
+        categoryId: null,
       };
       
       const response = await fetch('/api/products', {

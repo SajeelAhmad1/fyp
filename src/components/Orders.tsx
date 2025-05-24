@@ -20,7 +20,7 @@ export default function Orders() {
   const hasFetched = useRef(false);
 
   const fetchOrders = useCallback(
-    async (email = null) => {
+    async (email?: string) => {
       if (hasFetched.current) return;
 
       setIsLoading(true);
@@ -58,14 +58,12 @@ export default function Orders() {
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
-        // Don't refetch when tab becomes visible
         return;
       }
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
 
-    // Initial fetch
     if (status === "unauthenticated") {
       const storedEmail = localStorage.getItem("guestEmail");
       if (storedEmail) {
@@ -88,7 +86,7 @@ export default function Orders() {
     if (guestEmail.trim()) {
       localStorage.setItem("guestEmail", guestEmail);
       setShowEmailPopup(false);
-      hasFetched.current = false; // Reset fetch flag
+      hasFetched.current = false;
       fetchOrders(guestEmail);
     }
   };
@@ -183,7 +181,7 @@ export default function Orders() {
             <div className="border rounded-lg overflow-hidden">
               <div className="p-6 text-center">
                 <p className="text-gray-500">
-                  You haven't placed any orders yet.
+                  You haven&apos;t placed any orders yet.
                 </p>
                 <Link
                   href="/"

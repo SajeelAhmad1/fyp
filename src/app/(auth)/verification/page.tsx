@@ -26,7 +26,7 @@ export default function Verification() {
             Lyalla and Lora
           </div>
           <div className="flex flex-col items-center space-y-1 lg:space-y-1 p-5 mt-[50px]">
-            <h1 className="font-semibold leading-[28.8px] md:leading-[48.8px] text-[24px] md:text-[36px] lg:text-[40px] text-center">
+            <h1 className="font-medium md:font-semibold leading-[28.8px] md:leading-[48.8px] text-[24px] md:text-[36px] lg:text-[40px] text-center">
               Enter The 6-Digit Verification Code <br />
                Sent To Your Email
             </h1>

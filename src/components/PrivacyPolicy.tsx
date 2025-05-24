@@ -122,7 +122,7 @@ const PrivacyPolicy = () => {
                             <p className="text-gray-700 mb-4 whitespace-pre-line">{section.content}</p>
                         )}
                         
-                        {section.subsections && section.subsections.map((subsection, subIndex) => (
+                        {section.subsections && section.subsections.map((subsection:any, subIndex) => (
                             <div key={subIndex} className="mb-4">
                                 {subsection.subtitle && (
                                     <h3 className="font-medium text-cyan-600 mb-2">

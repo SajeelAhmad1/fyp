@@ -16,9 +16,9 @@ interface CheckoutPaymentProps {
   onBack: () => void;
 }
 
-export const CheckoutPayment: React.FC<CheckoutPaymentProps> = ({ 
-  checkoutData, 
-  onBack 
+export const CheckoutPayment: React.FC<CheckoutPaymentProps> = ({
+  checkoutData,
+  onBack,
 }) => {
   const { data: session } = useSession();
   const router = useRouter();
@@ -34,7 +34,7 @@ export const CheckoutPayment: React.FC<CheckoutPaymentProps> = ({
   const [cartItems, setCartItems] = useState<any[]>([]);
   const [orderCount, setOrderCount] = useState<number | null>(null);
   const [payablePrice, setPayablePrice] = useState<number>(0);
-  
+
   const stripeCustomerIdRef = useRef<string | null>(null);
 
   const getGuestCartId = useCallback(() => {
@@ -92,7 +92,7 @@ export const CheckoutPayment: React.FC<CheckoutPaymentProps> = ({
           amount: Math.round(amount * 100),
           currency: "gbp",
           orderId: orderIdParam,
-          email: checkoutData.email || session?.user?.email,
+          email: session?.user?.email,
         }),
       });
 
@@ -103,7 +103,7 @@ export const CheckoutPayment: React.FC<CheckoutPaymentProps> = ({
       } else {
         throw new Error("No client secret returned");
       }
-      
+
       if (responseData.customerId) {
         stripeCustomerIdRef.current = responseData.customerId;
         setStripeCustId(responseData.customerId);
@@ -188,6 +188,7 @@ export const CheckoutPayment: React.FC<CheckoutPaymentProps> = ({
 
       const { data: cartData } = await response.json();
       setCartItems(cartData.items || []);
+      console.log("cart items", cartItems);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load your cart");
     }
@@ -219,8 +220,7 @@ export const CheckoutPayment: React.FC<CheckoutPaymentProps> = ({
 
     try {
       const userId = session?.user?.id;
-      const guestEmail =
-        checkoutData.email || localStorage.getItem(GUEST_EMAIL_KEY);
+      const guestEmail = localStorage.getItem(GUEST_EMAIL_KEY);
 
       if (!userId && !guestEmail) {
         throw new Error("Email is required for guest checkout");
@@ -228,10 +228,6 @@ export const CheckoutPayment: React.FC<CheckoutPaymentProps> = ({
 
       if (!cartItems || cartItems.length === 0) {
         throw new Error("Your cart is empty");
-      }
-
-      if (!userId && checkoutData.email) {
-        localStorage.setItem(GUEST_EMAIL_KEY, checkoutData.email);
       }
 
       const orderItems = cartItems.map((item) => ({
@@ -249,12 +245,12 @@ export const CheckoutPayment: React.FC<CheckoutPaymentProps> = ({
       }));
 
       const customerIdToUse = stripeCustId || stripeCustomerIdRef.current || "";
-      
+
       const orderPayload = {
         items: orderItems,
         ...(userId
           ? { userId }
-          : { guestEmail: checkoutData.email.toLowerCase().trim() }),
+          : { guestEmail: session?.user.email.toLowerCase().trim() }),
         shippingFirstName: checkoutData.shippingFirstName,
         shippingLastName: checkoutData.shippingLastName,
         shippingStreet: checkoutData.shippingStreet,
@@ -271,19 +267,26 @@ export const CheckoutPayment: React.FC<CheckoutPaymentProps> = ({
         billingLastName: checkoutData.useSameAddress
           ? null
           : checkoutData.billingLastName,
-        billingStreet: checkoutData.useSameAddress ? null : checkoutData.billingStreet,
-        billingCity: checkoutData.useSameAddress ? null : checkoutData.billingCity,
-        billingState: checkoutData.useSameAddress ? null : checkoutData.billingState,
+        billingStreet: checkoutData.useSameAddress
+          ? null
+          : checkoutData.billingStreet,
+        billingCity: checkoutData.useSameAddress
+          ? null
+          : checkoutData.billingCity,
+        billingState: checkoutData.useSameAddress
+          ? null
+          : checkoutData.billingState,
         billingPostalCode: checkoutData.useSameAddress
           ? null
           : checkoutData.billingPostalCode,
         billingCountry: checkoutData.useSameAddress
           ? null
           : checkoutData.billingCountry,
-        email: checkoutData.email,
+        email: session?.user.email,
         totalPrice: payablePrice,
         paymentMethod: "STRIPE",
         status: OrderStatus.CONFIRMED,
+        totalWeight: totalWeight,
         ...(paymentData
           ? {
               paymentIntentId: paymentData.paymentIntentId,
@@ -326,12 +329,12 @@ export const CheckoutPayment: React.FC<CheckoutPaymentProps> = ({
   }): Promise<string | null> => {
     try {
       const customerIdToUse = stripeCustId || stripeCustomerIdRef.current || "";
-      
+
       const newOrderId = await createOrderFromCart({
         ...paymentData,
         stripeCustId: customerIdToUse,
       });
-      
+
       if (!newOrderId) {
         throw new Error("Failed to create order");
       }
@@ -404,6 +407,11 @@ export const CheckoutPayment: React.FC<CheckoutPaymentProps> = ({
           item.quantity,
         product: item.product,
       }));
+
+  const totalWeight = cartItems.reduce((sum, item) => {
+    const weight = Number(item.product.parcelWeight) || 0;
+    return sum + weight * item.quantity;
+  }, 0);
 
   if (loading || isCreatingOrder) {
     return (

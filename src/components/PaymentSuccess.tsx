@@ -82,7 +82,7 @@ export default function PaymentSuccess() {
         </p>
       </div>
 
-      <OrderSummary paymentMethod={paymentMethod} order={orderData} />
+      <OrderSummary order={orderData} paymentMethod={paymentMethod} />
 
       <div className='flex flex-col md:flex-row space-x-0 md:space-x-2 justify-center'>
         <div className="mt-6 text-center">

@@ -261,7 +261,7 @@ function ClientLoginForm() {
       <div className="mt-8 text-center text-sm text-gray-600">
         {" "}
         {/* Increased margin-top */}
-        Don't have an account?{" "}
+        Don&apos;t have an account?{" "}
         <Link
           href="/register"
           className="font-medium text-[#F19B12] hover:text-[#d48a10] transition underline" // Added underline

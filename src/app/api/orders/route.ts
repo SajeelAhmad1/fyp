@@ -5,35 +5,42 @@ import { Prisma } from "@prisma/client";
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        console.log(body)
 
-        // Validate essential input
         if (!body.items || body.items.length === 0) {
             return NextResponse.json({ error: "Invalid order data" }, { status: 400 });
         }
 
-        // Validate email for guest orders
-        if (!body.userId && (!body.guestEmail || !body.guestEmail.includes('@'))) {
-            return NextResponse.json({ error: "Valid email is required for guest orders" }, { status: 400 });
-        }
+        let totalWeight = new Prisma.Decimal(0);
+        const products = await prisma.product.findMany({
+            where: {
+                id: { in: body.items.map((item: any) => item.productId) }
+            },
+            select: {
+                id: true,
+                name: true,
+                stock: true,
+                parcelWeight: true
+            }
+        });
 
-        // Check product availability and stock
         for (const item of body.items) {
-            const product = await prisma.product.findUnique({
-                where: { id: item.productId },
-                select: { name: true, stock: true }
-            });
-
-            if (!product || product.stock < item.quantity) {
+            const product = products.find(p => p.id === item.productId);
+            if (!product) {
                 return NextResponse.json({ 
-                    error: `${product?.name} is out of stock or insufficient quantity. Remove it from your cart to proceed.` 
+                    error: `Product not found` 
                 }, { status: 400 });
             }
+            if (product.stock < item.quantity) {
+                return NextResponse.json({ 
+                    error: `${product.name} is out of stock` 
+                }, { status: 400 });
+            }
+            totalWeight = new Prisma.Decimal(totalWeight).add(
+                new Prisma.Decimal(product.parcelWeight).times(item.quantity)
+            );
         }
 
-        // Create order with guest support
         const order = await prisma.$transaction(async (prisma) => {
-            // Create the order
             const createdOrder = await prisma.order.create({
                 data: {
                     userId: body.userId || undefined,
@@ -52,6 +59,7 @@ export async function POST(request: Request) {
                     paymentMethodId: body.paymentMethodId,
                     clientSecret: body.clientSecret,
                     stripeCustomerId: body.stripeCustomerId,
+                    parcelWeight: totalWeight,
                     items: {
                         create: body.items.map((item: any) => ({
                             productId: item.productId,
@@ -69,7 +77,6 @@ export async function POST(request: Request) {
                 },
             });
 
-            // Update product stock
             for (const item of body.items) {
                 await prisma.product.update({
                     where: { id: item.productId },
@@ -79,9 +86,7 @@ export async function POST(request: Request) {
                 });
             }
 
-            // Clear the cart after successful order
             if (body.userId) {
-                // For logged-in users
                 await prisma.cartItem.deleteMany({
                     where: { 
                         cart: { 
@@ -90,7 +95,6 @@ export async function POST(request: Request) {
                     }
                 });
             } else if (body.guestCartId) {
-                // For guest users
                 await prisma.cartItem.deleteMany({
                     where: { 
                         cartId: body.guestCartId 

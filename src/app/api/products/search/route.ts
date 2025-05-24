@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
-
+ 
 // Function to calculate similarity between strings
 function calculateSimilarity(str1: string, str2: string): number {
   // Convert both strings to lowercase for case-insensitive comparison

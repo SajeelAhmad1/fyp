@@ -1,5 +1,4 @@
-// lib/auth-options.ts
-import NextAuth from "next-auth";
+import { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaClient } from "@prisma/client";
@@ -8,10 +7,10 @@ import axios from "axios";
 
 const prisma = new PrismaClient();
 
-export const authOptions = {
+export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    maxAge: 30 * 24 * 60 * 60,
   },
   pages: {
     signIn: "/login",
@@ -28,7 +27,7 @@ export const authOptions = {
           response_type: "code",
         },
       },
-      profile(profile) {
+      profile(profile: any) {
         return {
           id: profile.sub,
           name: profile.name || '',
@@ -49,7 +48,11 @@ export const authOptions = {
         password: { label: "Password", type: "password" },
         isSettingPassword: { label: "IsSettingPassword", type: "hidden" },
       },
-      async authorize(credentials) {
+      async authorize(credentials: {
+        email?: string;
+        password?: string;
+        isSettingPassword?: string;
+      }) {
         try {
           if (!credentials?.email || !credentials?.password) {
             throw new Error("Email and password are required");
@@ -109,7 +112,7 @@ export const authOptions = {
     }),
   ],
   callbacks: {
-    async signIn({ user, account, profile }) {
+    async signIn({ user, account, profile }: any) {
       if (account?.provider === "google") {
         const existingUser = await prisma.user.findUnique({
           where: { email: user.email },
@@ -117,7 +120,6 @@ export const authOptions = {
         });
     
         if (!existingUser) {
-          // Create new user for Google sign-in
           const newUser = await prisma.user.create({
             data: {
               email: user.email,
@@ -128,7 +130,6 @@ export const authOptions = {
                 create: {
                   firstName: profile?.given_name || user.firstName,
                   lastName: profile?.family_name || user.lastName,
-                  // You can add more default profile fields if needed
                 }
               }
             },
@@ -142,7 +143,6 @@ export const authOptions = {
           user.customerProfile = existingUser.customerProfile;
           user.isProfileComplete = !!existingUser.customerProfile;
           
-          // If user exists but doesn't have a profile, create one
           if (!existingUser.customerProfile) {
             const profile = await prisma.customerProfile.create({
               data: {
@@ -158,8 +158,7 @@ export const authOptions = {
       }
       return true;
     },
-    async jwt({ token, user, account }) {
-      // Initial sign-in
+    async jwt({ token, user, account }: any) {
       if (account && user) {
         token = {
           ...token,
@@ -176,7 +175,6 @@ export const authOptions = {
         };
       }
     
-      // For credential logins
       if (user) {
         token.id = user.id;
         token.email = user.email;
@@ -193,7 +191,7 @@ export const authOptions = {
     
       return token;
     },
-    async session({ session, token }) {
+    async session({ session, token }: any) {
       session.user = {
         ...session.user,
         id: token.id,
@@ -207,7 +205,7 @@ export const authOptions = {
       };
       return session;
     },
-    async redirect({ url, baseUrl }) {
+    async redirect({ url, baseUrl }: { url: string; baseUrl: string }) {
       if (url.startsWith("/")) return `${baseUrl}${url}`;
       else if (new URL(url).origin === baseUrl) return url;
       return baseUrl;

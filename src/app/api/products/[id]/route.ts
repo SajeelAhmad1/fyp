@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { NextRequest, NextResponse } from "next/server";
+import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -12,12 +12,12 @@ interface RouteParams {
 
 // GET /api/products/[id] - Get a single product
 export async function GET(
-  _request: NextRequest, 
+  _request: NextRequest,
   { params }: RouteParams
 ): Promise<NextResponse<any>> {
   try {
     const id = params.id;
-    
+
     const product = await prisma.product.findUnique({
       where: { id },
       include: {
@@ -30,9 +30,9 @@ export async function GET(
               select: {
                 firstName: true,
                 lastName: true,
-              }
-            }
-          }
+              },
+            },
+          },
         },
         reviews: {
           include: {
@@ -42,41 +42,38 @@ export async function GET(
                 customerProfile: {
                   select: {
                     firstName: true,
-                    lastName: true
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+                    lastName: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     });
-    
-    
+
     if (!product) {
-      return NextResponse.json(
-        { error: 'Product not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
-    
+
     // Calculate average rating
-    const ratings = product.reviews.map(review => review.rating);
-    const avgRating = ratings.length > 0 
-      ? ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length 
-      : 0;
-    
+    const ratings = product.reviews.map((review) => review.rating);
+    const avgRating =
+      ratings.length > 0
+        ? ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length
+        : 0;
+
     const productWithRating = {
       ...product,
       avgRating,
-      reviewCount: ratings.length
+      reviewCount: ratings.length,
     };
-    
+
     return NextResponse.json(productWithRating);
   } catch (error) {
-    console.error('Error fetching product:', error);
+    console.error("Error fetching product:", error);
     return NextResponse.json(
-      { error: 'Failed to fetch product' },
+      { error: "Failed to fetch product" },
       { status: 500 }
     );
   }
@@ -102,40 +99,41 @@ interface UpdateProductRequest {
 
 // PUT /api/products/[id] - Update a product
 export async function PUT(
-  request: NextRequest, 
+  request: NextRequest,
   { params }: RouteParams
 ): Promise<NextResponse<any>> {
   try {
     const id = params.id;
     const body: UpdateProductRequest = await request.json();
-    
+
     // Check if product exists
     const existingProduct = await prisma.product.findUnique({
-      where: { id }
+      where: { id },
     });
-    
+
     if (!existingProduct) {
-      return NextResponse.json(
-        { error: 'Product not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
 
     // Validate images if provided
     if (body.images !== undefined && !Array.isArray(body.images)) {
       return NextResponse.json(
-        { error: 'Images must be an array of strings' },
+        { error: "Images must be an array of strings" },
         { status: 400 }
       );
     }
-    
+
     // Update product
     const updatedProduct = await prisma.product.update({
       where: { id },
       data: {
         name: body.name,
         description: body.description,
-        price: body.price ? (typeof body.price === 'string' ? parseFloat(body.price) : body.price) : undefined,
+        price: body.price
+          ? typeof body.price === "string"
+            ? parseFloat(body.price)
+            : body.price
+          : undefined,
         stock: body.stock !== undefined ? body.stock : undefined,
         sku: body.sku,
         images: body.images, // Will be properly validated as string[]
@@ -146,53 +144,62 @@ export async function PUT(
         isBestChoice: body.isBestChoice,
         color: body.color,
         size: body.size,
-        shortDescription: body.shortDescription
-      }
+        shortDescription: body.shortDescription,
+      },
     });
-    
+
     return NextResponse.json(updatedProduct);
   } catch (error) {
-    console.error('Error updating product:', error);
+    console.error("Error updating product:", error);
     return NextResponse.json(
-      { error: 'Failed to update product' },
+      { error: "Failed to update product" },
       { status: 500 }
     );
   }
 }
 
-// DELETE /api/products/[id] - Delete a product
 export async function DELETE(
-  _request: NextRequest, 
-  { params }: RouteParams
-): Promise<NextResponse<any>> {
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
-    const id = params.id;
-    
-    // Check if product exists
-    const existingProduct = await prisma.product.findUnique({
-      where: { id }
+    const product = await prisma.product.findUnique({
+      where: { id: params.id },
     });
-    
-    if (!existingProduct) {
-      return NextResponse.json(
-        { error: 'Product not found' },
-        { status: 404 }
-      );
+
+    if (!product) {
+      return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
-    
-    // Delete product
-    await prisma.product.delete({
-      where: { id }
-    });
-    
+
+    await prisma.$transaction([
+      prisma.cartItem.deleteMany({
+        where: { productId: params.id },
+      }),
+
+      prisma.orderItem.deleteMany({
+        where: { productId: params.id },
+      }),
+
+      prisma.review.deleteMany({
+        where: { productId: params.id },
+      }),
+
+      prisma.product.delete({
+        where: { id: params.id },
+      }),
+    ]);
+
     return NextResponse.json(
-      { message: 'Product deleted successfully' },
+      { success: true, message: "Product deleted successfully" },
       { status: 200 }
     );
   } catch (error) {
-    console.error('Error deleting product:', error);
+    console.error("Error deleting product:", error);
     return NextResponse.json(
-      { error: 'Failed to delete product' },
+      {
+        error: "Failed to delete product",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
       { status: 500 }
     );
   }

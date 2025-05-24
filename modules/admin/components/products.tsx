@@ -37,45 +37,6 @@ interface ProductsResponse {
     pagination: PaginationInfo;
 }
 
-// Product delete handler function
-const handleDelete = async (productId: string) => {
-    if (!productId) return;
-    
-    // Show confirmation dialog
-    const confirmed = window.confirm("Are you sure you want to delete this product? This action cannot be undone.");
-    
-    if (!confirmed) return;
-    
-    try {
-      // Call the delete API endpoint
-      const response = await fetch(`/api/products/${productId}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      if (!response.ok) {
-        // Handle error response
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to delete product');
-      }
-      
-      // Handle successful deletion
-      const result = await response.json();
-      alert('Product deleted successfully!');
-      
-      // Navigate back to products list or refresh the current list
-      window.location.href = '/products';
-      
-      return result;
-    } catch (error: any) {
-      console.error('Error deleting product:', error);
-      alert(error.message || 'An error occurred while deleting the product');
-      return null;
-    }
-  };
-
 const ProductsPage: React.FC = () => {
     // State for products and filters
     const [products, setProducts] = useState<Product[]>([]);
@@ -99,6 +60,44 @@ const ProductsPage: React.FC = () => {
     // Get search params from URL
     const router = useRouter();
     const searchParams = useSearchParams();
+    const [isDeleting, setIsDeleting] = useState<string | null>(null);
+
+    const handleDelete = async (productId: string) => {
+  if (!productId) return;
+  
+  // Show confirmation dialog
+  const confirmed = window.confirm(
+    "Are you sure you want to delete this product? " +
+    "This will also remove it from all carts and orders. " +
+    "This action cannot be undone."
+  );
+  
+  if (!confirmed) return;
+
+  setIsDeleting(productId);
+  
+  try {
+    const response = await fetch(`/api/products/${productId}`, {
+      method: 'DELETE'
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to delete product');
+    }
+    
+    // Refresh the product list
+    await fetchProducts();
+    
+    // Show success message
+    alert('Product deleted successfully!');
+  } catch (error: any) {
+    console.error('Error deleting product:', error);
+    alert(error.message || 'An error occurred while deleting the product');
+  } finally {
+    setIsDeleting(null);
+  }
+};
 
     // Fetch products with current filters
     const fetchProducts = async () => {
@@ -234,11 +233,17 @@ const ProductsPage: React.FC = () => {
                                                 <div className="text-blue-600 hover:underline">
                                                     {product.name}
                                                 </div>
-                                                <div 
-                                                onClick={()=>handleDelete(product.id)}
-                                                className='cursor-pointer text-[#000000]'>
-                                                    <Trash/>
-                                                </div>
+                                                <button
+  onClick={() => handleDelete(product.id)}
+  disabled={isDeleting === product.id}
+  className="text-red-500 hover:text-red-700 disabled:opacity-50"
+>
+  {isDeleting === product.id ? (
+    <span className="animate-pulse">Deleting...</span>
+  ) : (
+    <Trash size={16} />
+  )}
+</button>
                                             </div>
                                         </h3>
 

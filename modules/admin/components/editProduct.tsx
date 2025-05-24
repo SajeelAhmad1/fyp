@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
-import { useParams } from 'next/navigation';
+import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 
 interface Category {
   id: string;
@@ -21,77 +21,77 @@ interface ProductFormData {
   sku?: string;
   images?: string[];
   isFeatured: boolean;
-  discount: string,
+  discount: string;
   isBestChoice: boolean;
-  color: string[], 
-  size: string[], 
-  shortDescription: string,
+  color: string[];
+  size: string[];
+  shortDescription: string;
 }
 
 export default function EditProductPage() {
   const router = useRouter();
   const params = useParams();
   const productId = params.id as string;
-  
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoadingCategories, setIsLoadingCategories] = useState(true);
-  const [colorInput, setColorInput] = useState('');
-  const [sizeInput, setSizeInput] = useState('');
-  const [imageInput, setImageInput] = useState('');
+  const [colorInput, setColorInput] = useState("");
+  const [sizeInput, setSizeInput] = useState("");
+  const [imageInput, setImageInput] = useState("");
   const [uploadedImages, setUploadedImages] = useState<File[]>([]);
-  const [uploadProgress, setUploadProgress] = useState<{[key: string]: number}>({});
+  const [uploadProgress, setUploadProgress] = useState<{
+    [key: string]: number;
+  }>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState<ProductFormData>({
-    name: '',
-    description: '',
-    price: '',
-    categoryId: '',
-    stock: '',
-    sku: '',
+    name: "",
+    description: "",
+    price: "",
+    categoryId: "",
+    stock: "",
+    sku: "",
     images: [],
     isFeatured: false,
-    discount: '',
+    discount: "",
     isBestChoice: false,
-    color: [], 
-    size: [], 
-    shortDescription: ''
+    color: [],
+    size: [],
+    shortDescription: "",
   });
 
-  // Fetch product data when component mounts
   useEffect(() => {
     const fetchProduct = async () => {
       try {
         const response = await fetch(`/api/products/${productId}`);
 
         if (!response.ok) {
-          throw new Error('Failed to fetch product');
+          throw new Error("Failed to fetch product");
         }
 
         const productData = await response.json();
-        
-        // Format the data for the form
+
         setFormData({
-          name: productData.name || '',
-          description: productData.description || '',
-          price: productData.price?.toString() || '',
-          categoryId: productData.categoryId || '',
-          stock: productData.stock?.toString() || '',
-          sku: productData.sku || '',
+          name: productData.name || "",
+          description: productData.description || "",
+          price: productData.price?.toString() || "",
+          categoryId: productData.categoryId || "",
+          stock: productData.stock?.toString() || "",
+          sku: productData.sku || "",
           images: productData.images || [],
           isFeatured: productData.isFeatured === true,
-          discount: productData.discount?.toString() || '',
+          discount: productData.discount?.toString() || "",
           isBestChoice: productData.isBestChoice === true,
           color: productData.color || [],
           size: productData.size || [],
-          shortDescription: productData.shortDescription || ''
+          shortDescription: productData.shortDescription || "",
         });
       } catch (err) {
-        console.error('Error fetching product:', err);
-        setError('Failed to load product data. Please try again later.');
+        console.error("Error fetching product:", err);
+        setError("Failed to load product data. Please try again later.");
       } finally {
         setIsLoading(false);
       }
@@ -100,26 +100,25 @@ export default function EditProductPage() {
     fetchProduct();
   }, [productId]);
 
-  // Fetch categories when component mounts
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch('/api/categories');
+        const response = await fetch("/api/categories");
 
         if (!response.ok) {
-          throw new Error('Failed to fetch categories');
+          throw new Error("Failed to fetch categories");
         }
 
         const data = await response.json();
         const formattedCategories = data.map((category: any) => ({
           id: category.id,
-          name: category.name
+          name: category.name,
         }));
 
         setCategories(formattedCategories);
       } catch (err) {
-        console.error('Error fetching categories:', err);
-        setError('Failed to load categories. Please try again later.');
+        console.error("Error fetching categories:", err);
+        setError("Failed to load categories. Please try again later.");
       } finally {
         setIsLoadingCategories(false);
       }
@@ -128,71 +127,68 @@ export default function EditProductPage() {
     fetchCategories();
   }, []);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
     const { name, value } = e.target;
 
-    if (name === 'isFeatured' || name === 'isBestChoice') {
-      setFormData(prev => ({
+    if (name === "isFeatured" || name === "isBestChoice") {
+      setFormData((prev) => ({
         ...prev,
-        [name]: value === 'true'
+        [name]: value === "true",
       }));
-    } else if (name !== 'colorInput' && name !== 'sizeInput' && name !== 'imageInput') {
-      setFormData(prev => ({ ...prev, [name]: value }));
+    } else if (
+      name !== "colorInput" &&
+      name !== "sizeInput" &&
+      name !== "imageInput"
+    ) {
+      setFormData((prev) => ({ ...prev, [name]: value }));
     }
   };
 
-  // Handle color input
   const handleColorInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setColorInput(e.target.value);
   };
 
-  // Handle size input
   const handleSizeInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSizeInput(e.target.value);
   };
 
-  // Handle image input
   const handleImageInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setImageInput(e.target.value);
   };
 
-  // Handle file selection
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const newFiles = Array.from(e.target.files);
-      setUploadedImages(prev => [...prev, ...newFiles]);
-      
-      // Reset the file input
+      setUploadedImages((prev) => [...prev, ...newFiles]);
+
       if (fileInputRef.current) {
-        fileInputRef.current.value = '';
+        fileInputRef.current.value = "";
       }
     }
   };
 
-  // Upload image to server
   const uploadImage = async (file: File): Promise<string> => {
     const formData = new FormData();
-    formData.append('file', file);
-    
+    formData.append("file", file);
+
     try {
-      // Create a unique identifier for this upload
       const uploadId = Date.now() + file.name;
-      
-      // Initialize progress for this upload
-      setUploadProgress(prev => ({...prev, [uploadId]: 0}));
-      
-      // Create an XMLHttpRequest to track upload progress
+
+      setUploadProgress((prev) => ({ ...prev, [uploadId]: 0 }));
+
       const xhr = new XMLHttpRequest();
-      
-      // Track upload progress
-      xhr.upload.addEventListener('progress', (event) => {
+
+      xhr.upload.addEventListener("progress", (event) => {
         if (event.lengthComputable) {
           const progress = Math.round((event.loaded / event.total) * 100);
-          setUploadProgress(prev => ({...prev, [uploadId]: progress}));
+          setUploadProgress((prev) => ({ ...prev, [uploadId]: progress }));
         }
       });
-      
-      // Create a promise to handle the XHR response
+
       const uploadPromise = new Promise<string>((resolve, reject) => {
         xhr.onload = () => {
           if (xhr.status >= 200 && xhr.status < 300) {
@@ -200,96 +196,86 @@ export default function EditProductPage() {
               const response = JSON.parse(xhr.responseText);
               resolve(response.url);
             } catch (e) {
-              reject(new Error('Failed to parse server response'));
+              reject(new Error("Failed to parse server response"));
             }
           } else {
-            reject(new Error('Upload failed'));
+            reject(new Error("Upload failed"));
           }
         };
-        
-        xhr.onerror = () => reject(new Error('Network error'));
+
+        xhr.onerror = () => reject(new Error("Network error"));
       });
-      
-      // Open and send the request
-      xhr.open('POST', '/api/upload', true);
+
+      xhr.open("POST", "/api/upload", true);
       xhr.send(formData);
-      
-      // Wait for the upload to complete
+
       const imageUrl = await uploadPromise;
-      
-      // Remove this upload from the progress tracking
-      setUploadProgress(prev => {
-        const newProgress = {...prev};
+
+      setUploadProgress((prev) => {
+        const newProgress = { ...prev };
         delete newProgress[uploadId];
         return newProgress;
       });
-      
+
       return imageUrl;
     } catch (err) {
-      console.error('Error uploading image:', err);
-      throw new Error('Failed to upload image');
+      console.error("Error uploading image:", err);
+      throw new Error("Failed to upload image");
     }
   };
 
-  // Remove uploaded image
   const removeUploadedImage = (index: number) => {
-    setUploadedImages(prev => prev.filter((_, i) => i !== index));
+    setUploadedImages((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // Add color to the array
   const addColor = () => {
     if (colorInput.trim()) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        color: [...prev.color, colorInput.trim()]
+        color: [...prev.color, colorInput.trim()],
       }));
-      setColorInput('');
+      setColorInput("");
     }
   };
 
-  // Add size to the array
   const addSize = () => {
     if (sizeInput.trim()) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        size: [...prev.size, sizeInput.trim()]
+        size: [...prev.size, sizeInput.trim()],
       }));
-      setSizeInput('');
+      setSizeInput("");
     }
   };
 
-  // Add image URL to the array
   const addImage = () => {
     if (imageInput.trim()) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        images: [...(prev.images || []), imageInput.trim()]
+        images: [...(prev.images || []), imageInput.trim()],
       }));
-      setImageInput('');
+      setImageInput("");
     }
   };
 
-  // Remove color from the array
   const removeColor = (index: number) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      color: prev.color.filter((_, i) => i !== index)
+      color: prev.color.filter((_, i) => i !== index),
     }));
   };
 
-  // Remove size from the array
   const removeSize = (index: number) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      size: prev.size.filter((_, i) => i !== index)
+      size: prev.size.filter((_, i) => i !== index),
     }));
   };
 
-  // Remove image from the array
   const removeImage = (index: number) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      images: prev.images?.filter((_, i) => i !== index) || []
+      images: prev.images?.filter((_, i) => i !== index) || [],
     }));
   };
 
@@ -299,24 +285,18 @@ export default function EditProductPage() {
     setError(null);
 
     try {
-      // Upload any new images first
       const uploadedImageUrls: string[] = [];
-      
+
       if (uploadedImages.length > 0) {
-        // Create a promise for each image upload
-        const uploadPromises = uploadedImages.map(file => uploadImage(file));
-        
-        // Wait for all uploads to complete
+        const uploadPromises = uploadedImages.map((file) => uploadImage(file));
+
         const results = await Promise.all(uploadPromises);
-        
-        // Add the new image URLs to our list
+
         uploadedImageUrls.push(...results);
       }
 
-      // Combine existing image URLs with newly uploaded ones
       const allImages = [...(formData.images || []), ...uploadedImageUrls];
-      
-      // Explicitly create the product data object
+
       const productData = {
         name: formData.name,
         description: formData.description,
@@ -333,60 +313,58 @@ export default function EditProductPage() {
         shortDescription: formData.shortDescription,
       };
 
-      // Log the data for debugging
-      console.log('Updating product data:', productData);
+      console.log("Updating product data:", productData);
 
       const response = await fetch(`/api/products/${productId}`, {
-        method: 'PUT',
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(productData),
       });
 
-      // Log the raw response and body for debugging
-      console.log('Response status:', response.status);
+      console.log("Response status:", response.status);
 
-      // Try to read the response body as text for debugging
       const responseText = await response.text();
-      console.log('Response body:', responseText);
+      console.log("Response body:", responseText);
 
-      // If not OK, parse the error
       if (!response.ok) {
-        let errorMessage = 'Failed to update product';
+        let errorMessage = "Failed to update product";
         try {
           const errorData = JSON.parse(responseText);
           errorMessage = errorData.error || errorMessage;
         } catch (e) {
-          // If we can't parse the error as JSON, use the raw text
           errorMessage = responseText || errorMessage;
         }
         throw new Error(errorMessage);
       }
 
-      // Success - try to parse the response as JSON
       let updatedProduct;
       try {
         updatedProduct = JSON.parse(responseText);
-        console.log('Product updated:', updatedProduct);
+        console.log("Product updated:", updatedProduct);
       } catch (e) {
-        console.log('Could not parse response as JSON, but request succeeded');
+        console.log("Could not parse response as JSON, but request succeeded");
       }
 
-      router.push('/admin/products');
+      router.push("/admin/products");
     } catch (err) {
-      console.error('Error updating product:', err);
-      setError(err instanceof Error ? err.message : 'An unknown error occurred');
+      console.error("Error updating product:", err);
+      setError(
+        err instanceof Error ? err.message : "An unknown error occurred"
+      );
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // If product or categories are still loading, show a loading spinner
   if (isLoading || isLoadingCategories) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent align-[-0.125em]" role="status">
+        <div
+          className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent align-[-0.125em]"
+          role="status"
+        >
           <span className="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]">
             Loading...
           </span>
@@ -396,7 +374,6 @@ export default function EditProductPage() {
     );
   }
 
-  // For testing - show what API is likely receiving
   const getJsonPreview = () => {
     const preview = {
       name: formData.name,
@@ -410,8 +387,11 @@ export default function EditProductPage() {
       isBestChoice: formData.isBestChoice === true,
       color: formData.color,
       size: formData.size,
-      images: [...(formData.images || []), ...uploadedImages.map(file => `(Pending upload: ${file.name})`)],
-      shortDescription: formData.shortDescription
+      images: [
+        ...(formData.images || []),
+        ...uploadedImages.map((file) => `(Pending upload: ${file.name})`),
+      ],
+      shortDescription: formData.shortDescription,
     };
     return JSON.stringify(preview, null, 2);
   };
@@ -426,9 +406,7 @@ export default function EditProductPage() {
         <div className="bg-red-50 border-l-4 border-red-500 p-4">
           <div className="flex">
             <div>
-              <p className="text-sm text-red-700">
-                {error}
-              </p>
+              <p className="text-sm text-red-700">{error}</p>
             </div>
           </div>
         </div>
@@ -438,7 +416,10 @@ export default function EditProductPage() {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="name"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Product Name
               </label>
               <input
@@ -453,7 +434,10 @@ export default function EditProductPage() {
             </div>
 
             <div>
-              <label htmlFor="categoryId" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="categoryId"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Category
               </label>
               <select
@@ -465,7 +449,7 @@ export default function EditProductPage() {
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F19B12] focus:ring-[#F19B12]"
               >
                 <option value="">Select a category</option>
-                {categories.map(category => (
+                {categories.map((category) => (
                   <option key={category.id} value={category.id}>
                     {category.name}
                   </option>
@@ -478,7 +462,10 @@ export default function EditProductPage() {
               )}
             </div>
             <div>
-              <label htmlFor="isFeatured" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="isFeatured"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Featured
               </label>
               <select
@@ -494,7 +481,10 @@ export default function EditProductPage() {
               </select>
             </div>
             <div>
-              <label htmlFor="isBestChoice" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="isBestChoice"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Best Choice
               </label>
               <select
@@ -511,7 +501,10 @@ export default function EditProductPage() {
             </div>
 
             <div>
-              <label htmlFor="price" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="price"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Price (&#163;)
               </label>
               <input
@@ -527,7 +520,10 @@ export default function EditProductPage() {
               />
             </div>
             <div>
-              <label htmlFor="discount" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="discount"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Discount (%)
               </label>
               <input
@@ -543,7 +539,10 @@ export default function EditProductPage() {
             </div>
 
             <div>
-              <label htmlFor="stock" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="stock"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Stock Quantity
               </label>
               <input
@@ -559,14 +558,17 @@ export default function EditProductPage() {
             </div>
 
             <div>
-              <label htmlFor="sku" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="sku"
+                className="block text-sm font-medium text-gray-700"
+              >
                 SKU
               </label>
               <input
                 type="text"
                 id="sku"
                 name="sku"
-                value={formData.sku || ''}
+                value={formData.sku || ""}
                 onChange={handleChange}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F19B12] focus:ring-[#F19B12]"
               />
@@ -574,7 +576,10 @@ export default function EditProductPage() {
 
             {/* Color Input (as array) */}
             <div>
-              <label htmlFor="colorInput" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="colorInput"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Colors
               </label>
               <div className="flex mt-1">
@@ -597,7 +602,9 @@ export default function EditProductPage() {
               </div>
               {formData.color.length > 0 && (
                 <div className="mt-2">
-                  <p className="text-sm font-medium text-gray-700 mb-1">Added Colors:</p>
+                  <p className="text-sm font-medium text-gray-700 mb-1">
+                    Added Colors:
+                  </p>
                   <div className="flex flex-wrap gap-2">
                     {formData.color.map((color, index) => (
                       <div
@@ -621,7 +628,10 @@ export default function EditProductPage() {
 
             {/* Size Input (as array) */}
             <div>
-              <label htmlFor="sizeInput" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="sizeInput"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Sizes
               </label>
               <div className="flex mt-1">
@@ -644,7 +654,9 @@ export default function EditProductPage() {
               </div>
               {formData.size.length > 0 && (
                 <div className="mt-2">
-                  <p className="text-sm font-medium text-gray-700 mb-1">Added Sizes:</p>
+                  <p className="text-sm font-medium text-gray-700 mb-1">
+                    Added Sizes:
+                  </p>
                   <div className="flex flex-wrap gap-2">
                     {formData.size.map((size, index) => (
                       <div
@@ -689,8 +701,19 @@ export default function EditProductPage() {
                       htmlFor="file-upload"
                       className="cursor-pointer bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4v12" />
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5 mr-2"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4v12"
+                        />
                       </svg>
                       Select Files
                     </label>
@@ -704,10 +727,15 @@ export default function EditProductPage() {
               {/* Pending uploads section */}
               {uploadedImages.length > 0 && (
                 <div className="mb-4">
-                  <h3 className="text-sm font-medium text-gray-700 mb-2">Pending Uploads:</h3>
+                  <h3 className="text-sm font-medium text-gray-700 mb-2">
+                    Pending Uploads:
+                  </h3>
                   <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4">
                     {uploadedImages.map((file, index) => (
-                      <div key={index} className="relative border rounded-md p-2">
+                      <div
+                        key={index}
+                        className="relative border rounded-md p-2"
+                      >
                         <div className="aspect-w-1 aspect-h-1 w-full overflow-hidden rounded-md bg-gray-200 mb-2">
                           <img
                             src={URL.createObjectURL(file)}
@@ -722,16 +750,27 @@ export default function EditProductPage() {
                             onClick={() => removeUploadedImage(index)}
                             className="text-red-500 hover:text-red-700"
                           >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="h-4 w-4"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M6 18L18 6M6 6l12 12"
+                              />
                             </svg>
                           </button>
                         </div>
                         {uploadProgress[file.name] !== undefined && (
                           <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1">
-                            <div 
-                              className="bg-blue-600 h-1.5 rounded-full" 
-                              style={{width: `${uploadProgress[file.name]}%`}}
+                            <div
+                              className="bg-blue-600 h-1.5 rounded-full"
+                              style={{ width: `${uploadProgress[file.name]}%` }}
                             ></div>
                           </div>
                         )}
@@ -743,7 +782,9 @@ export default function EditProductPage() {
 
               {/* URL input section */}
               <div className="mb-4">
-                <h3 className="text-sm font-medium text-gray-700 mb-2">Or Add Image by URL:</h3>
+                <h3 className="text-sm font-medium text-gray-700 mb-2">
+                  Or Add Image by URL:
+                </h3>
                 <div className="flex mt-1">
                   <input
                     type="text"
@@ -767,29 +808,48 @@ export default function EditProductPage() {
               {/* Existing images */}
               {formData.images && formData.images.length > 0 && (
                 <div>
-                  <h3 className="text-sm font-medium text-gray-700 mb-2">Current Images:</h3>
+                  <h3 className="text-sm font-medium text-gray-700 mb-2">
+                    Current Images:
+                  </h3>
                   <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4">
                     {formData.images.map((image, index) => (
-                      <div key={index} className="relative border rounded-md p-2">
+                      <div
+                        key={index}
+                        className="relative border rounded-md p-2"
+                      >
                         <div className="aspect-w-1 aspect-h-1 w-full overflow-hidden rounded-md bg-gray-200 mb-2">
                           <img
                             src={image}
                             alt={`Product image ${index}`}
                             className="h-full w-full object-cover object-center"
                             onError={(e) => {
-                              (e.target as HTMLImageElement).src = '/placeholder-image.jpg';
+                              (e.target as HTMLImageElement).src =
+                                "/placeholder-image.jpg";
                             }}
                           />
                         </div>
                         <div className="flex justify-between items-center">
-                          <span className="text-xs truncate">{image.split('/').pop()}</span>
+                          <span className="text-xs truncate">
+                            {image.split("/").pop()}
+                          </span>
                           <button
                             type="button"
                             onClick={() => removeImage(index)}
                             className="text-red-500 hover:text-red-700"
                           >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="h-4 w-4"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M6 18L18 6M6 6l12 12"
+                              />
                             </svg>
                           </button>
                         </div>
@@ -802,7 +862,10 @@ export default function EditProductPage() {
           </div>
 
           <div>
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="description"
+              className="block text-sm font-medium text-gray-700"
+            >
               Description
             </label>
             <textarea
@@ -816,7 +879,10 @@ export default function EditProductPage() {
             />
           </div>
           <div>
-            <label htmlFor="shortDescription" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="shortDescription"
+              className="block text-sm font-medium text-gray-700"
+            >
               Short Description
             </label>
             <textarea
@@ -832,7 +898,9 @@ export default function EditProductPage() {
 
           {/* Debug section - helps you see what's going to be sent */}
           <div className="bg-gray-50 p-4 rounded-md">
-            <h3 className="text-sm font-medium text-gray-700 mb-2">JSON Preview (for debugging)</h3>
+            <h3 className="text-sm font-medium text-gray-700 mb-2">
+              JSON Preview (for debugging)
+            </h3>
             <pre className="text-xs bg-gray-100 p-2 rounded overflow-auto max-h-32">
               {getJsonPreview()}
             </pre>
@@ -841,7 +909,7 @@ export default function EditProductPage() {
           <div className="flex justify-end space-x-3">
             <button
               type="button"
-              onClick={() => router.push('/admin/products')}
+              onClick={() => router.push("/admin/products")}
               disabled={isSubmitting}
               className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
             >
@@ -854,14 +922,30 @@ export default function EditProductPage() {
             >
               {isSubmitting ? (
                 <>
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  <svg
+                    className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
                   </svg>
                   Saving...
                 </>
               ) : (
-                'Update Product'
+                "Update Product"
               )}
             </button>
           </div>

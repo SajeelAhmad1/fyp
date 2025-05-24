@@ -24,6 +24,7 @@ export interface CheckoutFormData {
   billingState: string;
   billingPostalCode: string;
   billingCountry: string;
+  billingPhone: string; 
 }
 
 interface CheckoutFormProps {
@@ -55,6 +56,7 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({
     billingState: initialData?.billingState || "",
     billingPostalCode: initialData?.billingPostalCode || "",
     billingCountry: initialData?.billingCountry || "United Kingdom",
+    billingPhone: initialData?.billingPhone || "",
   });
 
   const [formErrors, setFormErrors] = useState({
@@ -73,38 +75,42 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({
     billingState: false,
     billingPostalCode: false,
     billingCountry: false,
+    billingPhone: false,
   });
 
   const [postcodeSearchTerm, setPostcodeSearchTerm] = useState("");
   const [postCodeError, setPostCodeError] = useState("");
 
   const validateForm = () => {
-    const newErrors = {
-      shippingFirstName: !formData.shippingFirstName?.trim(),
-      shippingLastName: !formData.shippingLastName?.trim(),
-      shippingStreet: !formData.shippingStreet?.trim(),
-      shippingCity: !formData.shippingCity?.trim(),
-      shippingState: !formData.shippingState?.trim(),
-      shippingCountry: false, // Since it has a default value
-      shippingPhone:
-        !formData.shippingPhone || formData.shippingPhone.length !== 10,
-      billingFirstName:
-        !formData.useSameAddress && !formData.billingFirstName?.trim(),
-      billingLastName:
-        !formData.useSameAddress && !formData.billingLastName?.trim(),
-      billingStreet:
-        !formData.useSameAddress && !formData.billingStreet?.trim(),
-      billingCity: !formData.useSameAddress && !formData.billingCity?.trim(),
-      billingState: !formData.useSameAddress && !formData.billingState?.trim(),
-      billingPostalCode:
-        !formData.useSameAddress &&
-        (!formData.billingPostalCode?.trim() ||
-          !isValidPostcode(formData.billingPostalCode)),
-      billingCountry:
-        !formData.useSameAddress && !formData.billingCountry?.trim(),
-      shippingPostalCode:
-        !formData.shippingPostalCode?.trim() || !!postCodeError,
-    };
+  const newErrors = {
+    shippingFirstName: !formData.shippingFirstName?.trim(),
+    shippingLastName: !formData.shippingLastName?.trim(),
+    shippingStreet: !formData.shippingStreet?.trim(),
+    shippingCity: !formData.shippingCity?.trim(),
+    shippingState: !formData.shippingState?.trim(),
+    shippingCountry: false, // Since it has a default value
+    shippingPhone:
+      !formData.shippingPhone || formData.shippingPhone.length !== 10,
+    billingFirstName:
+      !formData.useSameAddress && !formData.billingFirstName?.trim(),
+    billingLastName:
+      !formData.useSameAddress && !formData.billingLastName?.trim(),
+    billingStreet:
+      !formData.useSameAddress && !formData.billingStreet?.trim(),
+    billingCity: !formData.useSameAddress && !formData.billingCity?.trim(),
+    billingState: !formData.useSameAddress && !formData.billingState?.trim(),
+    billingPostalCode:
+      !formData.useSameAddress &&
+      (!formData.billingPostalCode?.trim() ||
+        !isValidPostcode(formData.billingPostalCode)),
+    billingCountry:
+      !formData.useSameAddress && !formData.billingCountry?.trim(),
+    billingPhone:
+      !formData.useSameAddress && 
+      (!formData.billingPhone || formData.billingPhone.length !== 10), // Add this line
+    shippingPostalCode:
+      !formData.shippingPostalCode?.trim() || !!postCodeError,
+  };
 
     setFormErrors(newErrors);
 
@@ -154,33 +160,52 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({
     }
   };
 
-  const handleSameAddressToggle = () => {
-    const useSameAddress = !formData.useSameAddress;
-    setFormData((prev) => ({
+const handleSameAddressToggle = () => {
+  const useSameAddress = !formData.useSameAddress;
+  
+  setFormData((prev) => {
+    const newData = {
       ...prev,
       useSameAddress,
-      billingFirstName: useSameAddress ? prev.shippingFirstName : "",
-      billingLastName: useSameAddress ? prev.shippingLastName : "",
-      billingStreet: useSameAddress ? prev.shippingStreet : "",
-      billingCity: useSameAddress ? prev.shippingCity : "",
-      billingState: useSameAddress ? prev.shippingState : "",
-      billingPostalCode: useSameAddress ? prev.shippingPostalCode : "",
-      billingCountry: useSameAddress ? prev.shippingCountry : "",
-    }));
-
+    };
+    
     if (useSameAddress) {
-      setFormErrors((prev) => ({
-        ...prev,
-        billingFirstName: false,
-        billingLastName: false,
-        billingStreet: false,
-        billingCity: false,
-        billingState: false,
-        billingPostalCode: false,
-        billingCountry: false,
-      }));
+      // Copy shipping details to billing when toggling on
+      newData.billingFirstName = prev.shippingFirstName;
+      newData.billingLastName = prev.shippingLastName;
+      newData.billingStreet = prev.shippingStreet;
+      newData.billingCity = prev.shippingCity;
+      newData.billingState = prev.shippingState;
+      newData.billingPostalCode = prev.shippingPostalCode;
+      newData.billingCountry = prev.shippingCountry;
+      newData.billingPhone = prev.shippingPhone;
+    } else {
+      // Clear billing details when toggling off
+      newData.billingFirstName = "";
+      newData.billingLastName = "";
+      newData.billingStreet = "";
+      newData.billingCity = "";
+      newData.billingState = "";
+      newData.billingPostalCode = "";
+      newData.billingCountry = "United Kingdom";
+      newData.billingPhone = "";
     }
-  };
+    
+    return newData;
+  });
+
+  setFormErrors((prev) => ({
+    ...prev,
+    billingFirstName: false,
+    billingLastName: false,
+    billingStreet: false,
+    billingCity: false,
+    billingState: false,
+    billingPostalCode: false,
+    billingCountry: false,
+    billingPhone: false,
+  }));
+};
 
   const handlePostcodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;

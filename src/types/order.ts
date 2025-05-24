@@ -11,6 +11,8 @@ export interface Order {
             name: string;
             images: string[];
             sku: string;
+            discount: number,
+            id: number
         };
     }>;
 }

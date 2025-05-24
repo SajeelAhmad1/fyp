@@ -45,6 +45,7 @@ export interface Order {
     billingCountry?: string;
 
     email: string;
+    parcelWeight: number;
 }
 
 export interface CustomerProfile {

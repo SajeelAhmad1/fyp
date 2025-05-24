@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient, Prisma } from "@prisma/client";
 
-// Create a singleton instance of PrismaClient
-const globalForPrisma = global as unknown as { prisma: PrismaClient };
-export const prisma = globalForPrisma.prisma || new PrismaClient();
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+const prisma = new PrismaClient();
 
 // Define types for query parameters
 type ProductQueryParams = {
@@ -259,12 +256,10 @@ interface CreateProductRequest {
   parcelLength: number;
 }
 
-// POST /api/products - Create a new product
 export async function POST(request: NextRequest): Promise<NextResponse<any>> {
   try {
     const body: CreateProductRequest = await request.json();
 
-    // Validate required fields
     const {
       name,
       description,
@@ -290,7 +285,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<any>> {
       price === undefined ||
       !sku ||
       !images ||
-      !Array.isArray(images)
+      !Array.isArray(images) ||
+      !categoryId
     ) {
       return NextResponse.json(
         { error: "Missing required fields" },
@@ -299,7 +295,6 @@ export async function POST(request: NextRequest): Promise<NextResponse<any>> {
     }
 
     try {
-      // Create new product with proper decimal conversion
       const product = await prisma.product.create({
         data: {
           name,
@@ -308,20 +303,18 @@ export async function POST(request: NextRequest): Promise<NextResponse<any>> {
           stock: body.stock || 0,
           sku: sku,
           images: images,
-          category: categoryId ? { connect: { id: categoryId } } : undefined,
-          // categoryId,
+          categoryId: categoryId,
           isFeatured: !!isFeatured,
-          discount:
-            discount !== undefined ? new Prisma.Decimal(discount) : null,
+          discount: new Prisma.Decimal(discount || 0),
           isBestChoice: !!isBestChoice,
           color: color || [],
           size: size || [],
           shortDescription,
           vendorId: body.vendorId,
-          parcelHeight: parseFloat(body.parcelHeight),
-          parcelWeight: parseFloat(body.parcelWeight),
-          parcelLength: parseFloat(body.parcelLength),
-          parcelWidth: parseFloat(body.parcelWidth),
+          parcelHeight: parseFloat(parcelHeight),
+          parcelWeight: parseFloat(parcelWeight),
+          parcelLength: parseFloat(parcelLength),
+          parcelWidth: parseFloat(parcelWidth)
         },
       });
 

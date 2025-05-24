@@ -43,8 +43,6 @@ export async function GET(request: NextRequest) {
     const userId = url.searchParams.get("userId");
     const guestCartId = url.searchParams.get("guestCartId");
  
-    console.log(`Fetching cart - userId: ${userId}, guestCartId: ${guestCartId}`);
-
     if (!userId && !guestCartId) {
       return NextResponse.json(
         { message: "User ID or Guest Cart ID is required" },

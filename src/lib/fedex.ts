@@ -1,14 +1,44 @@
-export function formatFreightRateRequest(shipmentData) {
-  // Get account number from either the proper structure or directly from the string
-  const accountNumberValue = 
-    shipmentData.accountNumber?.value || 
-    shipmentData.accountNumber || 
-    "802255209";
+// lib/fedex.ts
+import { format } from 'date-fns';
 
-  // Create properly structured request object
-  const request = {
+interface Address {
+  streetLine1: string;
+  streetLine2?: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  countryCode: string;
+}
+
+interface Package {
+  weight: number;
+  weightUnit?: 'KG' | 'LB';
+  length: number;
+  width: number;
+  height: number;
+  dimensionUnit?: 'IN' | 'CM';
+  freightClass?: string;
+  declaredValue?: number;
+}
+
+interface ShippingRequest {
+  originAddress: Address;
+  destinationAddress: Address;
+  packages: Package[];
+  serviceType?: 'FEDEX_FREIGHT_PRIORITY' | 'FEDEX_FREIGHT_ECONOMY';
+  shipDate?: Date;
+}
+
+export function formatFreightRateRequest(requestData: ShippingRequest) {
+  const fedexAccountNumber = process.env.FEDEX_ACCOUNT_NUMBER!;
+  const fedexFreightAccountNumber = process.env.FEDEX_FREIGHT_ACCOUNT_NUMBER || fedexAccountNumber;
+  
+  const today = new Date();
+  const shipDate = requestData.shipDate || today;
+
+  return {
     accountNumber: {
-      value: accountNumberValue
+      value: fedexAccountNumber
     },
     rateRequestControlParameters: {
       returnTransitTimes: true,
@@ -18,189 +48,184 @@ export function formatFreightRateRequest(shipmentData) {
     },
     freightRequestedShipment: {
       shipper: {
-        address: formatAddress(shipmentData.originAddress),
-        contact: {
-          personName: shipmentData.contactInfo.personName,
-          emailAddress: shipmentData.contactInfo.emailAddress,
-          phoneNumber: shipmentData.contactInfo.phoneNumber,
-          companyName: shipmentData.contactInfo.companyName || "Your Company"
+        address: {
+          streetLines: [
+            process.env.FEDEX_SHIPPER_STREET1!,
+            process.env.FEDEX_SHIPPER_STREET2 || ''
+          ].filter(Boolean),
+          city: process.env.FEDEX_SHIPPER_CITY!,
+          stateOrProvinceCode: process.env.FEDEX_SHIPPER_STATE!,
+          postalCode: process.env.FEDEX_SHIPPER_POSTAL_CODE!,
+          countryCode: process.env.FEDEX_SHIPPER_COUNTRY!,
+          residential: false
         }
       },
       recipient: {
-        address: formatAddress(shipmentData.destinationAddress),
-        contact: {
-          personName: shipmentData.contactInfo.personName,
-          emailAddress: shipmentData.contactInfo.emailAddress,
-          phoneNumber: shipmentData.contactInfo.phoneNumber
+        address: {
+          streetLines: [
+            requestData.destinationAddress.streetLine1,
+            requestData.destinationAddress.streetLine2 || ''
+          ].filter(Boolean),
+          city: requestData.destinationAddress.city,
+          stateOrProvinceCode: requestData.destinationAddress.state,
+          postalCode: requestData.destinationAddress.postalCode,
+          countryCode: requestData.destinationAddress.countryCode,
+          residential: false
         }
       },
-      serviceType: "FEDEX_FREIGHT_PRIORITY",
-      preferredCurrency: "GBP",
+      serviceType: requestData.serviceType || "FEDEX_FREIGHT_PRIORITY",
+      preferredCurrency: "USD",
       shippingChargesPayment: {
-        paymentType: "SENDER",
         payor: {
           responsibleParty: {
-            address: formatAddress(shipmentData.originAddress),
+            address: {
+              streetLines: [
+                process.env.FEDEX_BILLING_STREET1!,
+                process.env.FEDEX_BILLING_STREET2 || ''
+              ].filter(Boolean),
+              city: process.env.FEDEX_BILLING_CITY!,
+              stateOrProvinceCode: process.env.FEDEX_BILLING_STATE!,
+              postalCode: process.env.FEDEX_BILLING_POSTAL_CODE!,
+              countryCode: process.env.FEDEX_BILLING_COUNTRY!,
+              residential: false
+            },
             contact: {
-              personName: shipmentData.contactInfo.personName,
-              emailAddress: shipmentData.contactInfo.emailAddress,
-              phoneNumber: shipmentData.contactInfo.phoneNumber,
-              companyName: shipmentData.contactInfo.companyName || "Your Company"
+              personName: "John Taylor",
+              emailAddress: "shipping@yourcompany.com",
+              phoneNumber: "1234567890",
+              companyName: "Your Company"
             },
             accountNumber: {
-              value: accountNumberValue
+              value: fedexAccountNumber
             }
           }
-        }
+        },
+        paymentType: "SENDER"
       },
       rateRequestType: ["LIST"],
-      shipDateStamp: new Date().toISOString().split('T')[0],
-      requestedPackageLineItems: formatPackageLineItems(shipmentData.packageDetails),
-      totalPackageCount: shipmentData.packageDetails.length,
-      totalWeight: shipmentData.packageDetails.reduce((sum, pkg) => sum + (parseFloat(pkg.weight) || 0), 0),
+      shipDateStamp: format(shipDate, 'yyyy-MM-dd'),
+      requestedPackageLineItems: requestData.packages.map((pkg, index) => ({
+        subPackagingType: "BAG",
+        groupPackageCount: 1,
+        contentRecord: [
+          {
+            itemNumber: `ITEM_${index + 1}`,
+            receivedQuantity: 1,
+            description: "General Goods",
+            partNumber: `PART_${index + 1}`
+          }
+        ],
+        declaredValue: {
+          amount: (pkg.declaredValue || 100).toString(),
+          currency: "USD"
+        },
+        weight: {
+          units: pkg.weightUnit || "KG",
+          value: pkg.weight
+        },
+        dimensions: {
+          length: pkg.length,
+          width: pkg.width,
+          height: pkg.height,
+          units: pkg.dimensionUnit || "IN"
+        },
+        associatedFreightLineItems: [
+          {
+            id: `PKG_${index + 1}`
+          }
+        ]
+      })),
+      totalPackageCount: requestData.packages.length,
+      totalWeight: requestData.packages.reduce((sum, pkg) => sum + pkg.weight, 0),
       freightShipmentDetail: {
         role: "SHIPPER",
         accountNumber: {
-          value: accountNumberValue
+          value: fedexFreightAccountNumber
         },
-        declaredValueUnits: "GBP",
+        declaredValueUnits: "USD",
         shipmentDimensions: {
-          length: 10,
-          width: 10,
-          height: 10,
-          units: "CM"
+          length: Math.max(...requestData.packages.map(pkg => pkg.length)),
+          width: Math.max(...requestData.packages.map(pkg => pkg.width)),
+          height: requestData.packages.reduce((sum, pkg) => sum + pkg.height, 0),
+          units: requestData.packages[0]?.dimensionUnit || "IN"
         },
-        lineItem: formatFreightLineItems(shipmentData.packageDetails),
+        lineItem: requestData.packages.map((pkg, index) => ({
+          handlingUnits: 1,
+          nmfcCode: "123456",
+          subPackagingType: "BAG",
+          description: "General Goods",
+          weight: {
+            units: pkg.weightUnit || "KG",
+            value: pkg.weight
+          },
+          pieces: 1,
+          volume: {
+            units: "CUBIC_FT",
+            value: (pkg.length * pkg.width * pkg.height) / 1728 // Convert cubic inches to cubic feet
+          },
+          freightClass: pkg.freightClass || "CLASS_050",
+          purchaseOrderNumber: `PO_${format(today, 'yyyyMMdd')}`,
+          id: `ITEM_${index + 1}`,
+          hazardousMaterials: "NON_HAZARDOUS",
+          dimensions: {
+            length: pkg.length,
+            width: pkg.width,
+            height: pkg.height,
+            units: pkg.dimensionUnit || "IN"
+          }
+        })),
         clientDiscountPercent: 0,
         fedExFreightBillingContactAndAddress: {
-          address: formatAddress(shipmentData.originAddress),
+          address: {
+            streetLines: [
+              process.env.FEDEX_BILLING_STREET1!,
+              process.env.FEDEX_BILLING_STREET2 || ''
+            ],
+            city: process.env.FEDEX_BILLING_CITY!,
+            stateOrProvinceCode: process.env.FEDEX_BILLING_STATE!,
+            postalCode: process.env.FEDEX_BILLING_POSTAL_CODE!,
+            countryCode: process.env.FEDEX_BILLING_COUNTRY!,
+            residential: false
+          },
           contact: {
-            personName: shipmentData.contactInfo.personName,
-            emailAddress: shipmentData.contactInfo.emailAddress,
-            phoneNumber: shipmentData.contactInfo.phoneNumber,
-            companyName: shipmentData.contactInfo.companyName || "Your Company"
+            personName: "John Taylor",
+            emailAddress: "billing@yourcompany.com",
+            phoneNumber: "1234567890",
+            companyName: "Your Company"
           }
         },
+        hazardousMaterialsOfferor: "Your Company",
         declaredValuePerUnit: {
-          amount: shipmentData.packageDetails[0]?.declaredValue?.toString() || "100",
-          currency: "GBP"
+          amount: "100",
+          currency: "USD"
         },
-        totalHandlingUnits: shipmentData.packageDetails.length,
+        totalHandlingUnits: requestData.packages.length,
         alternateBillingParty: {
-          address: formatAddress(shipmentData.originAddress),
+          address: {
+            streetLines: [
+              process.env.FEDEX_BILLING_STREET1!,
+              process.env.FEDEX_BILLING_STREET2 || ''
+            ],
+            city: process.env.FEDEX_BILLING_CITY!,
+            stateOrProvinceCode: process.env.FEDEX_BILLING_STATE!,
+            postalCode: process.env.FEDEX_BILLING_POSTAL_CODE!,
+            countryCode: process.env.FEDEX_BILLING_COUNTRY!,
+            residential: false
+          },
           accountNumber: {
-            value: accountNumberValue
+            value: fedexAccountNumber
           }
         }
       },
       freightShipmentSpecialServices: {
-        specialServiceTypes: ["FREIGHT_GUARANTEE"],
         freightGuaranteeDetail: {
           freightGuaranteeType: "GUARANTEED_DATE",
-          guaranteeTimestamp: new Date(Date.now() + 86400000).toISOString() // Next day
-        }
+          guaranteeTimestamp: format(shipDate, "yyyy-MM-dd'T'HH:mm:ss")
+        },
+        specialServiceTypes: [
+          "FREIGHT_GUARANTEE"
+        ]
       }
     }
   };
-
-  // Log for debugging
-  console.log('Formatted FedEx Freight Request:', JSON.stringify(request, null, 2));
-  return request;
-}
-
-function formatAddress(address) {
-  if (!address) {
-    throw new Error('Address is required');
-  }
-
-  if (!address.countryCode) {
-    console.error('Missing country code in address:', JSON.stringify(address));
-    throw new Error('Country code is required for all addresses');
-  }
-
-  // Convert country code to FedEx expected format
-  let countryCode = address.countryCode.toUpperCase();
-  if (countryCode === 'GB' || countryCode === 'UK') {
-    countryCode = 'GB'; // FedEx might prefer 'GB' over 'UK'
-  }
-
-  // For UK addresses, set a proper region code
-  let stateOrProvinceCode = 'Texas';
-  if (countryCode === 'GB' && !stateOrProvinceCode) {
-    stateOrProvinceCode = 'ENG'; // England as default for UK
-  }
-
-  const formattedAddress = {
-    streetLines: [
-      address.street1 || '',
-      address.street2 || ''
-    ].filter(Boolean),
-    city: address.city || '',
-    stateOrProvinceCode: stateOrProvinceCode,
-    postalCode: address.postalCode || '',
-    countryCode: countryCode,
-    residential: address.residential || false
-  };
-
-  return formattedAddress;
-}
-
-function formatPackageLineItems(packages, currency = 'GBP') {
-  return packages.map((pkg, index) => ({
-    subPackagingType: pkg.packagingType || 'BOX',
-    groupPackageCount: 1,
-    contentRecord: [{
-      itemNumber: `item_${index + 1}`,
-      receivedQuantity: 1,
-      description: "Freight shipment",
-      partNumber: `part_${index + 1}`
-    }],
-    declaredValue: pkg.declaredValue ? {
-      amount: pkg.declaredValue.toString(),
-      currency: currency
-    } : {
-      amount: "100",
-      currency: currency
-    },
-    weight: {
-      units: pkg.weightUnit || 'KG',
-      value: parseFloat(pkg.weight) || 0
-    },
-    dimensions: {
-      length: parseFloat(pkg.dimensions.length) || 10,
-      width: parseFloat(pkg.dimensions.width) || 10,
-      height: parseFloat(pkg.dimensions.height) || 10,
-      units: pkg.dimensions.unit || 'CM'
-    },
-    associatedFreightLineItems: [{
-      id: `item_${index + 1}`
-    }]
-  }));
-}
-
-function formatFreightLineItems(packages) {
-  return packages.map((pkg, index) => ({
-    handlingUnits: 1,
-    subPackagingType: pkg.packagingType || 'BOX',
-    description: "Freight shipment",
-    weight: {
-      units: pkg.weightUnit || 'KG',
-      value: parseFloat(pkg.weight) || 0
-    },
-    pieces: 1,
-    volume: {
-      units: "CUBIC_FT",
-      value: 0
-    },
-    freightClass: "CLASS_050",
-    purchaseOrderNumber: `PO_${index + 1}`,
-    id: `item_${index + 1}`,
-    hazardousMaterials: "NONE",
-    dimensions: {
-      length: parseFloat(pkg.dimensions.length) || 10,
-      width: parseFloat(pkg.dimensions.width) || 10,
-      height: parseFloat(pkg.dimensions.height) || 10,
-      units: pkg.dimensions.unit || 'CM'
-    }
-  }));
 }

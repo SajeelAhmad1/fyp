@@ -36,10 +36,10 @@ interface ProductFormData {
   color: string[];
   size: string[];
   shortDescription: string;
-  parcelWeight: string;
-  parcelLength: string;
-  parcelWidth: string;
-  parcelHeight: string;
+  parcelWeight: number;
+  parcelLength: number;
+  parcelWidth: number;
+  parcelHeight: number;
 }
 
 export default function AddProductPage() {
@@ -69,13 +69,12 @@ export default function AddProductPage() {
     color: [],
     size: [],
     shortDescription: "",
-    parcelWeight: "",
-    parcelLength: "",
-    parcelWidth: "",
-    parcelHeight: ""
+    parcelWeight: 0,
+    parcelLength: 0,
+    parcelWidth: 0,
+    parcelHeight: 0
   });
 
-  // Fetch categories when component mounts
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -94,14 +93,12 @@ export default function AddProductPage() {
 
         setCategories(formattedCategories);
 
-        // Set the first category as default if available
         if (formattedCategories.length > 0) {
           setFormData((prev) => ({
             ...prev,
             categoryId: formattedCategories[0].id,
           }));
 
-          // Set subcategories for the first category
           if (
             formattedCategories[0].subcategories &&
             formattedCategories[0].subcategories.length > 0
@@ -126,7 +123,6 @@ export default function AddProductPage() {
     fetchCategories();
   }, []);
 
-  // Update subcategories when category changes
   useEffect(() => {
     if (formData.categoryId) {
       const selectedCategory = categories.find(
@@ -135,11 +131,10 @@ export default function AddProductPage() {
       if (selectedCategory && selectedCategory.subcategories) {
         setSubcategories(selectedCategory.subcategories);
 
-        // Reset subcategory selection or select the first one if available
         if (selectedCategory.subcategories.length > 0) {
           setFormData((prev) => ({
             ...prev,
-            subcategoryId: selectedCategory.subcategories[0].id,
+            subcategoryId: selectedCategory?.subcategories[0].id,
           }));
         } else {
           setFormData((prev) => ({ ...prev, subcategoryId: "" }));
@@ -164,6 +159,15 @@ export default function AddProductPage() {
         [name]: value === "true",
       }));
     } else if (
+      name === "parcelHeight" ||
+      name === "parcelWeight" ||
+      name === "parcelLength" ||
+      name === "parcelWidth"
+    ) {
+      // Convert to number, default to 0 if empty
+      const numValue = value === "" ? 0 : Number(value);
+      setFormData((prev) => ({ ...prev, [name]: numValue }));
+    } else if (
       name !== "colorInput" &&
       name !== "sizeInput" &&
       name !== "imageUrl"
@@ -172,12 +176,10 @@ export default function AddProductPage() {
     }
   };
 
-  // Handle image URL input
   const handleImageUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setImageUrl(e.target.value);
   };
 
-  // Add image URL to the array
   const addImageUrl = () => {
     if (imageUrl.trim()) {
       setFormData((prev) => ({
@@ -188,7 +190,6 @@ export default function AddProductPage() {
     }
   };
 
-  // Remove image from the array
   const removeImage = (index: number) => {
     setFormData((prev) => ({
       ...prev,
@@ -196,7 +197,6 @@ export default function AddProductPage() {
     }));
   };
 
-  // File upload handler
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
@@ -208,7 +208,6 @@ export default function AddProductPage() {
       const formData = new FormData();
       formData.append("file", files[0]);
 
-      // Replace with your actual image upload API endpoint
       const response = await fetch("/api/upload", {
         method: "POST",
         body: formData,
@@ -220,7 +219,6 @@ export default function AddProductPage() {
 
       const data = await response.json();
 
-      // Add the uploaded image URL to the images array
       setFormData((prev) => ({
         ...prev,
         images: [...prev.images, data.url],
@@ -233,17 +231,14 @@ export default function AddProductPage() {
     }
   };
 
-  // Handle color input
   const handleColorInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setColorInput(e.target.value);
   };
 
-  // Handle size input
   const handleSizeInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSizeInput(e.target.value);
   };
 
-  // Add color to the array
   const addColor = () => {
     if (colorInput.trim()) {
       setFormData((prev) => ({
@@ -254,7 +249,6 @@ export default function AddProductPage() {
     }
   };
 
-  // Add size to the array
   const addSize = () => {
     if (sizeInput.trim()) {
       setFormData((prev) => ({
@@ -265,7 +259,6 @@ export default function AddProductPage() {
     }
   };
 
-  // Remove color from the array
   const removeColor = (index: number) => {
     setFormData((prev) => ({
       ...prev,
@@ -273,7 +266,6 @@ export default function AddProductPage() {
     }));
   };
 
-  // Remove size from the array
   const removeSize = (index: number) => {
     setFormData((prev) => ({
       ...prev,
@@ -287,12 +279,10 @@ export default function AddProductPage() {
     setError(null);
 
     try {
-      // Check if images array has at least one image
       if (formData.images.length === 0) {
         throw new Error("Please add at least one product image");
       }
 
-      // Explicitly create the product data object
       const productData = {
         name: formData.name,
         description: formData.description,
@@ -301,22 +291,18 @@ export default function AddProductPage() {
         sku: formData.sku || undefined,
         images: formData.images,
         categoryId: formData.categoryId,
-        subcategoryId: formData.subcategoryId || undefined, // Include subcategoryId
+        subcategoryId: formData.subcategoryId || undefined,
         isFeatured: formData.isFeatured === true,
         discount: formData.discount,
         isBestChoice: formData.isBestChoice === true,
         color: formData.color,
         size: formData.size,
         shortDescription: formData.shortDescription,
-        parcelHeight: parseFloat(formData.parcelHeight),
-        parcelWeight: parseFloat(formData.parcelWeight),
-        parcelLength: parseFloat(formData.parcelLength),
-        parcelWidth: parseFloat(formData.parcelWidth),
+        parcelHeight: formData.parcelHeight,
+        parcelWeight: formData.parcelWeight,
+        parcelLength: formData.parcelLength,
+        parcelWidth: formData.parcelWidth,
       };
-
-      // Log the data for debugging
-      console.log("Submitting product data:", productData);
-      console.log("isFeatured type:", typeof productData.isFeatured);
 
       const response = await fetch("/api/products", {
         method: "POST",
@@ -326,31 +312,22 @@ export default function AddProductPage() {
         body: JSON.stringify(productData),
       });
 
-      // Log the raw response and body for debugging
-      console.log("Response status:", response.status);
-
-      // Try to read the response body as text for debugging
       const responseText = await response.text();
-      console.log("Response body:", responseText);
 
-      // If not OK, parse the error
       if (!response.ok) {
         let errorMessage = "Failed to create product";
         try {
           const errorData = JSON.parse(responseText);
           errorMessage = errorData.error || errorMessage;
         } catch (e) {
-          // If we can't parse the error as JSON, use the raw text
           errorMessage = responseText || errorMessage;
         }
         throw new Error(errorMessage);
       }
 
-      // Success - try to parse the response as JSON
       let newProduct;
       try {
         newProduct = JSON.parse(responseText);
-        console.log("Product created:", newProduct);
       } catch (e) {
         console.log("Could not parse response as JSON, but request succeeded");
       }
@@ -366,7 +343,6 @@ export default function AddProductPage() {
     }
   };
 
-  // If categories are still loading, show a loading spinner
   if (isLoadingCategories) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -382,31 +358,6 @@ export default function AddProductPage() {
       </div>
     );
   }
-
-  // For testing - show what API is likely receiving
-  const getJsonPreview = () => {
-    const preview = {
-      name: formData.name || "Example Product",
-      description: formData.description || "Example Description",
-      price: parseFloat(formData.price) || 99.99,
-      stock: parseInt(formData.stock, 10) || 10,
-      sku: formData.sku || "SKU123",
-      categoryId: formData.categoryId || "cat123",
-      subcategoryId: formData.subcategoryId || null,
-      isFeatured: formData.isFeatured === true,
-      discount: formData.discount,
-      isBestChoice: formData.isBestChoice === true,
-      color: formData.color,
-      size: formData.size,
-      images: formData.images,
-      shortDescription: formData.shortDescription || "Short description",
-      parcelHeight: formData.parcelHeight,
-      parcelWeight: formData.parcelWeight,
-      parcelLength: formData.parcelLength,
-      parcelWidth: formData.parcelWidth,
-    };
-    return JSON.stringify(preview, null, 2);
-  };
 
   return (
     <div className="space-y-6">
@@ -875,80 +826,87 @@ export default function AddProductPage() {
             />
           </div>
           <div>
-            <label
-              htmlFor="parcelHeight"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Parcel Height
-            </label>
-            <input
-              id="parcelHeight"
-              name="parcelHeight"
-              required
-              value={formData.parcelHeight}
-              onChange={handleChange}
-              className="mt-1 px-1 py-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F19B12] focus:ring-[#F19B12]"
-            />
-          </div>
-          <div>
-            <label
-              htmlFor="parcelWeight"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Parcel Weight
-            </label>
-            <input
-              id="parcelWeight"
-              name="parcelWeight"
-              required
-              value={formData.parcelWeight}
-              onChange={handleChange}
-              className="mt-1 px-1 py-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F19B12] focus:ring-[#F19B12]"
-            />
-          </div>
-          <div>
-            <label
-              htmlFor="parcelLength"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Parcel Length
-            </label>
-            <input
-              id="parcelLength"
-              name="parcelLength"
-              required
-              value={formData.parcelLength}
-              onChange={handleChange}
-              className="mt-1 px-1 py-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F19B12] focus:ring-[#F19B12]"
-            />
-          </div>
-          <div>
-            <label
-              htmlFor="parcelWidth"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Parcel Width
-            </label>
-            <input
-              id="parcelWidth"
-              name="parcelWidth"
-              required
-              value={formData.parcelWidth}
-              onChange={handleChange}
-              className="mt-1 px-1 py-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F19B12] focus:ring-[#F19B12]"
-            />
-          </div>
+              <label
+                htmlFor="parcelHeight"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Product Height (cm)
+              </label>
+              <input
+                type="number"
+                id="parcelHeight"
+                name="parcelHeight"
+                required
+                min="0"
+                step="0.1"
+                value={formData.parcelHeight}
+                onChange={handleChange}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F19B12] focus:ring-[#F19B12]"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="parcelWeight"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Product Weight (kg)
+              </label>
+              <input
+                type="number"
+                id="parcelWeight"
+                name="parcelWeight"
+                required
+                min="0"
+                step="0.1"
+                value={formData.parcelWeight}
+                onChange={handleChange}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F19B12] focus:ring-[#F19B12]"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="parcelLength"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Product Length (cm)
+              </label>
+              <input
+                type="number"
+                id="parcelLength"
+                name="parcelLength"
+                required
+                min="0"
+                step="0.1"
+                value={formData.parcelLength}
+                onChange={handleChange}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F19B12] focus:ring-[#F19B12]"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="parcelWidth"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Product Width (cm)
+              </label>
+              <input
+                type="number"
+                id="parcelWidth"
+                name="parcelWidth"
+                required
+                min="0"
+                step="0.1"
+                value={formData.parcelWidth}
+                onChange={handleChange}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F19B12] focus:ring-[#F19B12]"
+              />
+            </div>
           
 
-          {/* Debug section - helps you see what's going to be sent */}
-          <div className="bg-gray-50 p-4 rounded-md">
-            <h3 className="text-sm font-medium text-gray-700 mb-2">
-              JSON Preview (for debugging)
-            </h3>
-            <pre className="text-xs bg-gray-100 p-2 rounded overflow-auto max-h-32">
-              {getJsonPreview()}
-            </pre>
-          </div>
+         
 
           <div className="flex justify-end space-x-3">
             <button

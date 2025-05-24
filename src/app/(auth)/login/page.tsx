@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect } from "react";
 import ClientPasswordForm from "@/components/loginForm";
-import Login from "@/assets/myImages/loginbg.jpg";
+import Login from "@/assets/myImages/loginbg.png";
 import Image from "next/image";
 
 export default function Home() {
@@ -25,7 +25,7 @@ export default function Home() {
     <div className="min-h-screen flex flex-col md:flex-row bg-gray-50">
       {/* Image Section - Full height, centered content */}
       <div className="hidden md:flex md:w-1/2">
-        <div className="w-full h-full relative">
+        <div className="w-full h-full relative ml-24">
           <Image
             src={Login.src}
             alt="login bg"
@@ -37,7 +37,7 @@ export default function Home() {
       </div>
 
       {/* Content Section - Full height, centered content */}
-      <div className="w-full md:w-1/2 flex items-center justify-center p-6 md:p-12">
+      <div className="w-full md:w-1/2 flex items-center justify-center p-6 md:p-12 my-auto">
         <div className="w-full max-w-xl bg-white rounded-2xl shadow-lg p-10">
           {" "}
           {/* Changed max-w-md to max-w-xl */}
