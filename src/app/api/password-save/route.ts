@@ -11,9 +11,12 @@ export async function POST(req: NextRequest) {
 
     // Validate input fields
     if (!email) return errorResponse(ErrorMessages.emailRequired, 400);
-    if (!newPassword) return errorResponse(ErrorMessages.newPasswordRequired, 400);
-    if (!confirmPassword) return errorResponse(ErrorMessages.confirmPasswordRequired, 400);
-    if (newPassword !== confirmPassword) return errorResponse(ErrorMessages.passwordMismatch, 400);
+    if (!newPassword)
+      return errorResponse(ErrorMessages.newPasswordRequired, 400);
+    if (!confirmPassword)
+      return errorResponse(ErrorMessages.confirmPasswordRequired, 400);
+    if (newPassword !== confirmPassword)
+      return errorResponse(ErrorMessages.passwordMismatch, 400);
 
     const normalizedEmail = email.trim().toLowerCase();
 
@@ -25,9 +28,11 @@ export async function POST(req: NextRequest) {
     if (!user) return errorResponse(ErrorMessages.userNotFound, 404);
 
     // Prevent user from reusing the same password
-    const passwordMatch = await bcrypt.compare(newPassword, user.password);
-    if (passwordMatch) {
-      return errorResponse("Same Password not allowed", 400);
+    if (user.password) {
+      const passwordMatch = await bcrypt.compare(newPassword, user.password);
+      if (passwordMatch) {
+        return errorResponse("Same Password not allowed", 400);
+      }
     }
 
     // Hash and update the password

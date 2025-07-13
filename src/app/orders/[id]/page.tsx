@@ -6,10 +6,11 @@ import Image from 'next/image';
 import { toast } from 'sonner';
 import { formatDate } from '@/utils/checkoutUtils';
 
-// Define TypeScript interfaces for the data structures
 interface Product {
-  imageUrl?: string;
+  id: string;
   name: string;
+  imageUrl: string | null;
+  price: number;
 }
 
 interface OrderItem {
@@ -19,32 +20,34 @@ interface OrderItem {
   price: number;
 }
 
-interface ShippingAddress {
+interface Address {
   fullName: string;
   addressLine1: string;
-  addressLine2?: string;
   city: string;
   state: string;
   postalCode: string;
   country: string;
+  phone?: string;
 }
 
 interface PaymentMethod {
   type: 'card' | 'paypal';
-  cardNumber?: string;
+  status?: string;
 }
 
 interface Order {
   id: string;
   createdAt: string;
   items: OrderItem[];
-  shippingAddress: ShippingAddress;
-  shippingMethod: 'standard' | 'express';
-  paymentMethod: PaymentMethod;
+  shippingAddress: Address;
+  billingAddress: Address | null;
+  paymentMethod: PaymentMethod | null;
   subtotal: number;
   shippingCost: number;
   tax: number;
   total: number;
+  status: string;
+  isGuestOrder: boolean;
 }
 
 export default function OrderConfirmationPage() {
@@ -58,17 +61,18 @@ export default function OrderConfirmationPage() {
       try {
         const orderId = params.id as string;
         const response = await fetch(`/api/orders/${orderId}`);
-        const data = await response.json();
+        const result = await response.json();
         
         if (response.ok) {
-          setOrder(data.order);
+          setOrder(result.data);
         } else {
-          toast.error(data.error || 'Failed to load order details');
+          toast.error(result.error || 'Failed to load order details');
           router.push('/');
         }
       } catch (error) {
         console.error('Error fetching order:', error);
         toast.error('An error occurred while loading your order');
+        router.push('/');
       } finally {
         setIsLoading(false);
       }
@@ -89,12 +93,13 @@ export default function OrderConfirmationPage() {
       </div>
     );
   }
+  console.log(order)
   
   if (!order) {
     return (
       <div className="container mx-auto py-16 px-4 text-center">
         <h1 className="text-2xl font-bold mb-4">Order not found</h1>
-        <p className="mb-8">We couldn't find the order you're looking for.</p>
+        <p className="mb-8">We could not find the order you are looking for.</p>
         <button
           onClick={() => router.push('/')}
           className="bg-blue-600 text-white py-2 px-4 rounded-md"
@@ -132,6 +137,7 @@ export default function OrderConfirmationPage() {
                         alt={item.product.name}
                         fill
                         className="object-cover rounded-md"
+                        unoptimized
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-gray-400">
@@ -147,6 +153,7 @@ export default function OrderConfirmationPage() {
                   
                   <div className="text-right">
                     <p className="font-medium">${(item.price * item.quantity).toFixed(2)}</p>
+                    <p className="text-sm text-gray-500">${item.price.toFixed(2)} each</p>
                   </div>
                 </div>
               ))}
@@ -165,21 +172,16 @@ export default function OrderConfirmationPage() {
                   <span className="font-medium">Address:</span>
                   <br />
                   {order.shippingAddress.addressLine1}
-                  {order.shippingAddress.addressLine2 && (
-                    <>
-                      <br />
-                      {order.shippingAddress.addressLine2}
-                    </>
-                  )}
                   <br />
                   {order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.postalCode}
                   <br />
                   {order.shippingAddress.country}
                 </p>
-                <p>
-                  <span className="font-medium">Shipping Method:</span>{' '}
-                  {order.shippingMethod === 'express' ? 'Express (1-2 days)' : 'Standard (3-5 days)'}
-                </p>
+                {order.shippingAddress.phone && (
+                  <p>
+                    <span className="font-medium">Phone:</span> {order.shippingAddress.phone}
+                  </p>
+                )}
               </div>
             </div>
             
@@ -187,19 +189,35 @@ export default function OrderConfirmationPage() {
             <div className="bg-white p-6 rounded-lg shadow-md">
               <h2 className="text-xl font-semibold mb-4">Payment Information</h2>
               <div className="space-y-2">
-                <p>
-                  <span className="font-medium">Payment Method:</span>{' '}
-                  {order.paymentMethod.type === 'card' ? 'Credit/Debit Card' : 'PayPal'}
-                </p>
-                {order.paymentMethod.type === 'card' && order.paymentMethod.cardNumber && (
-                  <p>
-                    <span className="font-medium">Card:</span>{' '}
-                    •••• •••• •••• {order.paymentMethod.cardNumber.slice(-4)}
-                  </p>
+                {order.paymentMethod ? (
+                  <>
+                    <p>
+                      <span className="font-medium">Payment Method:</span>{' '}
+                      {order.paymentMethod.type === 'paypal' ? 'PayPal' : 'Credit/Debit Card'}
+                    </p>
+                    <p>
+                      <span className="font-medium">Status:</span>{' '}
+                      <span className={
+                        order.paymentMethod.status === 'COMPLETED' ? 
+                        'text-green-600 font-medium' : 
+                        'text-yellow-600 font-medium'
+                      }>
+                        {order.paymentMethod.status || 'PENDING'}
+                      </span>
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-yellow-600">Payment information not available</p>
                 )}
                 <p>
-                  <span className="font-medium">Status:</span>{' '}
-                  <span className="text-green-600 font-medium">Paid</span>
+                  <span className="font-medium">Order Status:</span>{' '}
+                  <span className={
+                    order.status === 'DELIVERED' ? 'text-green-600' :
+                    order.status === 'CANCELLED' ? 'text-red-600' :
+                    'text-blue-600'
+                  }>
+                    {order.status}
+                  </span>
                 </p>
               </div>
             </div>

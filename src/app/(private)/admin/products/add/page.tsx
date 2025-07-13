@@ -112,7 +112,7 @@ export default function AddProductPage() {
   // Update subcategories when category changes
   useEffect(() => {
     if (formData.categoryId) {
-      const selectedCategory = categories.find(cat => cat.id === formData.categoryId);
+      const selectedCategory:any = categories.find(cat => cat.id === formData.categoryId);
       if (selectedCategory && selectedCategory.subcategories) {
         setSubcategories(selectedCategory.subcategories);
         

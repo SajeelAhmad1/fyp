@@ -1,10 +1,29 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import OrderSummary from '@/components/OrderSummary';
 
-export default function OrderConfirmationPage() {
+// Loading component for Suspense fallback
+function OrderDetailsLoading() {
+  return (
+    <div className="max-w-4xl mx-auto p-6 bg-white shadow-md rounded-lg">
+      <div className="text-center mb-8">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-3/4 mx-auto mb-4"></div>
+          <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
+          <div className="h-4 bg-gray-200 rounded w-2/3 mx-auto"></div>
+        </div>
+      </div>
+      <div className="animate-pulse">
+        <div className="h-64 bg-gray-200 rounded"></div>
+      </div>
+    </div>
+  );
+}
+
+// Separate component for order details to work with Suspense
+function OrderDetails() {
   const searchParams = useSearchParams();
   const id = searchParams.get('orderId');
   const [orderData, setOrderData] = useState<any>(null);
@@ -37,9 +56,9 @@ export default function OrderConfirmationPage() {
     fetchOrderDetails();
   }, [id]);
 
-  if (loading) return <div>Loading order details...</div>;
-  if (error) return <div>{error}</div>;
-  if (!orderData) return <div>No order found</div>;
+  if (loading) return <OrderDetailsLoading />;
+  if (error) return <div className="text-center text-red-600 py-8">{error}</div>;
+  if (!orderData) return <div className="text-center text-gray-600 py-8">No order found</div>;
 
   return (
     <div className="max-w-4xl mx-auto p-6 bg-white shadow-md rounded-lg">
@@ -62,5 +81,13 @@ export default function OrderConfirmationPage() {
         </a>
       </div>
     </div>
+  );
+}
+
+export default function OrderConfirmationPage() {
+  return (
+    <Suspense fallback={<OrderDetailsLoading />}>
+      <OrderDetails />
+    </Suspense>
   );
 }

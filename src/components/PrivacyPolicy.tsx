@@ -1,7 +1,18 @@
 import React from 'react';
 
+interface Subsection {
+    subtitle?: string;
+    content: string;
+}
+
+interface Section {
+    title: string;
+    content?: string;
+    subsections?: Subsection[];
+}
+
 const PrivacyPolicy = () => {
-    const sections = [
+    const sections: Section[] = [
         { 
             title: "1. About Us", 
             content: "[Store Name] is a registered company in [Country], dedicated to providing quality products and excellent customer service. Our address is: [Company Name], [Street Address], [City], [Postal Code], [Country]. As the data controller, we determine how and why your personal data is processed."        },

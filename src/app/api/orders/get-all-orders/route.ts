@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+export const dynamic = 'force-dynamic'
 
 // GET request handler: Fetch all orders
 export async function GET(request: NextRequest) {

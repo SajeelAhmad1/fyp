@@ -9,7 +9,7 @@ const Footer = () => {
     const [message, setMessage] = useState('');
     const [status, setStatus] = useState('idle'); // idle, loading, success, error
     
-    const handleSubscribe = async (e) => {
+    const handleSubscribe = async (e:any) => {
         e.preventDefault();
         
         // Basic validation
@@ -58,7 +58,7 @@ const Footer = () => {
                     <div className="space-y-4 lg:w-1/3 md:w-1/2 mb-8 lg:mb-0">
                         <h2 className="text-2xl md:text-3xl font-bold italic">Lylla & Lora</h2>
                         <p className="text-base md:text-lg">
-                            We have clothes that suits your style and which you're proud to wear. From women to men.
+                            We have clothes that suits your style and which you are proud to wear. From women to men.
                         </p>
                         
                         {/* Social Media Icons */}

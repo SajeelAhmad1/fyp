@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, Suspense } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
@@ -148,7 +148,42 @@ const StripePaymentForm = ({
     );
 };
 
-const CheckoutPage = () => {
+const LoadingSpinner = () => (
+    <div className="flex justify-center items-center h-64">
+        Loading checkout...
+    </div>
+);
+
+const ErrorDisplay = ({ error, onReturnToCart }: { error: string, onReturnToCart: () => void }) => (
+    <div className="p-12 mx-auto">
+        <div className="text-red-500 p-4 bg-red-50 rounded">{error}</div>
+        <div className="text-center mt-4">
+            <button
+                onClick={onReturnToCart}
+                className="text-blue-600 hover:text-blue-800 transition-colors"
+            >
+                Return to Cart
+            </button>
+        </div>
+    </div>
+);
+
+const OrderNotFound = ({ onContinueShopping }: { onContinueShopping: () => void }) => (
+    <div className="p-12 mx-auto">
+        <div className="bg-white p-6 rounded-lg  text-center">
+            <h2 className="text-xl font-semibold mb-4">Order Not Found</h2>
+            <p className="text-gray-600 mb-4">The order you are looking for does not exist or you do not have permission to view it.</p>
+            <button
+                onClick={onContinueShopping}
+                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
+            >
+                Continue Shopping
+            </button>
+        </div>
+    </div>
+);
+
+const CheckoutContent = () => {
     const { data: session } = useSession();
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -438,40 +473,15 @@ const CheckoutPage = () => {
     }, [customerProfile, order, session]);
 
     if (loading || isCreatingOrder) {
-        return <div className="flex justify-center items-center h-64">Loading checkout...</div>;
+        return <LoadingSpinner />;
     }
 
     if (error) {
-        return (
-            <div className="p-12 mx-auto">
-                <div className="text-red-500 p-4 bg-red-50 rounded">{error}</div>
-                <div className="text-center mt-4">
-                    <button
-                        onClick={() => router.push('/cart')}
-                        className="text-blue-600 hover:text-blue-800 transition-colors"
-                    >
-                        Return to Cart
-                    </button>
-                </div>
-            </div>
-        );
+        return <ErrorDisplay error={error} onReturnToCart={() => router.push('/cart')} />;
     }
 
     if (!order && !isCreatingOrder) {
-        return (
-            <div className="p-12 mx-auto">
-                <div className="bg-white p-6 rounded-lg  text-center">
-                    <h2 className="text-xl font-semibold mb-4">Order Not Found</h2>
-                    <p className="text-gray-600 mb-4">The order you're looking for doesn't exist or you don't have permission to view it.</p>
-                    <button
-                        onClick={() => router.push('/products')}
-                        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
-                    >
-                        Continue Shopping
-                    </button>
-                </div>
-            </div>
-        );
+        return <OrderNotFound onContinueShopping={() => router.push('/products')} />;
     }
 
     return (
@@ -806,6 +816,14 @@ const CheckoutPage = () => {
                 )}
             </div>
         </div>
+    );
+};
+
+const CheckoutPage = () => {
+    return (
+        <Suspense fallback={<LoadingSpinner />}>
+            <CheckoutContent />
+        </Suspense>
     );
 };
 

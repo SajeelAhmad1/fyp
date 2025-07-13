@@ -84,7 +84,7 @@ const Slider = () => {
         alert('Shop now');
     };
 
-    const goToSlide = (index) => {
+    const goToSlide = (index:any) => {
         setCurrentSlide(index);
         setIsPaused(true); // Pause automatic sliding when manually navigating
     };

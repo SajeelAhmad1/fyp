@@ -40,7 +40,7 @@ export default function DeleteConfirmDialog({
           <h2 className="text-lg font-semibold">Are you sure?</h2>
           <div className="mt-2 text-sm text-gray-500">
             <p>
-              You are about to delete the {type} <strong>"{itemName}"</strong>.
+              You are about to delete the {type} <strong>&quot;{itemName}&quot;</strong>.
               {type === 'category' && (
                 <span> This will only work if the category has no subcategories.</span>
               )}

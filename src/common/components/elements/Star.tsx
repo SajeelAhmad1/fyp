@@ -4,7 +4,7 @@ interface StarProps {
     count: number
 }
 
-const Star = (props: StarProps) => {
+const Star = (props: any) => {
 
     const stars = Array.from({ length: props.count }, (_, index) => index);
 

@@ -21,7 +21,7 @@ export default function Orders() {
             // Check if we have a stored guest email in localStorage
             const storedEmail = localStorage.getItem("guestEmail");
             if (storedEmail) {
-                setGuestEmail(storedEmail);
+                setGuestEmail(storedEmail); 
                 fetchOrders(storedEmail);
             } else {
                 setShowEmailPopup(true);
@@ -31,7 +31,7 @@ export default function Orders() {
         }
     }, [status, session]);
 
-    const handleEmailSubmit = (e) => {
+    const handleEmailSubmit = (e:any) => {
         e.preventDefault();
         if (guestEmail.trim()) {
             localStorage.setItem("guestEmail", guestEmail);
@@ -40,7 +40,7 @@ export default function Orders() {
         }
     };
 
-    const fetchOrders = async (email = null) => {
+    const fetchOrders = async (email?: string) => {
         setIsLoading(true);
         try {
             let response;
@@ -137,7 +137,7 @@ export default function Orders() {
                     ) : orders.length === 0 ? (
                         <div className="border rounded-lg overflow-hidden">
                             <div className="p-6 text-center">
-                                <p className="text-gray-500">You haven't placed any orders yet.</p>
+                                <p className="text-gray-500">You have not placed any orders yet.</p>
                                 <Link href="/" className="mt-4 inline-block bg-orange-500 text-white py-2 px-6 rounded">
                                     Start Shopping
                                 </Link>
@@ -146,7 +146,9 @@ export default function Orders() {
                     ) : (
                         <div className="space-y-4">
                             {orders.map((order) => (
-                                <div key={order.id} className="border rounded-lg p-4">
+                                <div 
+                                onClick={()=>{router.push(`/orders/${order.id}`)}}
+                                key={order.id} className="border rounded-lg p-4">
                                     <div className="flex justify-between items-center mb-4">
                                         <div>
                                             <p className="font-bold">Order #{order.id.slice(-6)}</p>

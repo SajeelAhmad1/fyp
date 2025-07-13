@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 
 export default function OrderDetailPage() {
   const { orderId } = useParams();
-  const [order, setOrder] = useState(null);
+  const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -18,7 +18,7 @@ export default function OrderDetailPage() {
         const data = await response.json();
         setOrder(data.data);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Something went wrong");
+        console.error(err);
       } finally {
         setLoading(false);
       }
@@ -42,7 +42,7 @@ export default function OrderDetailPage() {
 
           <h3 style={{ marginTop: "20px", fontWeight: "bold" }}>Items</h3>
           <ul style={{ paddingLeft: "20px" }}>
-            {order.items.map((item) => (
+            {order.items.map((item:any) => (
               <li key={item.id}>
                 {item.product.name} - {item.quantity} pcs (£{item.price})
               </li>

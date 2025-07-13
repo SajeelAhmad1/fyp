@@ -59,34 +59,15 @@ export async function POST(request: Request) {
       where: { email }
     });
 
-    if (existingSubscriber) {
-      // If already subscribed but unsubscribed before
-      if (existingSubscriber.status !== 'active') {
-        await prisma.subscriber.update({
-          where: { email },
-          data: {
-            status: 'active',
-            unsubscribeDate: null
-          }
-        });
-        
-        // Send resubscription email
-        await sendSubscriptionEmail(email, existingSubscriber.token);
-        
-        return NextResponse.json(
-          { message: 'Subscription reactivated' }, 
-          { status: 200 }
-        );
-      }
-      
+    const token = uuidv4();
+
+    if (existingSubscriber) {      
       return NextResponse.json(
         { message: 'Email already subscribed' }, 
         { status: 409 }
       );
     }
 
-    // Generate confirmation token
-    const token = uuidv4();
 
     // Create new subscriber
     await prisma.subscriber.create({

@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
       where: {
         email: {
           equals: email,
-          mode: 'insensitive'
+          mode: "insensitive",
         },
       },
       include: {},
@@ -60,33 +60,33 @@ export async function POST(req: NextRequest) {
           include: {
             items: {
               include: {
-                product: true
-              }
-            }
-          }
+                product: true,
+              },
+            },
+          },
         },
         wishlist: {
           include: {
             items: {
               include: {
-                product: true
-              }
-            }
-          }
+                product: true,
+              },
+            },
+          },
         },
         orders: {
           take: 5,
           orderBy: {
-            createdAt: 'desc'
+            createdAt: "desc",
           },
           include: {
-            items: true
-          }
-        }
+            items: true,
+          },
+        },
       };
     } else if (role === "VENDOR") {
       userQuery.include = {
-        products: true
+        products: true,
       };
     }
 
@@ -96,10 +96,12 @@ export async function POST(req: NextRequest) {
       return errorResponse(ErrorMessages.invalidEmailOrPassword, 401);
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (user.password) {
+      const isPasswordValid = await bcrypt.compare(password, user.password);
 
-    if (!isPasswordValid) {
-      return errorResponse(ErrorMessages.invalidEmailOrPassword, 401);
+      if (!isPasswordValid) {
+        return errorResponse(ErrorMessages.invalidEmailOrPassword, 401);
+      }
     }
 
     // const token = jwt.sign(
@@ -117,7 +119,7 @@ export async function POST(req: NextRequest) {
         email: user.email,
         id: user.id,
         role: user.role,
-        isAdmin: user.isAdmin
+        isAdmin: user.isAdmin,
       },
       JWT_SECRET
     );

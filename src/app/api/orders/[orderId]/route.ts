@@ -2,51 +2,11 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { PaymentStatus, OrderStatus } from "@prisma/client";
 
-async function validateOrderAccess(orderId: string, userId?: string, guestEmail?: string) {
-  if (!userId && !guestEmail) return null;
-  
-  const order = await prisma.order.findUnique({
-      where: { 
-          id: orderId,
-          OR: [
-              { userId: userId || undefined },
-              { 
-                  isGuestOrder: true, 
-                  guestEmail: guestEmail || undefined 
-              }
-          ]
-      }
-  });
-  return order;
-}
-
 export async function GET(request: Request, { params }: { params: { orderId: string } }) {
     try {
         const { orderId } = params;
-        const url = new URL(request.url);
-        const userId = url.searchParams.get('userId');
-        const guestEmail = url.searchParams.get('guestEmail');
 
-        if (!userId && !guestEmail) {
-            return NextResponse.json(
-                { error: "User ID or Guest Email is required" }, 
-                { status: 400 }
-            );
-        }
-
-        const order = await validateOrderAccess(
-          orderId, 
-          userId || undefined, 
-          guestEmail || undefined
-      );
-        if (!order) {
-            return NextResponse.json(
-                { error: "Order not found or unauthorized" }, 
-                { status: 404 }
-            );
-        }
-
-        const orderWithDetails = await prisma.order.findUnique({
+        const order = await prisma.order.findUnique({
             where: { id: orderId },
             include: {
                 items: {
@@ -58,7 +18,58 @@ export async function GET(request: Request, { params }: { params: { orderId: str
             },
         });
 
-        return NextResponse.json({ data: orderWithDetails }, { status: 200 });
+        if (!order) {
+            return NextResponse.json(
+                { error: "Order not found" }, 
+                { status: 404 }
+            );
+        }
+
+        // Transform data to match frontend expectations
+        const responseData = {
+            id: order.id,
+            createdAt: order.createdAt.toISOString(),
+            items: order.items.map(item => ({
+                id: item.id,
+                product: {
+                    id: item.product.id,
+                    name: item.product.name,
+                    imageUrl: item.product.images?.[0] || null,
+                    price: parseFloat(item.product.price.toString())
+                },
+                quantity: item.quantity,
+                price: parseFloat(item.price.toString())
+            })),
+            shippingAddress: {
+                fullName: `${order.shippingFirstName} ${order.shippingLastName}`,
+                addressLine1: order.shippingStreet,
+                city: order.shippingCity,
+                state: order.shippingState || "",
+                postalCode: order.shippingPostalCode,
+                country: order.shippingCountry,
+                phone: order.shippingPhone
+            },
+            billingAddress: order.billingFirstName ? {
+                fullName: `${order.billingFirstName} ${order.billingLastName}`,
+                addressLine1: order.billingStreet || "",
+                city: order.billingCity || "",
+                state: order.billingState || "",
+                postalCode: order.billingPostalCode || "",
+                country: order.billingCountry || ""
+            } : null,
+            paymentMethod: order.payment ? {
+                type: order.payment.method.toLowerCase() === 'paypal' ? 'paypal' : 'card',
+                status: order.payment.status
+            } : null,
+            subtotal: parseFloat(order.totalPrice.toString()),
+            shippingCost: 0, // You'll need to calculate this properly
+            tax: 0, // You'll need to calculate this properly
+            total: parseFloat(order.totalPrice.toString()),
+            status: order.status,
+            isGuestOrder: order.isGuestOrder
+        };
+
+        return NextResponse.json({ data: responseData }, { status: 200 });
     } catch (error) {
         console.error("Order retrieval error:", error);
         return NextResponse.json(
@@ -85,18 +96,18 @@ export async function PUT(req: Request, { params }: { params: { orderId: string 
       }
 
       // Validate order access
-      const order = await validateOrderAccess(
-          orderId, 
-          userId || undefined, 
-          guestEmail || undefined
-      );
+    //   const order = await validateOrderAccess(
+    //       orderId, 
+    //       userId || undefined, 
+    //       guestEmail || undefined
+    //   );
 
-      if (!order) {
-          return NextResponse.json(
-              { error: "Order not found or unauthorized" }, 
-              { status: 404 }
-          );
-      }
+    //   if (!order) {
+    //       return NextResponse.json(
+    //           { error: "Order not found or unauthorized" }, 
+    //           { status: 404 }
+    //       );
+    //   }
 
       // Process payment
       const paymentStatus = body.status === 'CONFIRMED'

@@ -135,7 +135,7 @@ const ProductDetails: React.FC = () => {
   const params = useParams();
   const id = params.id;
 
-  const [product, setProduct] = useState<Product | null>(null);
+  const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [currentImageIndex, setCurrentImageIndex] = useState<number>(0);
   const [quantity, setQuantity] = useState<number>(1);
@@ -454,7 +454,7 @@ const ProductDetails: React.FC = () => {
   const calculateAverageRating = () => {
     if (!product?.reviews || product.reviews.length === 0) return 0;
 
-    const totalRating = product.reviews.reduce((sum, review) => sum + review.rating, 0);
+    const totalRating = product.reviews.reduce((sum:any, review:any) => sum + review.rating, 0);
     return totalRating / product.reviews.length;
   };
 
@@ -536,7 +536,7 @@ const ProductDetails: React.FC = () => {
           </div>
 
           <div className="flex m-auto flex-wrap gap-5 group">
-            {product.images && product.images.map((img, index) => (
+            {product.images && product.images.map((img:any, index:any) => (
               <div
                 key={index}
                 onClick={() => setCurrentImageIndex(index)}
@@ -616,7 +616,7 @@ const ProductDetails: React.FC = () => {
               <div className="flex items-center">
                 <span className='font-semibold'>Color:</span>
                 <div className="flex gap-2 ml-3">
-                  {product.colors.map((color, index) => (
+                  {product.colors.map((color:any, index:any) => (
                     <div
                       key={index}
                       className="w-4 h-4 rounded-full cursor-pointer border border-gray-300"
@@ -632,7 +632,7 @@ const ProductDetails: React.FC = () => {
               <div className="flex items-center">
                 <span className='font-semibold'>Size:</span>
                 <div className="flex gap-2 ml-3 flex-wrap">
-                  {product.sizes.map((size, index) => (
+                  {product.sizes.map((size:any, index:any) => (
                     <button
                       key={index}
                       className="w-16 h-8 bg-zinc-100 border items-center justify-center flex focus:bg-blue-200"
@@ -739,7 +739,7 @@ const ProductDetails: React.FC = () => {
 
           {product.reviews && product.reviews.length > 0 ? (
             <div className="flex flex-col gap-6 mt-4">
-              {product.reviews.map((review) => (
+              {product.reviews.map((review:any) => (
                 <div key={review.id} className="border-b pb-4">
                   <div className="flex items-start gap-4">
                     <div className="w-10 h-10 flex items-center justify-center bg-gray-200 rounded-full text-gray-600 font-semibold">

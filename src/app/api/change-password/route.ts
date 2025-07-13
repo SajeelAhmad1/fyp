@@ -6,13 +6,17 @@ import { ErrorMessages } from "@/utils/errorMessages";
 
 export async function POST(req: NextRequest) {
   try {
-    const { email, currentPassword, newPassword, confirmPassword } = await req.json();
+    const { email, currentPassword, newPassword, confirmPassword } =
+      await req.json();
 
     // Input validations
     if (!email) return errorResponse(ErrorMessages.emailRequired, 400);
-    if (!currentPassword) return errorResponse("Current password is required", 400);
-    if (!newPassword) return errorResponse(ErrorMessages.newPasswordRequired, 400);
-    if (!confirmPassword) return errorResponse(ErrorMessages.confirmPasswordRequired, 400);
+    if (!currentPassword)
+      return errorResponse("Current password is required", 400);
+    if (!newPassword)
+      return errorResponse(ErrorMessages.newPasswordRequired, 400);
+    if (!confirmPassword)
+      return errorResponse(ErrorMessages.confirmPasswordRequired, 400);
 
     // Check if new passwords match
     if (newPassword !== confirmPassword) {
@@ -29,15 +33,25 @@ export async function POST(req: NextRequest) {
     if (!user) return errorResponse(ErrorMessages.userNotFound, 404);
 
     // Verify current password
-    const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
+    let isCurrentPasswordValid;
+    if (user.password) {
+      isCurrentPasswordValid = await bcrypt.compare(
+        currentPassword,
+        user.password
+      );
+    }
     if (!isCurrentPasswordValid) {
       return errorResponse("Current password is incorrect", 400);
     }
 
     // Additional password strength checks (optional but recommended)
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    const passwordRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
     if (!passwordRegex.test(newPassword)) {
-      return errorResponse("Password must be at least 8 characters, include uppercase, lowercase, number, and special character", 400);
+      return errorResponse(
+        "Password must be at least 8 characters, include uppercase, lowercase, number, and special character",
+        400
+      );
     }
 
     // Hash and update the password
@@ -47,7 +61,7 @@ export async function POST(req: NextRequest) {
       where: { email: normalizedEmail },
       data: {
         password: hashedNewPassword,
-        isPasswordSet: true
+        isPasswordSet: true,
       },
     });
 

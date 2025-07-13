@@ -17,7 +17,7 @@ export default function AdminOrdersPage() {
 
         const data = await response.json();
         setOrders(data.data);
-      } catch (err) {
+      } catch (err:any) {
         setError(err.message || "Something went wrong");
       } finally {
         setLoading(false);
@@ -34,7 +34,7 @@ export default function AdminOrdersPage() {
       {error && <p style={{ color: "red" }}>{error}</p>}
 
       {!loading && !error && orders.length > 0 ? (
-        <table border="1" cellPadding="10" style={{ width: "100%", marginTop: "20px" }}>
+        <table cellPadding="10" style={{ width: "100%", marginTop: "20px" }}>
           <thead>
             <tr>
               <th>Order ID</th>
@@ -46,7 +46,7 @@ export default function AdminOrdersPage() {
             </tr>
           </thead>
           <tbody>
-            {orders.map((order) => (
+            {orders.map((order:any) => (
               <tr key={order.id}>
                 <td>{order.id}</td>
                 <td>{order.user?.email || "Guest"}</td>

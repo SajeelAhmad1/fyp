@@ -1,16 +1,15 @@
-// lib/auth-options.ts
-import NextAuth from "next-auth";
+import { PrismaClient } from "@prisma/client";
+import NextAuth, { AuthOptions, SessionStrategy } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { PrismaClient } from "@prisma/client";
-import { ROLE } from "@/common/constant/apis-urls";
 import axios from "axios";
+import { ROLE } from "@/common/constant/apis-urls";
 
 const prisma = new PrismaClient();
 
-export const authOptions = {
+export const authOptions: AuthOptions = {
   session: {
-    strategy: "jwt",
+    strategy: "jwt" as SessionStrategy,
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   pages: {
@@ -31,8 +30,8 @@ export const authOptions = {
       profile(profile) {
         return {
           id: profile.sub,
-          firstName: profile.firstName,
-          lastName: profile.lastName,
+          firstName: profile.given_name,
+          lastName: profile.family_name,
           email: profile.email,
           image: profile.picture,
           verified: true,
@@ -109,20 +108,30 @@ export const authOptions = {
   callbacks: {
     async signIn({ user, account }) {
       if (account?.provider === "google") {
-        // Check if user exists in your database
         const existingUser = await prisma.user.findUnique({
           where: { email: user.email },
         });
 
         if (!existingUser) {
-          // Create new user for Google sign-in
-          await prisma.user.create({
+          const [firstName = "", lastName = ""] = (user.name || "").split(" ");
+
+          // 1. Create user
+          const newUser = await prisma.user.create({
             data: {
-              email: user.email,
-              name: user.name,
+              email: user.email!,
               verified: true,
               loginType: "GOOGLE",
-              role: ROLE.CUSTOMER,
+              role: "CUSTOMER",
+            },
+          });
+
+          // 2. Create customer profile
+          await prisma.customerProfile.create({
+            data: {
+              userId: newUser.id,
+              firstName,
+              lastName,
+              imageUrl: user.image || null,
             },
           });
         }
@@ -130,7 +139,6 @@ export const authOptions = {
       return true;
     },
     async jwt({ token, user, account }) {
-      // Initial sign-in
       if (account && user) {
         return {
           ...token,

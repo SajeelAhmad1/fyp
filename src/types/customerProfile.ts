@@ -11,6 +11,6 @@ export interface CustomerProfile {
   postalCode?: string | null;
   country?: string | null;
   userId?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
+  createdAt?: string;
+  updatedAt?: string;
 }

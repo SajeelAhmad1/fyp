@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react'
 import SearchSection from './SearchSection'
-import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import CartSection from '@/common/components/layouts/CartSection'
 import CategoryDropdown from './CategoryDropdown'
