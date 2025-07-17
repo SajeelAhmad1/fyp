@@ -388,14 +388,14 @@ const CartDisplay: React.FC = () => {
                             <div className="mt-1">
                                 {item.discountPercentage > 0 ? (
                                     <div className="flex items-center">
-                                        <p className="text-gray-700 font-medium">${item.priceAfterDiscount.toFixed(2)}</p>
-                                        <p className="text-gray-400 line-through text-sm ml-2">${item.price.toFixed(2)}</p>
+                                        <p className="text-gray-700 font-medium">£{item.priceAfterDiscount.toFixed(2)}</p>
+                                        <p className="text-gray-400 line-through text-sm ml-2">£{item.price.toFixed(2)}</p>
                                         <span className="ml-2 bg-red-100 text-red-800 text-xs px-2 py-0.5 rounded">
                                             {item.discountPercentage}% OFF
                                         </span>
                                     </div>
                                 ) : (
-                                    <p className="text-gray-700 font-medium">${item.price.toFixed(2)}</p>
+                                    <p className="text-gray-700 font-medium">£{item.price.toFixed(2)}</p>
                                 )}
                             </div>
                         </div>
