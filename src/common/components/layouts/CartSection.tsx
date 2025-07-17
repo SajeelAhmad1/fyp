@@ -160,7 +160,7 @@ const CartSection: React.FC = () => {
                         onClick={item.onClick}
                         onMouseEnter={() => setActiveTooltip(index)}
                         onMouseLeave={() => setActiveTooltip(null)}
-                        className={`relative px-2 py-2 text-white hover:text-blue-100 transition-colors duration-200 ${isDropdownOpen && index === navItems.length - 1 ? 'text-blue-100' : ''}`}
+                        className={`relative px-2 py-2  hover:text-blue-100 transition-colors duration-200 ${isDropdownOpen && index === navItems.length - 1 ? 'text-blue-100' : ''}`}
                     >
                         {/* Icon Container */}
                         <div className="relative inline-block" style={{ width: '25px', height: '25px' }}>

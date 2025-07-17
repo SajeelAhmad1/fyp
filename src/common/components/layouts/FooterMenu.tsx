@@ -55,7 +55,7 @@ const Footer = () => {
                 <div className="flex flex-col lg:flex-row justify-between gap-8">
                     {/* Brand Column */}
                     <div className="space-y-4 lg:w-1/3 md:w-1/2 mb-8 lg:mb-0">
-                        <h2 className="text-2xl md:text-3xl font-bold italic">Lylla & Lora</h2>
+                        <h2 className="text-2xl md:text-3xl font-bold italic">eTrolly</h2>
                         <p className="text-base md:text-lg">
                             We have clothes that suits your style and which you&apos;re proud to wear. From women to men.
                         </p>
@@ -149,7 +149,7 @@ const Footer = () => {
                 {/* Payment Methods and Copyright */}
                 <div className="mt-10 pt-6 border-t border-blue-400/30 flex flex-col-reverse md:flex-row md:justify-between items-center">
                     <p className="text-sm text-blue-100 mt-4 md:mt-0">
-                        © 2025 Lylla & Lora. All rights reserved.
+                        © 2025 eTrolly. All rights reserved.
                     </p>
                     
                     {/* Payment Methods */}

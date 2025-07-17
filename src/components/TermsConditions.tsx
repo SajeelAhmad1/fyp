@@ -5,7 +5,7 @@ const TermsAndConditions = () => {
     const sections = [
         { 
             title: "1. General Information", 
-            content: "2 Guys is a trading name of [Company Name], registered in United Kingdom. Our registered address is: [Street Address], [City], [Postal Code], United Kingdom. Company Registration Number: [Insert Company Number] VAT Number: [Insert VAT Number] Contact Email: [email@example.com]" 
+            content: "eTrolly is a trading name of Company, registered in United Kingdom.Contact Email: etrolly@gmail.com" 
         },
         { 
             title: "2. Website Use", 
@@ -60,7 +60,7 @@ const TermsAndConditions = () => {
         },
         { 
             title: "6. Intellectual Property", 
-            content: "All content on this website, including text, images, and graphics, is owned by or licensed to 2 Guys. Unauthorized use, reproduction, or distribution of this content is prohibited." 
+            content: "All content on this website, including text, images, and graphics, is owned by or licensed to eTrolly. Unauthorized use, reproduction, or distribution of this content is prohibited." 
         },
         { 
             title: "7. Liability", 
@@ -93,7 +93,7 @@ const TermsAndConditions = () => {
         },
         { 
             title: "12. Contact Us", 
-            content: "If you have any questions or concerns about these Terms & Conditions, please contact us: By Email: [email@example.com] By Post: [Company Name], [Street Address], [City], [Postal Code], United Kingdom." 
+            content: "If you have any questions or concerns about these Terms & Conditions, please contact us: \n By Email: etrolly@gmail.com" 
         }
     ];
 

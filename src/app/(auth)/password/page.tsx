@@ -1,8 +1,6 @@
-// src/app/password/page.tsx
 "use client";
 import React from "react";
 import PasswordPic from "@/assets/myImages/otp.png";
-import logo from "@/assets/images/ava-logo.png";
 import ClientPasswordForm from "@/components/passwordForm";
 import { useEffect } from "react";
 

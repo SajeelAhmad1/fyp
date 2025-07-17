@@ -3,8 +3,8 @@ import React from 'react';
 const AboutUs = () => {
     const sections = [
         { 
-            title: "About 2 Guys", 
-            content: "At 2 Guys, we are dedicated to enhancing your everyday life by offering high-quality, innovative, and practical products. Our goal is to make shopping effortless, enjoyable, and rewarding by providing a carefully curated selection of trusted essentials."
+            title: "About eTrolly", 
+            content: "At eTrolly, we are dedicated to enhancing your everyday life by offering high-quality, innovative, and practical products. Our goal is to make shopping effortless, enjoyable, and rewarding by providing a carefully curated selection of trusted essentials."
         },
         { 
             title: "Our Values", 
@@ -29,7 +29,7 @@ const AboutUs = () => {
         },
         { 
             title: "Our Commitment", 
-            content: "At 2 Guys, we aim to simplify your shopping experience by offering products that bring value, convenience, and style to your life. Thank you for choosing us — we are excited to be part of your journey!"
+            content: "At eTrolly, we aim to simplify your shopping experience by offering products that bring value, convenience, and style to your life. Thank you for choosing us — we are excited to be part of your journey!"
         }
     ];
 

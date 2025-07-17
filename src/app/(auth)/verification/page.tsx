@@ -2,7 +2,6 @@
 import React, { useEffect, useState } from "react";
 import VerificationForm from "@/components/verificationForm";
 import AuthLayout from "@/components/auth";
-import logo from "@/assets/images/dark-ava-logo.png";
 
 export default function Verification() {
   useEffect(() => {

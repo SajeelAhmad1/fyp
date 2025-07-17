@@ -21,7 +21,7 @@ class NotificationSend {
       
 
       // Generate subject line
-      const subject = `Complete Your Profile to Get the Best Experience - DAILY KART`;
+      const subject = `Complete Your Profile to Get the Best Experience - eTrolly`;
 
       const html =  `
       <!DOCTYPE html>
@@ -29,7 +29,7 @@ class NotificationSend {
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Incomplete Profile - DAILY KART</title>
+    <title>Incomplete Profile - eTrolly</title>
     <style>
     /* General Styles */
 body {
@@ -209,10 +209,10 @@ body {
       <div class="text" style="color: #000000;"> <!-- Replace with actual color value -->
   
       <div class="content">
-        <p style="color: #000000;"><b>Subject: </b>Complete Your Profile to Get the Best Experience - DAILY KART</p>
+        <p style="color: #000000;"><b>Subject: </b>Complete Your Profile to Get the Best Experience - eTrolly</p>
         <p style="color: #000000;"><b>Dear User,</b></p>
         
-        <p style="color: #000000;">We noticed that you registered on <b>${role === "DOCTOR" ? "AVA HEALTH" : "DAILY KART"}</b> as a <b>${role === "DOCTOR" ? "DOCTOR" : "PATIENT"}</b> but your profile is incomplete. To ensure you get the best experience and access all features, please take a moment to complete your profile.</p>
+        <p style="color: #000000;">We noticed that you registered on <b>${role === "DOCTOR" ? "AVA HEALTH" : "eTrolly"}</b> as a <b>${role === "DOCTOR" ? "DOCTOR" : "PATIENT"}</b> but your profile is incomplete. To ensure you get the best experience and access all features, please take a moment to complete your profile.</p>
   
         
         <p style="color: #000000;">If you have any questions or need assistance, feel free to contact us at sajeelashiq1@gmail.com </p>
@@ -225,7 +225,7 @@ body {
         <!-- Footer Section -->
         <div class="footer">
           <p>Warm Regards,</p>
-          <p><b>The DAILY KART Team</b></p>
+          <p><b>The eTrolly Team</b></p>
         </div>
       </div>
     </div>

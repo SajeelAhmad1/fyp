@@ -3,6 +3,7 @@ import React from 'react';
 interface Subsection {
     subtitle?: string;
     content: string;
+    table?: string[][];
 }
 
 interface Section {
@@ -15,7 +16,7 @@ const PrivacyPolicy = () => {
     const sections: Section[] = [
         { 
             title: "1. About Us", 
-            content: "[Store Name] is a registered company in [Country], dedicated to providing quality products and excellent customer service. Our address is: [Company Name], [Street Address], [City], [Postal Code], [Country]. As the data controller, we determine how and why your personal data is processed."        },
+            content: "eTrolly is a registered company in United Kingdom, dedicated to providing quality products and excellent customer service."        },
         { 
             title: "2. What Information We Collect and Why", 
             content: "We may collect the following types of personal information:",
@@ -40,14 +41,22 @@ const PrivacyPolicy = () => {
             ]
         },
         { 
-            title: "4. How We Use Your Information", 
-            content: "We use your information for the following purposes:",
-            subsections: [
-                {
-                    content: "Purpose/Activity | Type of Data | Legal Basis\n--------------------------------------------------|---------------------|---------------------\nTo register you as a new customer | Identity, Contact | Performance of a contract, consent\nTo process your orders and manage payments | Identity, Contact, Transaction | Performance of a contract\nTo respond to your queries and provide support | Identity, Contact | Legitimate interest (customer support)\nTo send you marketing communications | Marketing Preferences | Consent, legitimate interest\nTo improve our website and customer experience | Technical, Usage | Legitimate interest"
-                }
+    title: "4. How We Use Your Information", 
+    content: "We use your information for the following purposes:",
+    subsections: [
+        {
+            content: "",
+            table: [
+                ["Purpose/Activity", "Type of Data", "Legal Basis"],
+                ["To register you as a new customer", "Identity, Contact", "Performance of a contract, consent"],
+                ["To process your orders and manage payments", "Identity, Contact, Transaction", "Performance of a contract"],
+                ["To respond to your queries and provide support", "Identity, Contact", "Legitimate interest (customer support)"],
+                ["To send you marketing communications", "Marketing Preferences", "Consent, legitimate interest"],
+                ["To improve our website and customer experience", "Technical, Usage", "Legitimate interest"]
             ]
-        },
+        }
+    ]
+},
         { 
             title: "5. Sharing and Access to Your Information", 
             content: "We limit access to your information to those who need it for their role. This may include:",
@@ -110,7 +119,7 @@ const PrivacyPolicy = () => {
             subsections: [
                 {
                     subtitle: "Contact Methods",
-                    content: "By Email: [email@example.com]\nBy Post: [Store Name], [Street Address], [City], [Postal Code], [Country].\n\nYou also have the right to contact your local data protection authority if you have concerns about our handling of your personal data."
+                    content: "By Email: etrolly@gmail.com\n\nYou also have the right to contact your local data protection authority if you have concerns about our handling of your personal data."
                 }
             ]
         }
@@ -140,9 +149,37 @@ const PrivacyPolicy = () => {
                                         {subsection.subtitle}
                                     </h3>
                                 )}
-                                <p className="text-gray-700 whitespace-pre-line">
-                                    {subsection.content}
-                                </p>
+                                {subsection.content && (
+                                    <p className="text-gray-700 whitespace-pre-line">
+                                        {subsection.content}
+                                    </p>
+                                )}
+                                {subsection.table && (
+                                    <div className="overflow-x-auto mt-4">
+                                        <table className="min-w-full border border-gray-200">
+                                            <thead>
+                                                <tr className="bg-gray-100">
+                                                    {subsection.table[0].map((header, i) => (
+                                                        <th key={i} className="px-4 py-2 text-left border-b border-gray-200">
+                                                            {header}
+                                                        </th>
+                                                    ))}
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {subsection.table.slice(1).map((row, rowIndex) => (
+                                                    <tr key={rowIndex} className={rowIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                                                        {row.map((cell, cellIndex) => (
+                                                            <td key={cellIndex} className="px-4 py-2 border-b border-gray-200">
+                                                                {cell}
+                                                            </td>
+                                                        ))}
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
                             </div>
                         ))}
                     </div>
@@ -154,6 +191,7 @@ const PrivacyPolicy = () => {
             </div>
         </div>
     );
+
 };
 
 export default PrivacyPolicy;
