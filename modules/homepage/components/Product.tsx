@@ -4,8 +4,8 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { v4 as uuidv4 } from 'uuid';
-import { useCart } from '@/components/context/CartContext';
+import { v4 as uuidv4 } from "uuid";
+import { useCart } from "@/components/context/CartContext";
 import { Toaster } from "sonner";
 import { toast } from "sonner";
 
@@ -60,10 +60,13 @@ const Star: React.FC<{ count: number }> = ({ count }) => {
               fill="#D3D3D3"
               xmlns="http://www.w3.org/2000/svg"
             >
-              <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
+              <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
             </svg>
 
-            <div className="absolute inset-0 overflow-hidden" style={{ width: `${fillPercentage * 100}%` }}>
+            <div
+              className="absolute inset-0 overflow-hidden"
+              style={{ width: `${fillPercentage * 100}%` }}
+            >
               <svg
                 width="24"
                 height="24"
@@ -71,7 +74,7 @@ const Star: React.FC<{ count: number }> = ({ count }) => {
                 fill="#FFD700"
                 xmlns="http://www.w3.org/2000/svg"
               >
-                <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
+                <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
               </svg>
             </div>
           </div>
@@ -85,11 +88,12 @@ const Product: React.FC<ProductProps> = ({
   product,
   isInWishlist = false,
   wishlistItemId,
-  onWishlistChange
+  onWishlistChange,
 }) => {
   const router = useRouter();
   const [inWishlist, setInWishlist] = useState(isInWishlist);
-  const [currentWishlistItemId, setCurrentWishlistItemId] = useState(wishlistItemId);
+  const [currentWishlistItemId, setCurrentWishlistItemId] =
+    useState(wishlistItemId);
   const [isWishlistLoading, setIsWishlistLoading] = useState(false);
   const [isCartLoading, setIsCartLoading] = useState(false);
   const [inCart, setInCart] = useState(false);
@@ -105,10 +109,10 @@ const Product: React.FC<ProductProps> = ({
 
   // Generate or retrieve guest cart ID
   useEffect(() => {
-    const storedGuestCartId = localStorage.getItem('guestCartId');
+    const storedGuestCartId = localStorage.getItem("guestCartId");
     if (!storedGuestCartId) {
       const newGuestCartId = uuidv4();
-      localStorage.setItem('guestCartId', newGuestCartId);
+      localStorage.setItem("guestCartId", newGuestCartId);
       setGuestCartId(newGuestCartId);
     } else {
       setGuestCartId(storedGuestCartId);
@@ -117,7 +121,10 @@ const Product: React.FC<ProductProps> = ({
 
   const calculateAverageRating = () => {
     if (!product?.reviews || product.reviews.length === 0) return 0;
-    const totalRating = product.reviews.reduce((sum, review) => sum + review.rating, 0);
+    const totalRating = product.reviews.reduce(
+      (sum, review) => sum + review.rating,
+      0
+    );
     return totalRating / product.reviews.length;
   };
 
@@ -127,7 +134,9 @@ const Product: React.FC<ProductProps> = ({
 
       setIsLoadingStock(true);
       try {
-        const response = await fetch(`/api/products/count?productId=${product.id}`);
+        const response = await fetch(
+          `/api/products/count?productId=${product.id}`
+        );
 
         if (response.ok) {
           const { data } = await response.json();
@@ -158,8 +167,8 @@ const Product: React.FC<ProductProps> = ({
 
   const checkCartStatus = async () => {
     try {
-      const queryParams = userId 
-        ? `userId=${userId}` 
+      const queryParams = userId
+        ? `userId=${userId}`
         : `guestCartId=${guestCartId}`;
 
       const response = await fetch(`/api/cart?${queryParams}`);
@@ -168,7 +177,9 @@ const Product: React.FC<ProductProps> = ({
         const { data } = await response.json();
 
         if (data && data.items) {
-          const cartItem = data.items.find((item: any) => item.productId === product.id);
+          const cartItem = data.items.find(
+            (item: any) => item.productId === product.id
+          );
 
           if (cartItem) {
             setInCart(true);
@@ -184,7 +195,7 @@ const Product: React.FC<ProductProps> = ({
         }
       }
     } catch (error) {
-      throw new Error('Failed to check cart status');
+      throw new Error("Failed to check cart status");
     }
   };
 
@@ -192,7 +203,7 @@ const Product: React.FC<ProductProps> = ({
     e.stopPropagation();
 
     if (!userId) {
-      router.push('/login');
+      router.push("/login");
       return;
     }
 
@@ -200,10 +211,10 @@ const Product: React.FC<ProductProps> = ({
 
     try {
       if (inWishlist && currentWishlistItemId) {
-        const response = await fetch('/api/wishlist', {
-          method: 'DELETE',
+        const response = await fetch("/api/wishlist", {
+          method: "DELETE",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({ userId, itemId: currentWishlistItemId }),
         });
@@ -212,13 +223,13 @@ const Product: React.FC<ProductProps> = ({
           setInWishlist(false);
           setCurrentWishlistItemId(undefined);
           if (onWishlistChange) onWishlistChange();
-          toast.success("Successfully removed item from wishlist")
+          toast.success("Successfully removed item from wishlist");
         }
       } else {
-        const response = await fetch('/api/wishlist', {
-          method: 'POST',
+        const response = await fetch("/api/wishlist", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({ userId, productId: product.id }),
         });
@@ -228,11 +239,11 @@ const Product: React.FC<ProductProps> = ({
           setInWishlist(true);
           setCurrentWishlistItemId(data.data.id);
           if (onWishlistChange) onWishlistChange();
-          toast.success("Successfully added item to wishlist")
+          toast.success("Successfully added item to wishlist");
         }
       }
     } catch (error) {
-      throw new Error('Failed to toggle wishlist status');
+      throw new Error("Failed to toggle wishlist status");
     } finally {
       setIsWishlistLoading(false);
     }
@@ -248,28 +259,27 @@ const Product: React.FC<ProductProps> = ({
     }
 
     setIsCartLoading(true);
-    if(!inCart){
-      openCart();
-    }
+
     try {
-      const cartPayload = userId 
+      const cartPayload = userId
         ? { userId, productId: product.id, quantity }
-        : { 
-            guestCartId, 
-            productId: product.id, 
-            quantity 
+        : {
+            guestCartId,
+            productId: product.id,
+            quantity,
           };
 
       if (inCart && cartItemId) {
+        // Existing remove from cart logic
         const id = cartItemId;
         const response = await fetch(`/api/cart/${id}`, {
-          method: 'DELETE',
+          method: "DELETE",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             ...(userId ? { userId } : { guestCartId }),
-            itemId: cartItemId
+            itemId: cartItemId,
           }),
         });
 
@@ -278,15 +288,14 @@ const Product: React.FC<ProductProps> = ({
           setCartItemId(undefined);
           setCartQuantity(0);
           setQuantity(1);
-          toast.success("Successfully removed item from cart")
-        } else {
-          const errorData = await response.json();
+          toast.success("Successfully removed item from cart");
         }
       } else {
-        const response = await fetch('/api/cart', {
-          method: 'POST',
+        // Add to cart logic
+        const response = await fetch("/api/cart", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify(cartPayload),
         });
@@ -296,36 +305,33 @@ const Product: React.FC<ProductProps> = ({
           setInCart(true);
           setCartItemId(data.data.cartItem.id);
           setCartQuantity(quantity);
-          toast.success("Successfully added item to cart")
-        } else {
-          const errorData = await response.json();
+          toast.success("Successfully added item to cart");
+          openCart(); // Open sidebar only after successful addition
         }
       }
     } catch (error) {
-      throw new Error('Failed to toggle cart status');
+      throw new Error("Failed to toggle cart status");
     } finally {
       setIsCartLoading(false);
     }
   };
 
   const updateCartQuantity = async (newQuantity: number) => {
-    if (!userId && !guestCartId || !cartItemId || !inCart) return;
+    if ((!userId && !guestCartId) || !cartItemId || !inCart) return;
 
     setIsUpdatingCart(true);
 
     try {
-      const queryParams = userId 
-        ? { userId } 
-        : { guestCartId };
+      const queryParams = userId ? { userId } : { guestCartId };
 
       const response = await fetch(`/api/cart/${cartItemId}`, {
-        method: 'PATCH',
+        method: "PATCH",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           ...queryParams,
-          quantity: newQuantity
+          quantity: newQuantity,
         }),
       });
 
@@ -359,12 +365,16 @@ const Product: React.FC<ProductProps> = ({
   };
 
   const formatPrice = (price: unknown): string => {
-    const numericPrice = Number(price) || 0;  
+    const numericPrice = Number(price) || 0;
     return `£${numericPrice.toFixed(2)}`;
   };
-  const discountPercentage = product.regularPrice > product.salePrice
-    ? Math.round(((product.regularPrice - product.salePrice) / product.regularPrice) * 100)
-    : 0;
+  const discountPercentage =
+    product.regularPrice > product.salePrice
+      ? Math.round(
+          ((product.regularPrice - product.salePrice) / product.regularPrice) *
+            100
+        )
+      : 0;
 
   return (
     <div
@@ -394,9 +404,7 @@ const Product: React.FC<ProductProps> = ({
             strokeWidth="2"
             xmlns="http://www.w3.org/2000/svg"
           >
-            <path
-              d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
-            />
+            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
           </svg>
         )}
       </button>
@@ -430,7 +438,10 @@ const Product: React.FC<ProductProps> = ({
           </div>
           <div className="flex items-center min-h-12">
             {product.inStock && (
-              <div className="flex items-center justify-between" onClick={(e) => e.stopPropagation()}>
+              <div
+                className="flex items-center justify-between"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <div className="text-xs text-gray-500">
                   {isLoadingStock ? (
                     <div className="w-3 h-3 border-2 border-gray-300 border-t-amber-500 rounded-full animate-spin"></div>
@@ -455,18 +466,18 @@ const Product: React.FC<ProductProps> = ({
         <button
           onClick={handleCartToggle}
           disabled={isCartLoading || (!product.inStock && !inCart)}
-          className={`w-full mt-2 py-2 px-4  ${inCart
-            ? 'bg-red-500 hover:bg-red-600 text-white'
-            : 'bg-amber-500 hover:bg-amber-600 text-white'
-            } font-semibold transition-colors flex items-center justify-center ${!product.inStock && !inCart ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
+          className={`w-full mt-2 py-2 px-4  ${
+            inCart
+              ? "bg-red-500 hover:bg-red-600 text-white"
+              : "bg-amber-500 hover:bg-amber-600 text-white"
+          } font-semibold transition-colors flex items-center justify-center ${
+            !product.inStock && !inCart ? "opacity-50 cursor-not-allowed" : ""
+          }`}
         >
           {isCartLoading ? (
             <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
           ) : null}
-          <span>
-            {inCart ? "Remove from cart" : "Add to cart"}
-          </span>
+          <span>{inCart ? "Remove from cart" : "Add to cart"}</span>
           <svg
             className="ml-2"
             width="18"
@@ -492,7 +503,7 @@ const Product: React.FC<ProductProps> = ({
           </svg>
         </button>
       </div>
-      <Toaster position="top-right"/>
+      <Toaster position="top-right" />
     </div>
   );
 };
