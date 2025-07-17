@@ -215,7 +215,7 @@ body {
         <p style="color: #000000;">We noticed that you registered on <b>${role === "DOCTOR" ? "AVA HEALTH" : "eTrolly"}</b> as a <b>${role === "DOCTOR" ? "DOCTOR" : "PATIENT"}</b> but your profile is incomplete. To ensure you get the best experience and access all features, please take a moment to complete your profile.</p>
   
         
-        <p style="color: #000000;">If you have any questions or need assistance, feel free to contact us at sajeelashiq1@gmail.com </p>
+        <p style="color: #000000;">If you have any questions or need assistance, feel free to contact us at etrolly.shop.co.uk@gmail.com </p>
         <p style="color: #000000;">We're here to support you every step of the way!</p>
 
   

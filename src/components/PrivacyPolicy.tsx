@@ -119,7 +119,7 @@ const PrivacyPolicy = () => {
             subsections: [
                 {
                     subtitle: "Contact Methods",
-                    content: "By Email: etrolly@gmail.com\n\nYou also have the right to contact your local data protection authority if you have concerns about our handling of your personal data."
+                    content: "By Email: etrolly.shop.co.uk@gmail.com\n\nYou also have the right to contact your local data protection authority if you have concerns about our handling of your personal data."
                 }
             ]
         }

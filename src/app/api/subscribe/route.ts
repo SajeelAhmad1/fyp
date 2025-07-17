@@ -25,7 +25,7 @@ async function sendSubscriptionEmail(email: string, token: string) {
   });
   
   await transporter.sendMail({
-    from: '"eTrolly" <sajeelashiq1@gmail.com>',
+    from: '"eTrolly" <etrolly.shop.co.uk@gmail.com>',
     to: email,
     subject: "Subscription Confirmation - eTrolly",
     html: `

@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
       });
         
       await transporter.sendMail({
-        from: '"eTrolly" <sajeelashiq1@gmail.com>',
+        from: '"eTrolly" <etrolly.shop.co.uk@gmail.com>',
         to: email,
         subject: "Your OTP Code - eTrolly",
         html: `
