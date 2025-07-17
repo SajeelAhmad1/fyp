@@ -105,60 +105,81 @@ export const authOptions: AuthOptions = {
     }),
   ],
   callbacks: {
-    async signIn({ user, account }) {
+    async signIn({ user, account, profile }) {
       if (account?.provider === "google") {
         const existingUser = await prisma.user.findUnique({
           where: { email: user.email },
+          include: { customerProfile: true },
         });
 
         if (!existingUser) {
-          const [firstName = "", lastName = ""] = (user.name || "").split(" ");
-
-          // 1. Create user
           const newUser = await prisma.user.create({
             data: {
               email: user.email!,
               verified: true,
               loginType: "GOOGLE",
               role: "CUSTOMER",
+              customerProfile: {
+                create: {
+                  firstName: (profile as any)?.given_name || user.name || '',
+                  lastName: (profile as any)?.family_name || user.name || '',
+                  imageUrl: user.image || null,
+                }
+              }
             },
+            include: { customerProfile: true },
           });
-
-          // 2. Create customer profile
-          await prisma.customerProfile.create({
-            data: {
-              userId: newUser.id,
-              firstName,
-              lastName,
-              imageUrl: user.image || null,
-            },
-          });
+          user.id = newUser.id;
+          (user as any).customerProfile = newUser.customerProfile;
+        } else {
+          user.id = existingUser.id;
+          (user as any).customerProfile = existingUser.customerProfile;
+          
+          // Create profile if it doesn't exist
+          if (!existingUser.customerProfile) {
+            const customerProfile = await prisma.customerProfile.create({
+              data: {
+                userId: existingUser.id,
+                firstName: (profile as any)?.given_name || user.name || '',
+                lastName: (profile as any)?.family_name || user.name || '',
+                imageUrl: user.image || null,
+              }
+            });
+            (user as any).customerProfile = customerProfile;
+          }
         }
       }
       return true;
     },
     async jwt({ token, user, account }) {
       if (account && user) {
-        return {
+        token = {
           ...token,
           id: user.id,
           email: user.email,
-          role: user.role || ROLE.CUSTOMER,
+          role: (user as any).role || ROLE.CUSTOMER,
           loginType: account.provider === "google" ? "GOOGLE" : "CREDENTIALS",
+          customerProfile: (user as any).customerProfile || null,
+          verified: (user as any).verified,
+          name: (user as any).customerProfile 
+            ? `${(user as any).customerProfile.firstName} ${(user as any).customerProfile.lastName}`.trim()
+            : '',
         };
       }
       return token;
     },
     async session({ session, token }) {
-      return {
-        ...session,
-        user: {
-          id: token.id,
-          email: token.email,
-          role: token.role,
-          loginType: token.loginType,
-        },
+      session.user = {
+        ...session.user,
+        id: token.id,
+        email: token.email,
+        name: token.name,
+        role: token.role,
+        loginType: token.loginType,
+        customerProfile: token.customerProfile,
+        verified: token.verified,
       };
+      return session;
     },
     async redirect({ url, baseUrl }) {
       return url.startsWith(baseUrl) ? url : baseUrl;

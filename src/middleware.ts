@@ -4,20 +4,17 @@ import { getToken } from "next-auth/jwt";
 
 // Define protected paths
 const protectedPaths = [
-  "/doctor/dashboard",
-  "/doctor/patient-listings",
-  "/doctor/merckandmanuals",
-  "/doctor/virtual-visits",
-  "/doctor/drugs-and-medications",
-  "/doctor/prescription-writer",
-  "/doctor/appointments",
-  "/doctor/reports-and-referrals",
-  "/doctor/health-tools",
-  "/doctor/pharma-cme",
-  "/doctor/supply-ordering",
-  "/doctor/billing",
-  "/doctor/med-advisory",
-  "/doctor/my-emr",
+  "/account",
+  "/account/change-password",
+  "/account/edit-profile",
+  "/account/wishlist",
+  "/admin",
+  "/admin/add-product",
+  "/admin/categories",
+  "/admin/orders",
+  "/admin/products",
+  "/admin/sub-categories",
+  "/profile",
 ];
 
 export async function middleware(req: NextRequest) {
@@ -74,20 +71,8 @@ export async function middleware(req: NextRequest) {
 // Middleware configuration
 export const config = {
   matcher: [
-    "/doctor/dashboard/:path*",
-    "/doctor/patient-listings/:path*",
-    "/doctor/merckandmanuals/:path*",
-    "/doctor/virtual-visits/:path*",
-    "/doctor/drugs-and-medications/:path*",
-    "/doctor/prescription-writer/:path*",
-    "/doctor/appointments/:path*",
-    "/doctor/reports-and-referrals/:path*",
-    "/doctor/health-tools/:path*",
-    "/doctor/pharma-cme/:path*",
-    "/doctor/supply-ordering/:path*",
-    "/doctor/billing/:path*",
-    "/doctor/med-advisory/:path*",
-    "/doctor/my-emr/:path*",
-    "/.well-known/assetlinks.json",
+    "/account/:path*",
+    "/admin/:path*",
+    "/profile/:path*",
   ],
 };

@@ -7,17 +7,17 @@ import Image from "next/image";
 
 export default function ProfileDetails() {
   useEffect(() => {
-    document.title = "Profile - Lyalla and Lora";
+    document.title = "Profile - eTrolly";
     const metaDescription = document.querySelector("meta[name='description']");
     if (metaDescription) {
       metaDescription.setAttribute(
         "content",
-        "Setup your profile on Lyalla and Lora"
+        "Setup your profile on eTrolly"
       );
     } else {
       const newMetaDescription = document.createElement("meta");
       newMetaDescription.name = "description";
-      newMetaDescription.content = "Setup your profile on Lyalla and Lora";
+      newMetaDescription.content = "Setup your profile on eTrolly";
       document.head.appendChild(newMetaDescription);
     }
   }, []);

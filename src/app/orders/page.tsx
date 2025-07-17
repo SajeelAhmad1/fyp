@@ -1,3 +1,4 @@
+import Footer from "@/common/components/layouts/FooterMenu";
 import HeaderBottom from "@/common/components/layouts/HeaderBottom";
 import HeaderTop from "@/common/components/layouts/HeaderTop";
 import Navigation from "@/common/components/layouts/Navigation";
@@ -11,6 +12,7 @@ const Page = () =>{
         <HeaderBottom/>
         <Navigation/>
         <Orders/>
+        <Footer/>
         </>
     )
 }

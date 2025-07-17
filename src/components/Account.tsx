@@ -58,6 +58,8 @@ export default function Account() {
         country: ""
     };
 
+    console.log("Profile Data:", safeProfile);
+
     return (
         <div className="container mx-auto px-4 py-8">
             {/* Tab Navigation */}
@@ -168,20 +170,20 @@ export default function Account() {
                                         <span>Change Password</span>
                                         <span>→</span>
                                     </button>
-                                    <button 
+                                    {/* <button 
                                         onClick={() => router.push("/account/communication-preferences")}
                                         className="w-full text-left flex justify-between items-center border p-4 rounded hover:bg-gray-50"
                                     >
                                         <span>Communication Preferences</span>
                                         <span>→</span>
-                                    </button>
-                                    <button 
+                                    </button> */}
+                                    {/* <button 
                                         onClick={() => router.push("/account/delete-account")}
                                         className="w-full text-left flex justify-between items-center border p-4 rounded hover:bg-gray-50 text-red-600"
                                     >
                                         <span>Delete Account</span>
                                         <span>→</span>
-                                    </button>
+                                    </button> */}
                                 </div>
                             </div>
                         </div>

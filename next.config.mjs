@@ -1,6 +1,8 @@
-// next.config.mjs - ES Module version
+// next.config.mjs
 const nextConfig = {
-  // your configuration here
+  images: {
+    domains: ['lh3.googleusercontent.com'],
+  },
 };
 
 export default nextConfig;

@@ -6,17 +6,17 @@ import Image from "next/image";
 
 export default function Home() {
   useEffect(() => {
-    document.title = "Register - Lyalla and Lora";
+    document.title = "Register - eTrolly";
     const metaDescription = document.querySelector("meta[name='description']");
     if (metaDescription) {
       metaDescription.setAttribute(
         "content",
-        "Register yourself on Lyalla and Lora"
+        "Register yourself on eTrolly"
       );
     } else {
       const newMetaDescription = document.createElement("meta");
       newMetaDescription.name = "description";
-      newMetaDescription.content = "Register yourself on Lyalla and Lora";
+      newMetaDescription.content = "Register yourself on eTrolly";
       document.head.appendChild(newMetaDescription);
     }
   }, []);
@@ -41,11 +41,11 @@ export default function Home() {
         <div className="w-full text-center text-black mt-5 space-y-2">
           <p className="text-sm md:text-[15.28px] leading-[20.78px]">
             By Proceeding, You Agree To The <br />
-            <a href="#" className="text-blue-500">
+            <a href="/terms-and-conditions" className="text-blue-500">
               Terms of Service
             </a>{" "}
             And{" "}
-            <a href="#" className="text-blue-500">
+            <a href="/privacy-policy" className="text-blue-500">
               Privacy Policy
             </a>
           </p>
