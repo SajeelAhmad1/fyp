@@ -115,7 +115,7 @@ const CategoryDropdown = () => {
         >
             <button
                 ref={buttonRef}
-                className="flex items-center gap-1 text-[#FFFFFF] font-inter font-medium text-[20px] leading-[150%] tracking-[0%] align-middle hover:text-amber-300 transition-colors px-3 py-6"
+                className="flex items-center gap-1 text-[#000000] font-inter font-medium text-[20px] leading-[150%] tracking-[0%] align-middle hover:text-amber-300 transition-colors px-3 py-6"
                 onClick={toggleDropdown}
             >
                 Catalog

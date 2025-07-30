@@ -217,13 +217,13 @@ const HeaderBottom = () => {
           {/* Mobile controls: Search icon and hamburger */}
           <div className="flex items-center md:hidden">
             <button
-              className="p-2 text-white focus:outline-none"
+              className="p-2 text-black focus:outline-none"
               onClick={toggleSearch}
             >
               <Search size={24} />
             </button>
             <button
-              className="p-2 text-white focus:outline-none"
+              className="p-2 text-black focus:outline-none"
               onClick={toggleMobileMenu}
             >
               {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
