@@ -46,16 +46,16 @@ function ClientLoginForm() {
     try {
       const result = await signIn("google", {
         redirect: false,
-        callbackUrl: from || "/"
+        callbackUrl: from || "/",
       });
-  
+
       if (result?.error) {
         toast.error(result.error || "Failed to sign in with Google");
       } else {
         // Wait for session to update
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise((resolve) => setTimeout(resolve, 500));
         const updatedSession = await update();
-        
+
         if (updatedSession?.user) {
           redirectBasedOnRole(updatedSession.user);
         } else {
@@ -112,16 +112,16 @@ function ClientLoginForm() {
               callbackUrl: "/",
             });
             setSubmitting(false);
-        
+
             if (result?.error) {
               toast.error("Error", {
                 description: "Incorrect email or password",
               });
             } else {
               // Wait for session to update
-              await new Promise(resolve => setTimeout(resolve, 500));
+              await new Promise((resolve) => setTimeout(resolve, 500));
               const updatedSession = await update();
-              
+
               if (updatedSession?.user) {
                 redirectBasedOnRole(updatedSession.user);
               } else {
@@ -204,12 +204,16 @@ function ClientLoginForm() {
 
               <button
                 type="submit"
-                className={`bg-[#F19B12] rounded-md text-base font-medium text-white py-2 ${
+                className={`bg-gradient-to-br from-indigo-400 via-purple-500 to-pink-300 rounded-md text-base font-medium text-white py-2 ${
                   isSubmitting || loading ? "opacity-50 cursor-not-allowed" : ""
                 }`}
                 disabled={isSubmitting || loading}
               >
-                {loading ? "Loading..." : isSubmitting ? "Logging in..." : "Login"}
+                {loading
+                  ? "Loading..."
+                  : isSubmitting
+                  ? "Logging in..."
+                  : "Login"}
               </button>
             </div>
           </Form>
@@ -222,28 +226,30 @@ function ClientLoginForm() {
         <div className="border-t-[1px] border-solid border-black flex-grow"></div>
       </div>
 
-      <button
-        onClick={handleGoogleSignIn}
-        disabled={googleLoading}
-        className={`flex justify-center items-center py-2 w-full bg-white font-custom text-base font-normal text-black border-[#F19B12] border-2 rounded-md ${
-          googleLoading ? "opacity-50 cursor-not-allowed" : ""
-        }`}
-      >
-        {googleLoading ? (
-          <span>Signing in...</span>
-        ) : (
-          <>
-            <Image
-              width={24}
-              height={24}
-              src={googleLogo.src}
-              alt="Google Logo"
-              className="w-6 h-6 mr-2"
-            />
-            <span>Continue with Google</span>
-          </>
-        )}
-      </button>
+      <div className="w-full p-[2px] rounded-md bg-gradient-to-br from-indigo-400 via-purple-500 to-pink-300">
+        <button
+          onClick={handleGoogleSignIn}
+          disabled={googleLoading}
+          className={`flex justify-center items-center py-2 w-full bg-white font-custom text-base font-normal text-black rounded-md ${
+            googleLoading ? "opacity-50 cursor-not-allowed" : ""
+          }`}
+        >
+          {googleLoading ? (
+            <span>Signing in...</span>
+          ) : (
+            <>
+              <Image
+                width={24}
+                height={24}
+                src={googleLogo.src}
+                alt="Google Logo"
+                className="w-6 h-6 mr-2"
+              />
+              <span>Continue with Google</span>
+            </>
+          )}
+        </button>
+      </div>
 
       <p className="text-center text-black leading-[25.48px] pt-3">
         Do not have an account?{" "}
@@ -254,7 +260,7 @@ function ClientLoginForm() {
           Sign Up
         </Link>
       </p>
-      <Toaster position="top-right"/>
+      <Toaster position="top-right" />
     </div>
   );
 }

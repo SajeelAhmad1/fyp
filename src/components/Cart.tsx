@@ -329,7 +329,7 @@ const CartDisplay: React.FC = () => {
                 <p className="text-gray-600 mb-4">Add some products to your cart to see them here.</p>
                 <button
                     onClick={() => router.push('/products')}
-                    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+                    className="bg-gradient-to-br from-indigo-400 via-purple-500 to-pink-300 text-white px-4 py-2 rounded transition-colors">
                     Continue Shopping
                 </button>
             </div>
@@ -369,7 +369,7 @@ const CartDisplay: React.FC = () => {
 
                         <div className="flex-grow px-4">
                             <h3 className="font-medium">{item.product.name}</h3>
-                            <p className="text-gray-500 text-sm">{item.product.shortDescription}</p>
+                            <p className="text-gray-500 text-sm">{item.product.shortDescription.slice(0, 100) + "..."}</p>
 
                             {item.product.color && item.product.color.length > 0 && (
                                 <div className="flex items-center mt-1">
@@ -440,7 +440,7 @@ const CartDisplay: React.FC = () => {
                     <button
                         onClick={handleProceedToCheckout}
                         disabled={isCreatingOrder}
-                        className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors disabled:bg-blue-400 disabled:cursor-not-allowed"
+                        className="bg-gradient-to-br from-indigo-400 via-purple-500 to-pink-300 text-white px-6 py-2 rounded  transition-colors disabled:bg-blue-400 disabled:cursor-not-allowed"
                     >
                         {isCreatingOrder ? 'Creating Order...' : 'Proceed to Checkout'}
                     </button>
@@ -469,7 +469,7 @@ const CartDisplay: React.FC = () => {
                             </button>
                             <button
                                 onClick={handleEmailSubmit}
-                                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                                className="px-4 py-2 bg-gradient-to-br from-indigo-400 via-purple-500 to-pink-300 text-white rounded "
                             >
                                 Continue
                             </button>

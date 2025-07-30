@@ -564,7 +564,7 @@ const ProductDetails: React.FC = () => {
             )}
 
             <div className="flex-col gap-2.5 flex">
-              <div className="text-sky-900 font-semibold text-2xl">{product.name}</div>
+              <div className="text-gray-900 font-semibold text-2xl">{product.name}</div>
               {product.discount > 0 ? (
                 <div className="flex items-center gap-3">
                   <div className="text-red-600 text-2xl font-semibold">
@@ -672,7 +672,7 @@ const ProductDetails: React.FC = () => {
               <button
                 onClick={handleCartToggle}
                 disabled={product.stock <= 0 && !inCart}
-                className={`w-full sm:w-56 h-16 text-white text-lg font-medium disabled:bg-gray-400 disabled:cursor-not-allowed ${inCart ? 'bg-red-500 hover:bg-red-600' : 'bg-amber-500 hover:bg-amber-600'
+                className={`w-full sm:w-56 h-16 text-white text-lg font-medium disabled:bg-gray-400 disabled:cursor-not-allowed ${inCart ? 'bg-red-500 hover:bg-red-600' : 'bg-gray-900'
                   }`}
               >
                 {isCartLoading ? (
@@ -686,7 +686,7 @@ const ProductDetails: React.FC = () => {
               <button
                 onClick={handleBuyNow}
                 disabled={product.stock <= 0 || isCreatingOrder}
-                className='w-full sm:w-56 h-16 bg-amber-500 hover:bg-amber-600 text-white text-lg font-medium disabled:bg-gray-400 disabled:cursor-not-allowed'
+                className='w-full sm:w-56 h-16 bg-gray-900 text-white text-lg font-medium disabled:bg-gray-400 disabled:cursor-not-allowed'
               >
                 {isCreatingOrder ? 'Processing...' : 'Buy it now'}
               </button>
@@ -723,7 +723,7 @@ const ProductDetails: React.FC = () => {
       {/* Product description and reviews */}
       <div className='p-5 flex flex-col justify-center items-center m-auto'>
         <Card className="w-[85%] p-8 flex flex-col gap-3 border border-grey-200">
-          <span className='font-semibold text-sky-900 text-2xl mb-2'>Product Description</span>
+          <span className='font-semibold text-gray-900 text-2xl mb-2'>Product Description</span>
           <div className="text-gray-800">
             {product.shortDescription || 'No description available for this product.'}
           </div>
@@ -732,7 +732,7 @@ const ProductDetails: React.FC = () => {
           </div>
         </Card>
         <Card className="w-[85%] p-8 flex flex-col gap-3 mt-5">
-          <span className='font-semibold text-sky-900 text-xl'>Customer Reviews</span>
+          <span className='font-semibold text-gray-900 text-xl'>Customer Reviews</span>
 
           {product.reviews && product.reviews.length > 0 ? (
             <div className="flex flex-col gap-6 mt-4">

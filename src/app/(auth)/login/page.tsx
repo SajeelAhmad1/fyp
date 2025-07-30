@@ -19,7 +19,7 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="relative min-h-screen min-w-full grid grid-cols-1 md:grid-cols-2 bg-white">
+    <div className="relative min-h-screen min-w-full grid grid-cols-1">
       {/* Left Section - Login Form */}
       <section className="relative z-10 w-full h-full flex flex-col justify-center items-center px-4 space-y-8 py-12">
         {/* Logo */}
@@ -191,15 +191,7 @@ export default function Home() {
         {/* Footer Links */}
       </section>
 
-      {/* Right Section - Visual Content */}
-      <div className="hidden md:flex relative ">
-        <Image
-          src={loginImg.src}
-          alt="Login Illustration"
-          fill
-          className="object-fill"
-        />
-      </div>
+      
     </div>
   );
 }

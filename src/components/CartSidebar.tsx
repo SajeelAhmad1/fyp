@@ -437,7 +437,7 @@ const CartSidebar = () => {
               <button
                 onClick={handleProceedToCheckout}
                 disabled={isCreatingOrder}
-                className="w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed"
+                className="w-full py-2 bg-gradient-to-br from-indigo-400 via-purple-500 to-pink-300 text-white rounded hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed"
               >
                 {isCreatingOrder ? 'Creating Order...' : 'Proceed to Checkout'}
               </button>
@@ -477,7 +477,7 @@ const CartSidebar = () => {
               </button>
               <button
                 onClick={handleEmailSubmit}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                className="px-4 py-2 bg-gradient-to-br from-indigo-400 via-purple-500 to-pink-300 text-white rounded hover:bg-blue-700"
               >
                 Continue
               </button>

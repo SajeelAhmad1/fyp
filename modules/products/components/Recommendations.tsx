@@ -157,7 +157,7 @@ const Recommendations: React.FC = () => {
 
   return (
     <div className="px-4 sm:px-8 md:px-12 lg:px-20  pb-20">
-      <h1 className="mt-8 md:mt-12 mb-4 md:mb-8 text-cyan-800 text-2xl md:text-3xl lg:text-3xl font-medium text-center md:text-left">
+      <h1 className="mt-8 md:mt-12 mb-4 md:mb-8 text-gray-800 text-2xl md:text-3xl lg:text-3xl font-medium text-center md:text-left">
         You Might Also Like
       </h1>
       <div className="flex justify-center items-center flex-col w-full">

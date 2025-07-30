@@ -1,80 +1,219 @@
-import Button from '@/common/components/elements/Button'
-import { Card } from '@/common/components/elements/Card'
-import DotSlide from '@/common/components/elements/DotSlide'
-import Star from '@/common/components/elements/Star'
-import React from 'react'
+import React, { useState } from 'react'
+import { Heart, Package, Ruler, Weight, Badge, Tag, Waves } from 'lucide-react'
+import foodCover1 from "@/assets/products/foodcover1.jpg";
+import foodCover2 from "@/assets/products/foodcover2.jpg";
+import foodCover3 from "@/assets/products/foodcover3.jpg";
+import petPool from "@/assets/products/petpool3.png";
+import storageBox from "@/assets/products/storagebox1.jpg";
+import petTent from "@/assets/products/pettent2.png";
+import Image from 'next/image';
+
+const Button = ({ children, className, onClick, ...props }:any) => {
+    return (
+        <button 
+            className={`inline-flex items-center justify-center rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background ${className}`}
+            onClick={onClick}
+            {...props}
+        >
+            {children}
+        </button>
+    )
+}
+
+const Card = ({ children, className, ...props }:any) => {
+    return (
+        <div className={`rounded-lg border bg-card text-card-foreground shadow-sm ${className}`} {...props}>
+            {children}
+        </div>
+    )
+}
 
 const TopSeller = () => {
+    const [selectedImage, setSelectedImage] = useState(0)
+    const [isWishlisted, setIsWishlisted] = useState(false)
+
+    // Sample data - replace with your actual data
+    const product = {
+        title: "VINSANI SET OF 3 POP UP FOOD COVERS",
+        originalPrice: 6.29,
+        description: "Designed to cover bowls and plates to keep out pests, while leaving clear view of the food underneath",
+        brand: "Vinsani",
+        height: "40cm",
+        weight: "0.36kg",
+        width: "30cm",
+        depth: "3cm",
+        images: [
+            foodCover1,
+            foodCover2,
+            foodCover3
+        ]
+    }
+
+    const sideProducts = [
+        {
+            title: "Pet Paddling Pool Cat Dog",
+            originalPrice: 17.10,
+            brand: "Unbranded",
+            image: petPool
+        },
+        {
+            title: "Glass Food Storage Container Set With Air Vent Lids",
+            originalPrice: 25.49,
+            brand: "Unbranded",
+            image: storageBox
+        },
+        {
+            title: "Dog Bed Cooling Raised Pet Cot",
+            originalPrice: 29.99,
+            brand: "Unbranded",
+            image: petTent
+        }
+    ]
+
+    const handleProductClick = () => {
+        // Handle product opening logic here
+        console.log('Opening product:', product.title)
+        // You can add navigation logic or modal opening here
+    }
+
     return (
-        <div className="container mx-auto px-4">
-            <div className="flex flex-col lg:flex-row justify-center items-center gap-5 mb-5">
-                <Card className="w-full lg:w-[830px] h-auto lg:h-[500px] p-4 lg:p-0 justify-center items-center gap-5 lg:gap-10 flex flex-col lg:flex-row relative border border-zinc-200">
-                    <img className="p-3 rounded-2xl max-w-full h-auto" src="/assets/img/jbl-bar.png" alt="JBL Bar" />
-                    <div className="justify-center items-center flex absolute bottom-4 lg:bottom-10">
-                        <DotSlide count={1} />
-                    </div>
-                    <div className="flex-col justify-center items-center lg:items-start gap-6 lg:gap-9 inline-flex">
-                        <div className="flex-col justify-center items-center lg:items-start gap-3 lg:gap-4 flex">
-                            <div className="text-sky-900 text-xl font-semibold text-center lg:text-left">JBL bar 2.1 deep bass</div>
-                            <div className="text-neutral-600 text-lg font-semibold">$11,70</div>
-                            <Star count={5} />
+        <div className="container mx-auto px-4 py-6">
+            <div className="flex flex-col xl:flex-row gap-6">
+                {/* Main Product Card */}
+                <Card className="flex-1 p-4 relative overflow-hidden bg-gradient-to-br from-slate-50 to-blue-50 border-slate-200">
+                    {/* Wishlist Button */}
+                    <button 
+                        onClick={() => setIsWishlisted(!isWishlisted)}
+                        className="absolute top-4 right-4 z-10 p-2 bg-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110"
+                    >
+                        <Heart className={`w-5 h-5 ${isWishlisted ? 'fill-red-500 text-red-500' : 'text-gray-400'}`} />
+                    </button>
+
+                    <div className="flex flex-col lg:flex-row gap-8 items-center">
+                        {/* Product Images */}
+                        <div className="flex-1 flex flex-col items-center">
+                            <div className="relative group">
+                                <Image
+                                    width={100}
+                                    height={100} 
+                                    src={product.images[selectedImage]} 
+                                    alt={product.title}
+                                    className="w-full max-w-md h-64 lg:h-80 object-contain rounded-2xl bg-white shadow-lg group-hover:shadow-xl transition-all duration-300"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                            </div>
+                            
+                            {/* Image Thumbnails */}
+                            <div className="flex gap-2 mt-4">
+                                {product.images.map((img, index) => (
+                                    <button
+                                        key={index}
+                                        onClick={() => setSelectedImage(index)}
+                                        className={`w-16 h-16 rounded-lg border-2 overflow-hidden transition-all duration-200 ${
+                                            selectedImage === index 
+                                                ? 'border-blue-500 shadow-lg scale-105' 
+                                                : 'border-gray-200 hover:border-gray-300'
+                                        }`}
+                                    >
+                                        <Image
+                                    width={100}
+                                    height={100} src={img} alt="" className="w-full h-full object-cover" />
+                                    </button>
+                                ))}
+                            </div>
                         </div>
-                        <div className="justify-center items-center gap-2 lg:gap-3 flex flex-wrap">
-                            <button className="w-16 h-16 lg:w-20 lg:h-20 bg-sky-100 rounded-full justify-center items-center hover:bg-sky-200">
-                                <div className="text-amber-500 text-xl lg:text-2xl font-bold">57</div>
-                            </button>
-                            <button className="w-16 h-16 lg:w-20 lg:h-20 bg-sky-100 rounded-full justify-center items-center hover:bg-sky-200">
-                                <div className="text-amber-500 text-xl lg:text-2xl font-bold">11</div>
-                            </button>
-                            <button className="w-16 h-16 lg:w-20 lg:h-20 bg-sky-100 rounded-full justify-center items-center hover:bg-sky-200">
-                                <div className="text-amber-500 text-xl lg:text-2xl font-bold">33</div>
-                            </button>
-                            <button className="w-16 h-16 lg:w-20 lg:h-20 bg-sky-100 rounded-full justify-center items-center hover:bg-sky-200">
-                                <div className="text-amber-500 text-xl lg:text-2xl font-bold">59</div>
-                            </button>
-                        </div>
-                        <div className="justify-center items-center gap-3 lg:gap-5 inline-flex flex-wrap">
-                            <Button className="w-full sm:w-56 h-12 lg:h-14 pl-4 lg:pl-6 justify-between flex items-center bg-blue-300 hover:bg-blue-400 text-slate-800 text-sm lg:text-base font-semibold">
-                                Add to cart
-                                <div className="w-7 h-7 lg:w-8 lg:h-8 bg-amber-500 rounded-full justify-center items-center flex mr-3 lg:mr-4">
-                                    <svg width="16" height="16" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M1.89203 1.9411H3.1399C3.91443 1.9411 4.52402 2.60806 4.45947 3.37543L3.86423 10.5184C3.76382 11.6873 4.68896 12.6914 5.86511 12.6914H13.5029C14.5356 12.6914 15.4392 11.8451 15.5181 10.8196L15.9054 5.44086C15.9914 4.25037 15.0878 3.28219 13.8902 3.28219H4.6316" stroke="white" strokeWidth="1.47531" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round" />
-                                        <path d="M12.1116 16.2844C12.6067 16.2844 13.0081 15.883 13.0081 15.3879C13.0081 14.8928 12.6067 14.4915 12.1116 14.4915C11.6165 14.4915 11.2151 14.8928 11.2151 15.3879C11.2151 15.883 11.6165 16.2844 12.1116 16.2844Z" stroke="white" strokeWidth="1.47531" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round" />
-                                        <path d="M6.37436 16.2844C6.86946 16.2844 7.27081 15.883 7.27081 15.3879C7.27081 14.8928 6.86946 14.4915 6.37436 14.4915C5.87926 14.4915 5.47791 14.8928 5.47791 15.3879C5.47791 15.883 5.87926 16.2844 6.37436 16.2844Z" stroke="white" strokeWidth="1.47531" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round" />
-                                        <path d="M6.91217 6.24408H15.5181" stroke="white" strokeWidth="1.47531" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round" />
-                                    </svg>
+
+                        {/* Product Details */}
+                        <div className="flex-1 space-y-6">
+                            {/* Brand */}
+                            <div className="flex items-center gap-2">
+                                <Badge className="w-4 h-4 text-blue-600" />
+                                <span className="text-blue-600 font-medium text-sm bg-blue-50 px-2 py-1 rounded-full">
+                                    {product.brand}
+                                </span>
+                            </div>
+
+                            {/* Title - Clickable */}
+                            <h2 
+                                className="text-2xl lg:text-3xl font-bold text-slate-800 leading-tight cursor-pointer hover:text-blue-600 transition-colors duration-300"
+                                onClick={handleProductClick}
+                            >
+                                {product.title}
+                            </h2>
+
+                            {/* Price Section - Only Original Price */}
+                            <div className="bg-white p-4 rounded-xl shadow-inner border">
+                                <div className="flex items-center gap-3">
+                                    <span className="text-3xl font-black text-slate-800">
+                                        ${product.originalPrice}
+                                    </span>
                                 </div>
-                            </Button>
-                            <Button className="w-12 sm:w-16 h-12 lg:h-14 bg-blue-300 justify-center flex items-center hover:bg-blue-400">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M15.5289 12.1127C15.5289 14.0601 13.9553 15.6338 12.0079 15.6338C10.0605 15.6338 8.48682 14.0601 8.48682 12.1127C8.48682 10.1653 10.0605 8.59167 12.0079 8.59167C13.9553 8.59167 15.5289 10.1653 15.5289 12.1127Z" stroke="#292D32" strokeWidth="1.47531" strokeLinecap="round" strokeLinejoin="round" />
-                                    <path d="M12.008 20.2465C15.4799 20.2465 18.7157 18.2008 20.968 14.66C21.8532 13.2733 21.8532 10.9423 20.968 9.55549C18.7157 6.01475 15.4799 3.96899 12.008 3.96899C8.53612 3.96899 5.30028 6.01475 3.04798 9.55549C2.1628 10.9423 2.1628 13.2733 3.04798 14.66C5.30028 18.2008 8.53612 20.2465 12.008 20.2465Z" stroke="#292D32" strokeWidth="1.47531" strokeLinecap="round" strokeLinejoin="round" />
-                                </svg>
-                            </Button>
+                            </div>
+
+                            {/* Specifications */}
+                            <div className="grid grid-cols-4 gap-4">
+                                <div className="bg-white p-3 rounded-lg shadow-sm border text-center">
+                                    <Ruler className="w-5 h-5 text-blue-500 mx-auto mb-1" />
+                                    <div className="text-xs text-gray-500">Width</div>
+                                    <div className="font-semibold text-sm">{product.width}</div>
+                                </div>
+                                <div className="bg-white p-3 rounded-lg shadow-sm border text-center">
+                                    <Package className="w-5 h-5 text-green-500 mx-auto mb-1" />
+                                    <div className="text-xs text-gray-500">Height</div>
+                                    <div className="font-semibold text-sm">{product.height}</div>
+                                </div>
+                                <div className="bg-white p-3 rounded-lg shadow-sm border text-center">
+                                    <Weight className="w-5 h-5 text-orange-500 mx-auto mb-1" />
+                                    <div className="text-xs text-gray-500">Weight</div>
+                                    <div className="font-semibold text-sm">{product.weight}</div>
+                                </div>
+                                <div className="bg-white p-3 rounded-lg shadow-sm border text-center">
+                                    <Waves className="w-5 h-5 text-orange-500 mx-auto mb-1" />
+                                    <div className="text-xs text-gray-500">Depth</div>
+                                    <div className="font-semibold text-sm">{product.depth}</div>
+                                </div>
+                            </div>
+
+                            
                         </div>
                     </div>
                 </Card>
-                <div className="flex flex-col w-full lg:w-auto">
-                    <div className="w-full lg:w-[500px] h-auto sm:h-60 rounded-2xl border border-zinc-200 flex-col justify-center items-center gap-4 inline-flex mb-5 cursor-pointer hover:bg-slate-100 p-4">
-                        <div className="flex flex-col sm:flex-row justify-start items-center gap-4 sm:gap-6 lg:gap-12">
-                            <img className="w-full sm:w-60 lg:w-72 h-auto sm:h-36 lg:h-44 p-2 relative rounded-2xl" src="https://source.unsplash.com/288x176?gaming" alt="Gaming" />
-                            <div className="flex-col justify-center items-center sm:items-start gap-2 sm:gap-4 inline-flex mt-3 sm:mt-0">
-                                <div className="text-sky-900 text-lg font-medium text-center sm:text-left">Play game</div>
-                                <div className="text-neutral-600 text-lg font-semibold">$11,70</div>
-                                <Star count={5} />
+
+                {/* Side Products */}
+                <div className="w-full xl:w-96 space-y-6">
+                    {sideProducts.map((item, index) => (
+                        <Card key={index} className="p-4 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer group bg-gradient-to-r from-white to-slate-50">
+                            <div className="flex gap-4">
+                                <div className="relative">
+                                    <Image
+                                    width={96} 
+                                    height={96}
+                                        src={item.image} 
+                                        alt={item.title}
+                                        className="w-24 h-24 object-cover rounded-xl shadow-md group-hover:shadow-lg transition-shadow duration-300"
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                </div>
+                                
+                                <div className="flex-1 space-y-2">
+                                    {/* Brand */}
+                                    <span className="text-blue-600 text-xs font-medium bg-blue-50 px-2 py-0.5 rounded-full">
+                                        {item.brand}
+                                    </span>
+                                    
+                                    {/* Title */}
+                                    <h3 className="font-semibold text-slate-800 text-sm leading-tight group-hover:text-blue-600 transition-colors">
+                                        {item.title}
+                                    </h3>
+                                    
+                                    {/* Price - Only Original Price */}
+                                    <div className="flex items-center gap-2">
+                                        <span className="font-bold text-slate-800">${item.originalPrice}</span>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                    <div className="w-full lg:w-[500px] h-auto sm:h-60 rounded-2xl border border-zinc-200 flex-col justify-center items-center gap-4 inline-flex cursor-pointer hover:bg-slate-100 p-4">
-                        <div className="flex flex-col sm:flex-row justify-start items-center gap-4 sm:gap-6 lg:gap-12">
-                            <img className="w-full sm:w-60 lg:w-72 h-auto sm:h-36 lg:h-44 p-2 relative rounded-2xl" src="https://source.unsplash.com/288x176?laptop" alt="Laptop" />
-                            <div className="flex-col justify-center items-center sm:items-start gap-2 sm:gap-4 inline-flex mt-3 sm:mt-0">
-                                <div className="text-sky-900 text-lg font-medium text-center sm:text-left">Play game</div>
-                                <div className="text-neutral-600 text-lg font-semibold">$11,70</div>
-                                <Star count={5} />
-                            </div>
-                        </div>
-                    </div>
+                        </Card>
+                    ))}
                 </div>
             </div>
         </div>

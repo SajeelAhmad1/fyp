@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import CartSection from "@/common/components/layouts/CartSection";
 import CategoryDropdown from "./CategoryDropdown";
 import { Menu, X, Search } from "lucide-react";
-import Image from "next/image";
 
 const HeaderBottom = () => {
   const router = useRouter();

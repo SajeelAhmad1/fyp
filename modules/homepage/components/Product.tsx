@@ -381,11 +381,11 @@ const Product: React.FC<ProductProps> = ({
       onClick={() => router.push(`/products/${product.id}`)}
       className="w-68 bg-white border border-gray-150 shadow-sm hover:shadow-md transition-shadow duration-300 relative overflow-hidden cursor-pointer"
     >
-      {discountPercentage > 0 && (
+      {/* {discountPercentage > 0 && (
         <div className="absolute top-2 left-0 bg-blue-500 text-white px-2 py-1 text-xs font-medium z-10 flex items-center after:content-[''] after:absolute after:top-0 after:right-0 after:border-t-[14px] after:border-b-[14px] after:border-l-[14px] after:border-t-transparent after:border-b-transparent after:border-l-blue-500 after:translate-x-full">
           -{discountPercentage}%
         </div>
-      )}
+      )} */}
 
       <button
         onClick={handleWishlistToggle}
@@ -393,14 +393,14 @@ const Product: React.FC<ProductProps> = ({
         className="absolute top-2 right-2 z-10"
       >
         {isWishlistLoading ? (
-          <div className="w-4 h-4 border-2 border-gray-300 border-t-amber-500 rounded-full animate-spin"></div>
+          <div className="w-4 h-4 border-2 border-gray-300 border-t-red-600 rounded-full animate-spin"></div>
         ) : (
           <svg
             width="24"
             height="24"
             viewBox="0 0 24 24"
-            fill={inWishlist ? "#FFA500" : "none"}
-            stroke={inWishlist ? "#FFA500" : "#000000"}
+            fill={inWishlist ? "#dc2626" : "none"}
+            stroke={inWishlist ? "#dc2626" : "#000000"}
             strokeWidth="2"
             xmlns="http://www.w3.org/2000/svg"
           >
@@ -427,7 +427,7 @@ const Product: React.FC<ProductProps> = ({
 
         <div className="flex justify-between">
           <div className="flex items-center space-x-2 flex-row mb-2">
-            <span className="text-amber-500 font-bold text-lg">
+            <span className="text-gray-900 font-bold text-lg">
               {formatPrice(product.salePrice)}
             </span>
             {product.regularPrice > product.salePrice && (
@@ -444,7 +444,7 @@ const Product: React.FC<ProductProps> = ({
               >
                 <div className="text-xs text-gray-500">
                   {isLoadingStock ? (
-                    <div className="w-3 h-3 border-2 border-gray-300 border-t-amber-500 rounded-full animate-spin"></div>
+                    <div className="w-3 h-3 border-2 border-gray-300 border-t-gray-900 rounded-full animate-spin"></div>
                   ) : (
                     `${maxStock} available`
                   )}
@@ -468,8 +468,8 @@ const Product: React.FC<ProductProps> = ({
           disabled={isCartLoading || (!product.inStock && !inCart)}
           className={`w-full mt-2 py-2 px-4  ${
             inCart
-              ? "bg-red-500 hover:bg-red-600 text-white"
-              : "bg-amber-500 hover:bg-amber-600 text-white"
+              ? "bg-red-600 hover:bg-red-700 text-white"
+              : "bg-gray-900 text-white"
           } font-semibold transition-colors flex items-center justify-center ${
             !product.inStock && !inCart ? "opacity-50 cursor-not-allowed" : ""
           }`}

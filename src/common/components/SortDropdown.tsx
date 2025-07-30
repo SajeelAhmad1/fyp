@@ -48,7 +48,7 @@ const SortDropdown: React.FC = () => {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 text-sm bg-white border border-gray-300 rounded-md px-3 py-2"
+        className="flex items-center gap-2 text-sm bg-gradient-to-br from-indigo-400 via-purple-500 to-pink-300 border text-white rounded-xl px-3 py-2"
       >
         {currentLabel}
         <ChevronDown size={16} />

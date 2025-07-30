@@ -105,7 +105,7 @@ const SidePriceRange = () => {
               <button
                 key={index}
                 onClick={() => handlePriceRangeClick(range.min, range.max)}
-                className={`block text-sm hover:text-blue-600 w-full text-left py-1 ${
+                className={`block text-sm w-full text-left py-1 ${
                   currentMinPrice === range.min && currentMaxPrice === range.max 
                     ? 'font-medium text-blue-600' 
                     : 'text-gray-700'
@@ -145,8 +145,8 @@ const SidePriceRange = () => {
             <div className="flex space-x-2">
               <button 
                 onClick={handlePriceFilter}
-                className="flex-1 bg-blue-600 text-white rounded-md py-1.5 text-sm hover:bg-blue-700"
-              >
+                className="flex-1 bg-gradient-to-br from-indigo-400 via-purple-500 to-pink-300 text-white rounded-md py-1.5 text-sm"
+              > 
                 Apply
               </button>
               {(currentMinPrice || currentMaxPrice) && (

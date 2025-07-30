@@ -107,7 +107,7 @@ const ProductContent = () => {
         setTotalPages(data.pagination.totalPages);
         setCurrentPage(data.pagination.page);
         setTotalCount(data.pagination.total);
-      } catch (error) {
+      } catch (error:any) {
         throw new Error(`Failed to fetch products: ${error instanceof Error ? error.message : 'Unknown error'}`);
         setProducts([]);
         setDebugInfo(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);

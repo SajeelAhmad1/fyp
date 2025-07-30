@@ -73,7 +73,7 @@ export default function ChangePassword() {
     return (
         <div className="container mx-auto px-4 py-8">
             <div className="max-w-md mx-auto bg-white p-8">
-                <h1 className="text-2xl font-bold mb-6 text-center">Change Password</h1>
+                <h1 className="text-3xl font-semibold mb-6 text-center text-gray-900">Change Password</h1>
                 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     {error && (
@@ -136,7 +136,7 @@ export default function ChangePassword() {
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="w-full bg-blue-800 text-white py-2 px-4 rounded-md hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                            className="w-full bg-gradient-to-br from-indigo-400 via-purple-500 to-pink-300 text-white py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
                         >
                             {isLoading ? "Changing Password..." : "Change Password"}
                         </button>

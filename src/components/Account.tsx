@@ -114,7 +114,7 @@ export default function Account() {
                                 <div className="mt-4">
                                     <button 
                                         onClick={() => router.push("/account/edit-profile")}
-                                        className="bg-blue-800 text-white py-2 px-4 rounded hover:bg-blue-900"
+                                        className="bg-gradient-to-br from-indigo-400 via-purple-500 to-pink-300 text-white py-2 px-4 rounded"
                                     >
                                         Edit Profile
                                     </button>
