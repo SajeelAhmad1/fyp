@@ -18,7 +18,7 @@ type ProductQueryParams = {
 
 // Define type for response
 type ProductsResponse = {
-  products: Array<any>; // Using 'any' here as the product has computed properties
+  products: Array<any>;
   pagination: {
     total: number;
     page: number;
@@ -216,6 +216,7 @@ interface CreateProductRequest {
   size: string[]; 
   discount: number;
   shortDescription: string;
+  shippingCost?: number;
 }
 
 // POST /api/products - Create a new product
@@ -224,7 +225,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<any>> {
     const body: CreateProductRequest = await request.json();
     
     // Validate required fields
-    const { name, description, price, categoryId, discount, isFeatured, isBestChoice, color, size, shortDescription, sku, images } = body;
+    const { name, description, price, categoryId, discount, isFeatured, isBestChoice, color, size, shortDescription, sku, images, shippingCost  } = body;
     
     if (!name || !description || price === undefined || !sku || !images || !Array.isArray(images)) {
       return NextResponse.json(
@@ -250,7 +251,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<any>> {
           color: color || [], 
           size: size || [], 
           shortDescription,
-          vendorId: body.vendorId
+          vendorId: body.vendorId,
+          shippingCost: shippingCost !== undefined && shippingCost !== null ? new Prisma.Decimal(shippingCost) : null,
         }
       });
       
@@ -258,7 +260,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<any>> {
       const formattedProduct = {
         ...product,
         price: parseFloat(product.price.toString()),
-        discount: product.discount ? parseFloat(product.discount.toString()) : 0
+        discount: product.discount ? parseFloat(product.discount.toString()) : 0,
+        shippingCost: product.shippingCost ? parseFloat(product.shippingCost.toString()) : null
       };
       
       return NextResponse.json(formattedProduct, { status: 201 });

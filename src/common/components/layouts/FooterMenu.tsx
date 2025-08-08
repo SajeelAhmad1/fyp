@@ -94,7 +94,7 @@ const Footer = () => {
                     className={`${
                       status === "loading"
                         ? "bg-gray-500"
-                        : "bg-[#F19B12] hover:bg-[#e08a00]"
+                        : "bg-gradient-to-br from-indigo-400 via-purple-500 to-pink-300"
                     } text-white px-3 py-2 rounded-r-md flex items-center justify-center transition-colors`}
                     disabled={status === "loading"}
                   >

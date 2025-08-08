@@ -122,9 +122,9 @@ const CategoryDropdown = () => {
                 <svg width="25" height="25" viewBox="0 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg">
                     {/* Change polygon points to show up/down arrow based on dropdown state */}
                     {isOpen ? (
-                        <polygon points="12.5,9 5,18 20,18" fill="#FFFFFF" />
+                        <polygon points="12.5,9 5,18 20,18" fill="#000000" />
                     ) : (
-                        <polygon points="12.5,18 5,9 20,9" fill="#FFFFFF" />
+                        <polygon points="12.5,18 5,9 20,9" fill="#000000" />
                     )}
                 </svg>
             </button>

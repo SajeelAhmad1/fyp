@@ -6,7 +6,7 @@ interface ProductListSkeletonProps {
   count?: number;
 }
 
-const ProductListSkeleton: React.FC<ProductListSkeletonProps> = ({ count = 8 }) => {
+const ProductListSkeleton: React.FC<ProductListSkeletonProps> = ({ count = 5 }) => {
   const pathname = usePathname();
   const isHomePage = pathname === '/';
   const isProductDetailsPage = pathname !== '/products';

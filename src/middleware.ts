@@ -8,12 +8,12 @@ const protectedPaths = [
   "/account/change-password",
   "/account/edit-profile",
   "/account/wishlist",
-  "/admin",
-  "/admin/add-product",
-  "/admin/categories",
-  "/admin/orders",
-  "/admin/products",
-  "/admin/sub-categories",
+  // "/admin",
+  // "/admin/add-product",
+  // "/admin/categories",
+  // "/admin/orders",
+  // "/admin/products",
+  // "/admin/sub-categories",
   "/profile",
 ];
 
@@ -72,7 +72,7 @@ export async function middleware(req: NextRequest) {
 export const config = {
   matcher: [
     "/account/:path*",
-    "/admin/:path*",
+    // "/admin/:path*",
     "/profile/:path*",
   ],
 };

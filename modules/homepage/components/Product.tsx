@@ -106,7 +106,7 @@ const Product: React.FC<ProductProps> = ({
   const [isLoadingStock, setIsLoadingStock] = useState(true);
   const [maxStock, setMaxStock] = useState<number>(0);
   const [guestCartId, setGuestCartId] = useState<string | null>(null);
-
+  console.log("product", product);
   // Generate or retrieve guest cart ID
   useEffect(() => {
     const storedGuestCartId = localStorage.getItem("guestCartId");

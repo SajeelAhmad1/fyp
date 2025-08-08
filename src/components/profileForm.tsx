@@ -244,7 +244,7 @@ const CustomerProfileForm: React.FC = () => {
         <button
           type="submit"
           disabled={loading}
-          className="mt-6 w-full py-2 px-4 bg-[#F19B12] text-white rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#F19B12] disabled:bg-[#F19B12]"
+          className="mt-6 w-full py-2 px-4 bg-gradient-to-br from-indigo-400 via-purple-500 to-pink-300 text-white rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2"
         >
           {loading ? "Saving..." : user?.isProfileComplete ? "Update Profile" : "Create Profile"}
         </button>

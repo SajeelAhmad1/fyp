@@ -10,6 +10,7 @@ interface ProductFormData {
   sku: string;
   images: string[];
   categoryId: null;
+  shippingCost: string; // Added shipping cost field
 }
 
 const ProductCreationForm = () => {
@@ -26,6 +27,7 @@ const ProductCreationForm = () => {
     sku: '',
     images: [],
     categoryId: null,
+    shippingCost: '', // Added shipping cost to initial state
   });
 
   // Handle input changes with proper type handling
@@ -73,12 +75,12 @@ const ProductCreationForm = () => {
     setSuccess(false);
     
     try {
-      // Create a submission object with properly typed values
       const submissionData = {
         ...formData,
-        price: parseFloat(formData.price), // Convert price to number
-        stock: Number(formData.stock), // Ensure stock is a number
-        categoryId: null, // Explicitly set categoryId to null
+        price: parseFloat(formData.price),
+        stock: Number(formData.stock),
+        categoryId: null,
+        shippingCost: formData.shippingCost ? parseFloat(formData.shippingCost) : null, // Handle optional shipping cost
       };
       
       const response = await fetch('/api/products', {
@@ -106,6 +108,7 @@ const ProductCreationForm = () => {
         sku: '',
         images: [],
         categoryId: null,
+        shippingCost: '', // Reset shipping cost
       });
       
     } catch (err) {
@@ -162,7 +165,7 @@ const ProductCreationForm = () => {
           />
         </div>
         
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-3 gap-4">
           <div className="mb-4">
             <label className="block text-[#000000] font-medium mb-2" htmlFor="price">
               Price*
@@ -177,6 +180,23 @@ const ProductCreationForm = () => {
               step="0.01"
               min="0"
               required
+            />
+          </div>
+          
+          <div className="mb-4">
+            <label className="block text-[#000000] font-medium mb-2" htmlFor="shippingCost">
+              Shipping Cost
+            </label>
+            <input
+              type="number"
+              id="shippingCost"
+              name="shippingCost"
+              value={formData.shippingCost}
+              onChange={handleChange}
+              className="w-full p-2 border text-[#000000] rounded"
+              step="0.01"
+              min="0"
+              placeholder="Leave empty for free shipping"
             />
           </div>
           

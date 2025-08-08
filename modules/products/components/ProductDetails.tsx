@@ -721,7 +721,7 @@ const ProductDetails: React.FC = () => {
       </div>
 
       {/* Product description and reviews */}
-      <div className='p-5 flex flex-col justify-center items-center m-auto'>
+      <div className='p-0 md:p- flex flex-col  m-auto'>
         <Card className="w-[85%] p-8 flex flex-col gap-3 border border-grey-200">
           <span className='font-semibold text-gray-900 text-2xl mb-2'>Product Description</span>
           <div className="text-gray-800">
