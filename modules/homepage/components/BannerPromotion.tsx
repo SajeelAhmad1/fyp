@@ -1,8 +1,11 @@
 import React from 'react'
 import Image from 'next/image'
-import petTent from "@/assets/products/pettent1.png"
-import petPool from "@/assets/products/petpool3.png"
-import storageBox from "@/assets/products/storagebox1.jpg"
+import earPlugs from "@/assets/products/ear-plugs.jpeg"
+import foodChopper from "@/assets/products/food-chopper.jpg"
+import uno from "@/assets/products/uno.jpeg"
+import airBed from "@/assets/products/air-bed.jpeg"
+import medKit from "@/assets/products/med-kit.jpeg";
+import { useRouter } from 'next/navigation'
 
 const Button = ({ children, className, onClick, ...props }:any) => {
     return (
@@ -16,11 +19,8 @@ const Button = ({ children, className, onClick, ...props }:any) => {
     )
 }
 const BannerPromotion = () => {
-    const handleShopNow = () => {
-        // Navigate to /products page
-        window.location.href = '/products'
-    }
 
+    const router = useRouter();
     return (
         <div className="container mx-auto px-4">
             <div className="relative m-4 md:m-6 lg:m-10">
@@ -57,12 +57,12 @@ const BannerPromotion = () => {
                                     <Image
                                     width={100}
                                     height={100}
-                                        src={petTent}
-                                        alt="Pet camping tent"
+                                        src={earPlugs}
+                                        alt="Ear plugs"
                                         className="w-16 md:w-20 lg:w-24 h-16 md:h-20 lg:h-24 object-contain rounded-xl"
                                     />
                                     <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 bg-purple-500 text-white text-xs px-2 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
-                                        Tent
+                                        Ear-Plugs
                                     </div>
                                 </div>
                             </div>
@@ -73,12 +73,12 @@ const BannerPromotion = () => {
                                     <Image
                                     width={100}
                                     height={100}
-                                        src={petPool}
-                                        alt="Pet pool"
+                                        src={foodChopper}
+                                        alt="Food chopper"
                                         className="w-16 md:w-20 lg:w-24 h-16 md:h-20 lg:h-24 object-contain rounded-xl"
                                     />
                                     <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 bg-purple-500 text-white text-xs px-2 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
-                                        Pool
+                                        Food-Chopper
                                     </div>
                                 </div>
                             </div>
@@ -90,13 +90,13 @@ const BannerPromotion = () => {
                                     <Image
                                     width={100}
                                     height={100}
-                                        src={storageBox}
-                                        alt="Storage box"
+                                        src={uno}
+                                        alt="uno"
                                         className="w-16 md:w-20 lg:w-24 h-16 md:h-20 lg:h-24 object-contain rounded-xl"
                                     />
                                     
                                     <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 bg-purple-500 text-white text-xs px-2 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
-                                        Storage
+                                        uno
                                     </div>
                                 </div>
                             </div>
@@ -117,7 +117,7 @@ const BannerPromotion = () => {
                             </div>
                             
                             <div className="text-white text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold drop-shadow-2xl tracking-tight leading-tight">
-                                Sale up to
+                                Sale upto
                             </div>
                             <div className="relative">
                                 <div className="text-white text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-black drop-shadow-2xl leading-none">
@@ -127,20 +127,20 @@ const BannerPromotion = () => {
                                 <div className="absolute -bottom-2 right-0 w-16 md:w-20 lg:w-24 h-1 bg-gradient-to-l from-orange-400 to-pink-400 rounded-full"></div>
                             </div>
                             <div className="text-purple-100 text-base md:text-lg lg:text-xl font-semibold mt-3 tracking-wide">
-                                Pet Products Collection
+                                Health and Care Products
                             </div>
                             <div className="text-pink-100 text-sm md:text-base font-medium opacity-90 flex items-center justify-end space-x-2">
-                                <span>Tents</span>
+                                <span>Ear Plugs</span>
                                 <span className="w-1 h-1 bg-pink-200 rounded-full"></span>
-                                <span>Pools</span>
+                                <span>Food Chopper</span>
                                 <span className="w-1 h-1 bg-pink-200 rounded-full"></span>
-                                <span>Storage Solutions</span>
+                                <span>UNO Cards</span>
                             </div>
                         </div>
                         
                         {/* Enhanced shop now button */}
                         <Button 
-                            onClick={handleShopNow}
+                            onClick={()=>router.push("/products")}
                             className="mt-6 md:mt-8 w-40 md:w-44 lg:w-48 h-12 md:h-14 lg:h-16
                                       bg-gray-900 justify-center items-center 
                                       text-white text-sm md:text-base lg:text-lg font-bold

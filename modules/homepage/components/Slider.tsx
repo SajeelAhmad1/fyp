@@ -1,35 +1,40 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import storageBox from "@/assets/products/storagebox3.jpg";
-import foodCover from "@/assets/products/foodcover1.jpg";
-import petPool from "@/assets/products/Petpool1.png";
-import petTent from "@/assets/products/pettent2.png";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import earPlugs from "@/assets/products/ear-plugs.jpeg"
+import foodChopper from "@/assets/products/food-chopper.jpg"
+import uno from "@/assets/products/uno.jpeg"
+import airBed from "@/assets/products/air-bed.jpeg"
+import medKit from "@/assets/products/med-kit.jpeg";
 
 const sliderData = [
   {
-    title: "Glass Food Storage",
-    subtitle: "Glass Food Storage Container Set With Air Vent Lids",
-    description: "Save up to 20% on Glass Food Storage.",
-    image: storageBox,
-    price: "£25.49",
+    id: "23d84712-c800-4238-bea6-b5c24219dfd3",
+    title: "Ear Plugs for Sleep",
+    subtitle: "Ear Plugs for Sleep Soft Silicone Reusable, Earplugs",
+    description: "Save up to 32% on Health and Care.",
+    image: earPlugs,
+    price: "£4.62",
     buttonText: "SHOP NOW",
   },
   {
-    title: "POP UP FOOD COVERS",
-    subtitle: "VINSANI SET OF 3 POP UP FOOD COVERS",
-    description: "Save up to 20% on POP UP FOOD COVERS.",
-    image: foodCover,
-    price: "£6.29",
+    id: "642f702b-3ca8-4e76-a730-99f974b374a6",
+    title: "Manual Food Chopper",
+    subtitle: "Sifenma Multi-Function Manual Food Chopper & Processors",
+    description: "Save up to 16% on Home and Kitchen.",
+    image: foodChopper,
+    price: "£8.4",
     buttonText: "SHOP NOW",
   },
   {
-    title: "Pet Paddling Pool",
-    subtitle: "Save up to 20% on Pet Paddling Pool.",
-    description: "Save up to 20% on Pet Paddling Pool.",
-    image: petPool,
-    price: "£17.10",
+    id: "36d530d1-7979-4746-86ab-7a23f8abaf0f",
+    title: "UNO, Classic Card Game",
+    subtitle: "UNO, Classic Card Game for Kids and Adults",
+    description: "Save up to 13% on Pet Paddling Pool.",
+    image: uno,
+    price: "£6.53",
     buttonText: "SHOP NOW",
   },
 ];
@@ -37,18 +42,20 @@ const sliderData = [
 // Right side products data
 const rightProducts = [
   {
-    title: "Dog Bed Cooling Raised Pet Cot UV Protection Canopy Grey Pawhut",
-    image: petTent,
-    discount: "20% OFF",
+    id:"2b8c53fb-9866-4147-8732-0e0d6e4c5e91",
+    title: "Bestway Single Airbed, Inflatable Air Mattress for One",
+    image: airBed,
+    discount: "32% OFF",
     category: "SUMMER SALES",
-    price: "£29.99",
+    price: "£10.06",
     buttonText: "SHOP NOW",
 },
 {
-    title: "Pet Paddling Pool",
-    image: petPool,
-    price: "£17.10",
-    discount: "20% OFF",
+  id:"f981d0d3-0843-438c-8c9c-b758aae5c044",
+    title: "10 Person HSE Workplace First Aid Kit",
+    image: medKit,
+    price: "£8.99",
+    discount: "10% OFF",
     buttonText: "SHOP NOW",
   },
 ];
@@ -57,6 +64,7 @@ const Slider = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [showCardsOnMobile, setShowCardsOnMobile] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     if (isPaused) return;
@@ -85,8 +93,8 @@ const Slider = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const handleClick = () => {
-    alert("Shop now");
+  const handleClick = (id: string) => {
+    router.push(`/products/${id}`)
   };
 
   const goToSlide = (index: any) => {
@@ -114,10 +122,6 @@ const Slider = () => {
         {/* Main Slider */}
         <div className="w-full lg:w-2/3 relative">
           <div className="bg-gray-50 rounded-3xl shadow-xl overflow-hidden border border-gray-100">
-            {/* Subtle decorative elements */}
-            {/* <div className="absolute top-0 right-0 w-32 h-32 bg-gray-100 rounded-full -translate-y-16 translate-x-16 opacity-50"></div>
-            <div className="absolute bottom-0 left-0 w-20 h-20 bg-gray-100 rounded-full translate-y-10 -translate-x-10 opacity-30"></div>
-             */}
             {sliderData.map((slide, index) => (
               <div
                 key={index}
@@ -146,14 +150,11 @@ const Slider = () => {
                         <span className="text-3xl md:text-4xl font-bold">
                           {slide.price}
                         </span>
-                        {/* <span className="text-lg ml-2 line-through text-gray-400">
-                          {slide.originalPrice}
-                        </span> */}
                       </div>
                     </div>
 
                     <button
-                      onClick={handleClick}
+                      onClick={()=>handleClick(slide.id)}
                       className="group bg-gradient-to-br from-indigo-400 via-purple-500 to-pink-300 text-white font-semibold px-8 py-4 rounded-xl shadow-lg hover:shadow-xl hover:bg-gray-800 transform transition-all duration-300 hover:-translate-y-1 w-fit flex items-center space-x-2"
                     >
                       <span>{slide.buttonText}</span>
@@ -177,7 +178,7 @@ const Slider = () => {
                     <div className="relative">
                       {/* Floating badge */}
                       <div className="absolute -top-4 -right-4 z-20 bg-gray-900 text-white rounded-2xl px-4 py-2 font-bold text-sm shadow-lg">
-                        20% OFF
+                        SALE
                       </div>
 
                       {/* Product image with clean styling */}
@@ -290,7 +291,7 @@ const Slider = () => {
                     {rightProducts[0].price}
                   </span>
                   <button
-                    onClick={handleClick}
+                    onClick={()=>handleClick(rightProducts[0].id)}
                     className="bg-white text-gray-900 font-semibold px-4 py-2 rounded-lg hover:bg-gray-100 transition-all duration-300"
                   >
                     {rightProducts[0].buttonText}
@@ -322,7 +323,7 @@ const Slider = () => {
           </div>
 
           <button
-            onClick={handleClick}
+            onClick={()=>handleClick(rightProducts[1].id)}
             className="bg-gradient-to-br from-indigo-400 via-purple-500 to-pink-300 text-white font-semibold px-4 py-2 rounded-lg hover:bg-gray-800 transition-all duration-300 transform hover:-translate-y-1 shadow-md self-start"
           >
             {rightProducts[1].buttonText}

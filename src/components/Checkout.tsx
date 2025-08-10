@@ -22,6 +22,7 @@ interface Product {
   name: string;
   images: string[];
   price: number;
+  shippingCost?: number;
 }
 
 interface OrderItem {
@@ -80,6 +81,20 @@ interface CustomerProfile {
 const GUEST_EMAIL_KEY = "guestEmail";
 const GUEST_CART_ID_KEY = "guestCartId";
 
+// Helper function to calculate shipping cost
+const calculateShippingCost = (items: OrderItem[]): number => {
+  const shippingCosts = items.map(item => Number(item.product.shippingCost) || 0);
+  const uniqueCosts = Array.from(new Set(shippingCosts));
+  
+  // If all costs are the same, return that cost
+  if (uniqueCosts.length === 1) {
+    return uniqueCosts[0];
+  }
+  
+  // Otherwise, return the highest cost
+  return Math.max(...shippingCosts);
+};
+
 const StripePaymentForm = ({
   order,
   formData,
@@ -95,7 +110,9 @@ const StripePaymentForm = ({
   const [clientSecret, setClientSecret] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const amount = Math.round(order.totalPrice * 100 + 1000);
+  const shippingCost = calculateShippingCost(order.items);
+  const amount = Math.round((order.totalPrice + shippingCost) * 100);
+  
   useEffect(() => {
     fetch("/api/create-payment-intent", {
       method: "POST",
@@ -107,7 +124,7 @@ const StripePaymentForm = ({
     })
       .then((res) => res.json())
       .then((data) => setClientSecret(data.clientSecret));
-  }, [order]);
+  }, [order, amount]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -153,7 +170,7 @@ const StripePaymentForm = ({
       >
         {loading
           ? "Processing Payment..."
-          : `Pay £${(Number(order.totalPrice) + 10).toFixed(2)}`}
+          : `Pay £${(Number(order.totalPrice) + shippingCost).toFixed(2)}`}
       </button>
     </form>
   );
@@ -520,6 +537,9 @@ const Checkout = () => {
     );
   }
 
+  // Calculate shipping cost for the current order
+  const shippingCost = order ? calculateShippingCost(order.items) : 0;
+
   return (
     <div className="p-2 mx-auto">
       <div className="bg-white p-6 rounded-lg mb-6">
@@ -530,7 +550,7 @@ const Checkout = () => {
             stripe={stripePromise}
             options={{
               mode: "payment",
-              amount: Math.round((order.totalPrice + 10) * 100),
+              amount: Math.round((order.totalPrice + shippingCost) * 100),
               currency: "gbp",
             }}
           >
@@ -629,7 +649,7 @@ const Checkout = () => {
                           <td className="px-4 py-3 text-right text-sm font-medium text-gray-500"></td>
                           <td className="px-4 py-3 text-right text-sm font-medium text-gray-500"></td>
                           <td className="px-4 py-3 text-right text-sm font-medium text-gray-500">
-                            £10.00
+                            £{formatPrice(shippingCost)}
                           </td>
                         </tr>
                       </tbody>
@@ -652,7 +672,7 @@ const Checkout = () => {
                                 const discountAmount =
                                   (itemPrice * discountPercent) / 100;
                                 return sum + (itemPrice - discountAmount);
-                              }, 0) + 10
+                              }, 0) + shippingCost
                             )}
                           </td>
                         </tr>
@@ -750,7 +770,7 @@ const Checkout = () => {
                         <span className="text-sm font-medium text-gray-900">
                           Shipping:
                         </span>
-                        <span className="text-sm font-medium">£10.00</span>
+                        <span className="text-sm font-medium">£{formatPrice(shippingCost)}</span>
                       </div>
                     </div>
 
@@ -767,7 +787,7 @@ const Checkout = () => {
                                 ? parseFloat(item.product.discount)
                                 : 0;
                               return sum + (itemPrice - discount);
-                            }, 0) + 10
+                            }, 0) + shippingCost
                           )}
                         </span>
                       </div>
@@ -1128,8 +1148,6 @@ const Checkout = () => {
     </div>
   );
 };
-
-
 
 const CheckoutPage = () => {
   return (

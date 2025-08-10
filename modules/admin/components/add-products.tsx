@@ -10,7 +10,7 @@ interface ProductFormData {
   sku: string;
   images: string[];
   categoryId: null;
-  shippingCost: string; // Added shipping cost field
+  shippingCost: number; // Added shipping cost field
 }
 
 const ProductCreationForm = () => {
@@ -27,7 +27,7 @@ const ProductCreationForm = () => {
     sku: '',
     images: [],
     categoryId: null,
-    shippingCost: '', // Added shipping cost to initial state
+    shippingCost: 0
   });
 
   // Handle input changes with proper type handling
@@ -80,7 +80,7 @@ const ProductCreationForm = () => {
         price: parseFloat(formData.price),
         stock: Number(formData.stock),
         categoryId: null,
-        shippingCost: formData.shippingCost ? parseFloat(formData.shippingCost) : null, // Handle optional shipping cost
+        shippingCost: formData.shippingCost,
       };
       
       const response = await fetch('/api/products', {
@@ -108,7 +108,7 @@ const ProductCreationForm = () => {
         sku: '',
         images: [],
         categoryId: null,
-        shippingCost: '', // Reset shipping cost
+        shippingCost: 0
       });
       
     } catch (err) {

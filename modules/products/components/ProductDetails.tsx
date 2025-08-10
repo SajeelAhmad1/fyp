@@ -44,7 +44,7 @@ interface Product {
   sku?: string;
   images?: string[];
   colors?: string[];
-  sizes?: string[];
+  size?: string[];
   category?: Category;
   vendor?: Vendor;
   reviews: Review[];
@@ -625,11 +625,11 @@ const ProductDetails: React.FC = () => {
               </div>
             )}
 
-            {product.sizes && product.sizes.length > 0 && (
+            {product.size && product.size.length > 0 && (
               <div className="flex items-center">
                 <span className='font-semibold'>Size:</span>
                 <div className="flex gap-2 ml-3 flex-wrap">
-                  {product.sizes.map((size, index) => (
+                  {product.size.map((size, index) => (
                     <button
                       key={index}
                       className="w-16 h-8 bg-zinc-100 border items-center justify-center flex focus:bg-blue-200"
@@ -698,6 +698,7 @@ const ProductDetails: React.FC = () => {
               <div className='font-semibold'>Sku:</div>
               <span className='ml-3'>{product.sku || 'N/A'}</span>
             </div>
+            
 
             <div className="flex items-center">
               <div className='font-semibold'>Category:</div>

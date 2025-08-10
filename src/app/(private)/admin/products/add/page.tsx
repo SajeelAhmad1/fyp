@@ -26,16 +26,17 @@ interface ProductFormData {
   description: string;
   price: string;
   categoryId: string;
-  subcategoryId: string; // Added subcategoryId
+  subcategoryId: string;
   stock: string;
   sku?: string;
-  images: string[]; // This will store image URLs
+  images: string[];
   isFeatured: boolean;
   discount: string,
   isBestChoice: boolean;
   color: string[],
   size: string[],
   shortDescription: string,
+  shippingCost?: number
 }
 
 export default function AddProductPage() {
@@ -55,10 +56,10 @@ export default function AddProductPage() {
     description: '',
     price: '',
     categoryId: '',
-    subcategoryId: '',  // Added subcategoryId
+    subcategoryId: '',
     stock: '',
     sku: '',
-    images: [], // Initialize as empty array
+    images: [],
     isFeatured: false,
     discount: '',
     isBestChoice: false,
@@ -497,6 +498,24 @@ export default function AddProductPage() {
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               />
             </div>
+            
+            <div className="mb-4">
+            <label className="block text-[#000000] font-medium mb-2" htmlFor="shippingCost">
+              Shipping Cost
+            </label>
+            <input
+              type="number"
+              id="shippingCost"
+              name="shippingCost"
+              value={formData.shippingCost}
+              onChange={handleChange}
+              className="w-full p-2 border text-[#000000] rounded"
+              step="0.01"
+              min="0"
+              placeholder="Leave empty for free shipping"
+            />
+          </div>
+          
             <div>
               <label htmlFor="discount" className="block text-sm font-medium text-gray-700">
                 Discount (%)

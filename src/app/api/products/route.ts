@@ -252,7 +252,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<any>> {
           size: size || [], 
           shortDescription,
           vendorId: body.vendorId,
-          shippingCost: shippingCost !== undefined && shippingCost !== null ? new Prisma.Decimal(shippingCost) : null,
+          shippingCost: shippingCost,
         }
       });
       

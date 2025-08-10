@@ -1,12 +1,13 @@
 import React, { useState } from 'react'
 import { Heart, Package, Ruler, Weight, Badge, Tag, Waves } from 'lucide-react'
-import foodCover1 from "@/assets/products/foodcover1.jpg";
-import foodCover2 from "@/assets/products/foodcover2.jpg";
-import foodCover3 from "@/assets/products/foodcover3.jpg";
-import petPool from "@/assets/products/petpool3.png";
-import storageBox from "@/assets/products/storagebox1.jpg";
-import petTent from "@/assets/products/pettent2.png";
+import earPlugs1 from "@/assets/products/ear-plugs.jpeg";
+import earPlugs2 from "@/assets/products/ear-plugs-1.jpeg";
+import earPlugs3 from "@/assets/products/ear-plugs-2.jpeg";
+import foodChopper from "@/assets/products/food-chopper.jpg";
+import uno from "@/assets/products/uno.jpeg";
+import medkit from "@/assets/products/med-kit.jpeg";
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 const Button = ({ children, className, onClick, ...props }:any) => {
     return (
@@ -31,49 +32,52 @@ const Card = ({ children, className, ...props }:any) => {
 const TopSeller = () => {
     const [selectedImage, setSelectedImage] = useState(0)
     const [isWishlisted, setIsWishlisted] = useState(false)
+    const router = useRouter();
 
     // Sample data - replace with your actual data
     const product = {
-        title: "VINSANI SET OF 3 POP UP FOOD COVERS",
-        originalPrice: 6.29,
-        description: "Designed to cover bowls and plates to keep out pests, while leaving clear view of the food underneath",
-        brand: "Vinsani",
-        height: "40cm",
-        weight: "0.36kg",
-        width: "30cm",
-        depth: "3cm",
+        id: "23d84712-c800-4238-bea6-b5c24219dfd3",
+        title: "Ear Plugs for Sleep Soft Silicone",
+        originalPrice: 4.62,
+        description: "Ear Plugs for Sleep Soft Silicone Reusable, Earplugs for Sleeping Noise Cancelling(4Pairs)",
+        brand: "Unbranded",
+        height: "-",
+        weight: "-",
+        width: "-",
+        depth: "-",
         images: [
-            foodCover1,
-            foodCover2,
-            foodCover3
+            earPlugs1,
+            earPlugs2,
+            earPlugs3
         ]
     }
 
     const sideProducts = [
         {
-            title: "Pet Paddling Pool Cat Dog",
-            originalPrice: 17.10,
+            id: "642f702b-3ca8-4e76-a730-99f974b374a6",
+            title: "Manual Food Chopper",
+            originalPrice: 8.4,
             brand: "Unbranded",
-            image: petPool
+            image: foodChopper
         },
         {
-            title: "Glass Food Storage Container Set With Air Vent Lids",
-            originalPrice: 25.49,
-            brand: "Unbranded",
-            image: storageBox
+            id: "36d530d1-7979-4746-86ab-7a23f8abaf0f",
+            title: "UNO, Classic Card Game",
+            originalPrice: 6.53,
+            brand: "Mattel",
+            image: uno
         },
         {
-            title: "Dog Bed Cooling Raised Pet Cot",
-            originalPrice: 29.99,
+            id:"f981d0d3-0843-438c-8c9c-b758aae5c044",
+            title: "10 Person HSE Workplace First Aid Kit",
+            originalPrice: 8.99,
             brand: "Unbranded",
-            image: petTent
+            image: medkit
         }
     ]
 
-    const handleProductClick = () => {
-        // Handle product opening logic here
-        console.log('Opening product:', product.title)
-        // You can add navigation logic or modal opening here
+    const handleProductClick = (id: string) => {
+        router.push(`/products/${id}`)
     }
 
     return (
@@ -136,7 +140,7 @@ const TopSeller = () => {
                             {/* Title - Clickable */}
                             <h2 
                                 className="text-2xl lg:text-3xl font-bold text-slate-800 leading-tight cursor-pointer hover:text-blue-600 transition-colors duration-300"
-                                onClick={handleProductClick}
+                                onClick={() => handleProductClick(product.id)}
                             >
                                 {product.title}
                             </h2>
@@ -145,7 +149,7 @@ const TopSeller = () => {
                             <div className="bg-white p-4 rounded-xl shadow-inner border">
                                 <div className="flex items-center gap-3">
                                     <span className="text-3xl font-black text-slate-800">
-                                        ${product.originalPrice}
+                                        £{product.originalPrice}
                                     </span>
                                 </div>
                             </div>
@@ -182,7 +186,9 @@ const TopSeller = () => {
                 {/* Side Products */}
                 <div className="w-full xl:w-96 space-y-6">
                     {sideProducts.map((item, index) => (
-                        <Card key={index} className="p-4 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer group bg-gradient-to-r from-white to-slate-50">
+                        <Card 
+                        onClick={()=>handleProductClick(item.id)}
+                        key={index} className="p-4 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer group bg-gradient-to-r from-white to-slate-50">
                             <div className="flex gap-4">
                                 <div className="relative">
                                     <Image
