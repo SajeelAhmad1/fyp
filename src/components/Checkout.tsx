@@ -83,14 +83,16 @@ const GUEST_CART_ID_KEY = "guestCartId";
 
 // Helper function to calculate shipping cost
 const calculateShippingCost = (items: OrderItem[]): number => {
-  const shippingCosts = items.map(item => Number(item.product.shippingCost) || 0);
+  const shippingCosts = items.map(
+    (item) => Number(item.product.shippingCost) || 0
+  );
   const uniqueCosts = Array.from(new Set(shippingCosts));
-  
+
   // If all costs are the same, return that cost
   if (uniqueCosts.length === 1) {
     return uniqueCosts[0];
   }
-  
+
   // Otherwise, return the highest cost
   return Math.max(...shippingCosts);
 };
@@ -112,7 +114,7 @@ const StripePaymentForm = ({
 
   const shippingCost = calculateShippingCost(order.items);
   const amount = Math.round((order.totalPrice + shippingCost) * 100);
-  
+
   useEffect(() => {
     fetch("/api/create-payment-intent", {
       method: "POST",
@@ -137,8 +139,7 @@ const StripePaymentForm = ({
       setErrorMessage(submitError.message);
       setLoading(false);
       return;
-    }
-    else{
+    } else {
       onPaymentSuccess();
     }
 
@@ -152,7 +153,7 @@ const StripePaymentForm = ({
 
     if (error) {
       setErrorMessage(error.message);
-    } 
+    }
 
     setLoading(false);
   };
@@ -305,7 +306,7 @@ const Checkout = () => {
       const { data } = await response.json();
       setCustomerProfile(data);
     } catch (err) {
-      throw new Error("Error setting profile")
+      throw new Error("Error setting profile");
     }
   };
 
@@ -684,10 +685,12 @@ const Checkout = () => {
                   <div className="md:hidden space-y-4">
                     {order.items.map((item: any) => {
                       const itemPrice = parseFloat(item.price);
-                      const discount = item.product.discount
+                      const discountPercent = item.product.discount
                         ? parseFloat(item.product.discount)
                         : 0;
-                      const finalPrice = itemPrice - discount;
+                      const discountAmount =
+                        (itemPrice * discountPercent) / 100;
+                      const finalPrice = itemPrice - discountAmount;
 
                       return (
                         <div
@@ -738,13 +741,14 @@ const Checkout = () => {
                                   </span>
                                 </div>
 
-                                {discount > 0 && (
+                                {discountPercent > 0 && (
                                   <div className="flex justify-between items-center">
                                     <span className="text-sm text-gray-500">
                                       Discount:
                                     </span>
                                     <span className="text-sm text-red-600">
-                                      -£{formatPrice(discount)}
+                                      -{discountPercent}% (£
+                                      {formatPrice(discountAmount)})
                                     </span>
                                   </div>
                                 )}
@@ -770,7 +774,9 @@ const Checkout = () => {
                         <span className="text-sm font-medium text-gray-900">
                           Shipping:
                         </span>
-                        <span className="text-sm font-medium">£{formatPrice(shippingCost)}</span>
+                        <span className="text-sm font-medium">
+                          £{formatPrice(shippingCost)}
+                        </span>
                       </div>
                     </div>
 
@@ -783,10 +789,12 @@ const Checkout = () => {
                           {formatPrice(
                             order.items.reduce((sum, item: any) => {
                               const itemPrice = parseFloat(item.price);
-                              const discount = item.product.discount
+                              const discountPercent = item.product.discount
                                 ? parseFloat(item.product.discount)
                                 : 0;
-                              return sum + (itemPrice - discount);
+                              const discountAmount =
+                                (itemPrice * discountPercent) / 100;
+                              return sum + (itemPrice - discountAmount);
                             }, 0) + shippingCost
                           )}
                         </span>
