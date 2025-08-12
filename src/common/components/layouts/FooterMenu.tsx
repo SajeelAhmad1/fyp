@@ -137,7 +137,7 @@ const Footer = () => {
                 </svg>
               </a> */}
               <a
-                href="#"
+                href="https://www.instagram.com/etrolly.shop/"
                 className="bg-black p-2 rounded-full hover:bg-gray-800 transition-colors"
               >
                 <svg
