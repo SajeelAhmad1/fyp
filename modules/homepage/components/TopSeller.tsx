@@ -38,7 +38,7 @@ const TopSeller = () => {
     const product = {
         id: "23d84712-c800-4238-bea6-b5c24219dfd3",
         title: "Ear Plugs for Sleep Soft Silicone",
-        originalPrice: 4.62,
+        originalPrice: 4.98,
         description: "Ear Plugs for Sleep Soft Silicone Reusable, Earplugs for Sleeping Noise Cancelling(4Pairs)",
         brand: "Unbranded",
         height: "-",
@@ -56,21 +56,21 @@ const TopSeller = () => {
         {
             id: "642f702b-3ca8-4e76-a730-99f974b374a6",
             title: "Manual Food Chopper",
-            originalPrice: 8.4,
+            originalPrice: 8.9,
             brand: "Unbranded",
             image: foodChopper
         },
         {
             id: "36d530d1-7979-4746-86ab-7a23f8abaf0f",
             title: "UNO, Classic Card Game",
-            originalPrice: 6.53,
+            originalPrice: 7.39,
             brand: "Mattel",
             image: uno
         },
         {
             id:"f981d0d3-0843-438c-8c9c-b758aae5c044",
             title: "10 Person HSE Workplace First Aid Kit",
-            originalPrice: 8.99,
+            originalPrice: 9.52,
             brand: "Unbranded",
             image: medkit
         }

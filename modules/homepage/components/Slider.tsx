@@ -16,7 +16,7 @@ const sliderData = [
     subtitle: "Ear Plugs for Sleep Soft Silicone Reusable, Earplugs",
     description: "Save up to 32% on Health and Care.",
     image: earPlugs,
-    price: "£4.62",
+    price: "£4.98",
     buttonText: "SHOP NOW",
   },
   {
@@ -25,7 +25,7 @@ const sliderData = [
     subtitle: "Sifenma Multi-Function Manual Food Chopper & Processors",
     description: "Save up to 16% on Home and Kitchen.",
     image: foodChopper,
-    price: "£8.4",
+    price: "£8.9",
     buttonText: "SHOP NOW",
   },
   {
@@ -34,7 +34,7 @@ const sliderData = [
     subtitle: "UNO, Classic Card Game for Kids and Adults",
     description: "Save up to 13% on Pet Paddling Pool.",
     image: uno,
-    price: "£6.53",
+    price: "£7.39",
     buttonText: "SHOP NOW",
   },
 ];
@@ -47,14 +47,14 @@ const rightProducts = [
     image: airBed,
     discount: "32% OFF",
     category: "SUMMER SALES",
-    price: "£10.06",
+    price: "£10.55",
     buttonText: "SHOP NOW",
 },
 {
   id:"f981d0d3-0843-438c-8c9c-b758aae5c044",
     title: "10 Person HSE Workplace First Aid Kit",
     image: medKit,
-    price: "£8.99",
+    price: "£9.52",
     discount: "10% OFF",
     buttonText: "SHOP NOW",
   },
