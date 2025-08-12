@@ -788,7 +788,7 @@ const ProductDetails: React.FC = () => {
         </Card>
         <Card className="w-[85%] p-8 flex flex-col gap-3 mt-5">
           <span className="font-semibold text-gray-900 text-xl">
-            Customer Reviews
+            Recent Customer Reviews
           </span>
 
           {product.reviews && product.reviews.length > 0 ? (
