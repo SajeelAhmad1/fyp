@@ -88,7 +88,7 @@ const OrderConfirmationContent = () => {
       <div className="mt-6 text-center">
         <a 
           href={`/products`} 
-          className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300"
+          className="bg-gradient-to-br from-indigo-400 via-purple-500 to-pink-300 text-white font-bold py-2 px-4 rounded-lg transition duration-300"
         >
           Continue Shopping
         </a>

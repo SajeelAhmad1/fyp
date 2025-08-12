@@ -1,12 +1,17 @@
 import React from "react";
 
 export function formatCurrency(
-  amount: number | string | null | undefined
+  amount: number | string | null | undefined,
+  total?: boolean
 ): string {
   if (amount === null || amount === undefined) return "$0.00";
 
   let numAmount = typeof amount === "string" ? parseFloat(amount) : amount;
-  numAmount+=10;
+  // Removed the +5 from here - it was adding £5 to every formatted amount
+
+  if (total) {
+    numAmount += 5;
+  }
 
   return new Intl.NumberFormat("en-GB", {
     style: "currency",
@@ -34,6 +39,7 @@ interface OrderSummaryProps {
         name: string;
         id: string;
         images?: string[];
+        shippingCost?: number;
       };
       quantity: number;
       price: number;
@@ -138,7 +144,7 @@ export default function OrderSummary({ order }: OrderSummaryProps) {
             <tr className="border-b">
               <th className="text-left py-2 font-medium">Shipping</th>
               <th className="text-center py-2"></th>
-              <th className="text-right py-2 font-normal">10</th>
+              <th className="text-right py-2 font-normal">${order.items[0].product.shippingCost}</th>
             </tr>
           </tbody>
           <tfoot>
@@ -147,7 +153,7 @@ export default function OrderSummary({ order }: OrderSummaryProps) {
                 Total:
               </td>
               <td className="text-right py-2 text-xl">
-                {formatCurrency(order.totalPrice)}
+                {formatCurrency(order.totalPrice, true)}
               </td>
             </tr>
           </tfoot>

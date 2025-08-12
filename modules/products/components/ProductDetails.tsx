@@ -1,14 +1,14 @@
-"use client"
+"use client";
 
-import { Card } from '@/common/components/elements/Card'
-import { Separator } from '@/common/components/elements/Separator'
-import React, { useState, useEffect, useRef } from 'react'
-import { useParams } from 'next/navigation';
-import ProductSkeleton from './ProductDetailsSkeleton';
-import { useRouter } from 'next/navigation';
-import { v4 as uuidv4 } from 'uuid';
-import { useCart } from '@/components/context/CartContext';
-import { useSession } from 'next-auth/react';
+import { Card } from "@/common/components/elements/Card";
+import { Separator } from "@/common/components/elements/Separator";
+import React, { useState, useEffect, useRef } from "react";
+import { useParams } from "next/navigation";
+import ProductSkeleton from "./ProductDetailsSkeleton";
+import { useRouter } from "next/navigation";
+import { v4 as uuidv4 } from "uuid";
+import { useCart } from "@/components/context/CartContext";
+import { useSession } from "next-auth/react";
 
 // Define TypeScript interfaces
 interface Review {
@@ -57,7 +57,10 @@ const Star: React.FC<{ count: number }> = ({ count }) => {
   return (
     <div className="flex">
       {[1, 2, 3, 4, 5].map((star) => {
-        const fillPercentage = Math.max(0, Math.min(1, Math.max(0, count - (star - 1))));
+        const fillPercentage = Math.max(
+          0,
+          Math.min(1, Math.max(0, count - (star - 1)))
+        );
 
         return (
           <svg
@@ -69,9 +72,7 @@ const Star: React.FC<{ count: number }> = ({ count }) => {
             stroke="#D3D3D3"
             strokeWidth={2}
           >
-            <path
-              d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
-            />
+            <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
             <defs>
               <clipPath id={`starClip-${star}`}>
                 <rect
@@ -98,7 +99,8 @@ const StarNew: React.FC<{ count: number }> = ({ count }) => {
   return (
     <div className="flex">
       {[1, 2, 3, 4, 5].map((star) => {
-        const fillPercentage = Math.max(0, Math.min(1, count - (star - 1))) * 100;
+        const fillPercentage =
+          Math.max(0, Math.min(1, count - (star - 1))) * 100;
 
         return (
           <div key={star} className="relative w-5 h-5">
@@ -150,7 +152,7 @@ const ProductDetails: React.FC = () => {
   const [cartQuantity, setCartQuantity] = useState<number>(0);
   const [guestCartId, setGuestCartId] = useState<string | null>(null);
   const [isBuyNow, setIsBuyNow] = useState<boolean>(false);
-  
+
   // Zoom state
   const [isZoomed, setIsZoomed] = useState(false);
   const [zoomPosition, setZoomPosition] = useState({ x: 0, y: 0 });
@@ -159,15 +161,15 @@ const ProductDetails: React.FC = () => {
   // Order and email state
   const [isCreatingOrder, setIsCreatingOrder] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
-  const [email, setEmail] = useState('');
-  const [emailError, setEmailError] = useState('');
+  const [email, setEmail] = useState("");
+  const [emailError, setEmailError] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const storedGuestCartId = localStorage.getItem('guestCartId');
+    const storedGuestCartId = localStorage.getItem("guestCartId");
     if (!storedGuestCartId) {
       const newGuestCartId = uuidv4();
-      localStorage.setItem('guestCartId', newGuestCartId);
+      localStorage.setItem("guestCartId", newGuestCartId);
       setGuestCartId(newGuestCartId);
     } else {
       setGuestCartId(storedGuestCartId);
@@ -192,7 +194,9 @@ const ProductDetails: React.FC = () => {
         const { data } = await response.json();
 
         if (data && data.items) {
-          const cartItem = data.items.find((item: any) => item.productId === product?.id);
+          const cartItem = data.items.find(
+            (item: any) => item.productId === product?.id
+          );
 
           if (cartItem) {
             setInCart(true);
@@ -208,7 +212,7 @@ const ProductDetails: React.FC = () => {
         }
       }
     } catch (error) {
-      throw new Error('Failed to check cart status');
+      throw new Error("Failed to check cart status");
     }
   };
 
@@ -220,7 +224,7 @@ const ProductDetails: React.FC = () => {
     }
 
     setIsCartLoading(true);
-    if(!inCart && !isBuyNow){
+    if (!inCart && !isBuyNow) {
       openCart();
     }
 
@@ -232,13 +236,13 @@ const ProductDetails: React.FC = () => {
       if (inCart && cartItemId) {
         const id = cartItemId;
         const response = await fetch(`/api/cart/${id}`, {
-          method: 'DELETE',
+          method: "DELETE",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             ...(userId ? { userId } : { guestCartId }),
-            itemId: cartItemId
+            itemId: cartItemId,
           }),
         });
 
@@ -251,10 +255,10 @@ const ProductDetails: React.FC = () => {
           const errorData = await response.json();
         }
       } else {
-        const response = await fetch('/api/cart', {
-          method: 'POST',
+        const response = await fetch("/api/cart", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify(cartPayload),
         });
@@ -269,28 +273,26 @@ const ProductDetails: React.FC = () => {
         }
       }
     } catch (error) {
-      throw new Error('Failed to toggle cart status');
+      throw new Error("Failed to toggle cart status");
     } finally {
       setIsCartLoading(false);
     }
   };
 
   const updateCartQuantity = async (newQuantity: number) => {
-    if (!userId && !guestCartId || !cartItemId || !inCart) return;
+    if ((!userId && !guestCartId) || !cartItemId || !inCart) return;
 
     try {
-      const queryParams = userId
-        ? { userId }
-        : { guestCartId };
+      const queryParams = userId ? { userId } : { guestCartId };
 
       const response = await fetch(`/api/cart/${cartItemId}`, {
-        method: 'PATCH',
+        method: "PATCH",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           ...queryParams,
-          quantity: newQuantity
+          quantity: newQuantity,
         }),
       });
 
@@ -301,7 +303,7 @@ const ProductDetails: React.FC = () => {
         const errorData = await response.json();
       }
     } catch (error) {
-      throw new Error('Failed to update cart quantity');
+      throw new Error("Failed to update cart quantity");
       setQuantity(cartQuantity);
     }
   };
@@ -320,11 +322,11 @@ const ProductDetails: React.FC = () => {
 
       // Validate guest email if not logged in
       if (!session?.user && !guestEmail) {
-        throw new Error('Email is required for guest checkout');
+        throw new Error("Email is required for guest checkout");
       }
 
       if (guestEmail && !validateEmail(guestEmail)) {
-        throw new Error('Please enter a valid email address');
+        throw new Error("Please enter a valid email address");
       }
 
       // First ensure product is in cart
@@ -332,44 +334,48 @@ const ProductDetails: React.FC = () => {
         await handleCartToggle();
       }
 
-      const orderItems = [{
-        productId: product.id,
-        quantity: quantity,
-        unitPrice: product.price,
-        discountPercentage: product.discount || 0
-      }];
+      const orderItems = [
+        {
+          productId: product.id,
+          quantity: quantity,
+          unitPrice: product.price,
+          discountPercentage: product.discount || 0,
+        },
+      ];
 
       const requestBody = {
         items: orderItems,
         ...(session?.user
           ? { userId: session.user.id }
-          : { guestEmail: guestEmail?.toLowerCase().trim() })
+          : { guestEmail: guestEmail?.toLowerCase().trim() }),
       };
 
-      const response = await fetch('/api/orders', {
-        method: 'POST',
+      const response = await fetch("/api/orders", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || errorData.message || 'Failed to create order');
+        throw new Error(
+          errorData.error || errorData.message || "Failed to create order"
+        );
       }
 
       const { data } = await response.json();
       router.push(`/checkout?orderId=${data.id}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create order');
+      setError(err instanceof Error ? err.message : "Failed to create order");
     } finally {
       setIsCreatingOrder(false);
     }
   };
 
   const handleBuyNow = async () => {
-    setIsBuyNow(true)
+    setIsBuyNow(true);
     if (!product) return;
 
     // Check stock
@@ -388,11 +394,11 @@ const ProductDetails: React.FC = () => {
 
   const handleEmailSubmit = () => {
     if (!validateEmail(email)) {
-      setEmailError('Please enter a valid email address');
+      setEmailError("Please enter a valid email address");
       return;
     }
-    setEmailError('');
-    localStorage.setItem('guestEmail', email.toLowerCase().trim());
+    setEmailError("");
+    localStorage.setItem("guestEmail", email.toLowerCase().trim());
     createOrder(email);
   };
 
@@ -405,14 +411,14 @@ const ProductDetails: React.FC = () => {
         const response = await fetch(`/api/products/${id}`);
 
         if (!response.ok) {
-          throw new Error('Failed to fetch product');
+          throw new Error("Failed to fetch product");
         }
 
         const data = await response.json();
         setProduct(data);
         setCurrentImageIndex(0);
       } catch (error) {
-        throw new Error('Failed to fetch product details');
+        throw new Error("Failed to fetch product details");
       } finally {
         setLoading(false);
       }
@@ -421,7 +427,9 @@ const ProductDetails: React.FC = () => {
     fetchProduct();
   }, [id]);
 
-  const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+  const handleQuantityChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ): void => {
     const value = parseInt(e.target.value);
     if (!isNaN(value) && value > 0) {
       setQuantity(value);
@@ -429,11 +437,11 @@ const ProductDetails: React.FC = () => {
   };
 
   const increaseQuantity = (): void => {
-    product && setQuantity(prev => (prev < product.stock ? prev + 1 : prev));
+    product && setQuantity((prev) => (prev < product.stock ? prev + 1 : prev));
   };
 
   const decreaseQuantity = (): void => {
-    setQuantity(prev => prev > 1 ? prev - 1 : 1);
+    setQuantity((prev) => (prev > 1 ? prev - 1 : 1));
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -451,7 +459,10 @@ const ProductDetails: React.FC = () => {
   const calculateAverageRating = () => {
     if (!product?.reviews || product.reviews.length === 0) return 0;
 
-    const totalRating = product.reviews.reduce((sum, review) => sum + review.rating, 0);
+    const totalRating = product.reviews.reduce(
+      (sum, review) => sum + review.rating,
+      0
+    );
     return totalRating / product.reviews.length;
   };
 
@@ -474,8 +485,8 @@ const ProductDetails: React.FC = () => {
   }
 
   return (
-    <div className='container mx-auto'>
-      <div className='min-h-full flex flex-col lg:flex-row py-14'>
+    <div className="container mx-auto">
+      <div className="min-h-full flex flex-col lg:flex-row py-14">
         {/* Product images section */}
         <div className="w-full lg:w-1/2 h-full justify-center items-center gap-5 flex flex-col">
           <div
@@ -489,10 +500,10 @@ const ProductDetails: React.FC = () => {
               <div
                 className="w-full h-full relative"
                 style={{
-                  transform: isZoomed ? 'scale(2)' : 'scale(1)',
+                  transform: isZoomed ? "scale(2)" : "scale(1)",
                   transformOrigin: `${zoomPosition.x}% ${zoomPosition.y}%`,
-                  transition: 'transform 0.2s ease-out',
-                  cursor: isZoomed ? 'zoom-in' : 'zoom-in'
+                  transition: "transform 0.2s ease-out",
+                  cursor: isZoomed ? "zoom-in" : "zoom-in",
                 }}
               >
                 <img
@@ -506,50 +517,74 @@ const ProductDetails: React.FC = () => {
             <button
               onClick={() => {
                 if (!product?.images?.length) return;
-                setCurrentImageIndex(prev =>
+                setCurrentImageIndex((prev) =>
                   prev === 0 ? product.images!.length - 1 : prev - 1
                 );
               }}
               className="absolute left-2 top-1/2 -translate-y-1/2 bg-white bg-opacity-70 rounded-full w-10 h-10 flex items-center justify-center hover:bg-opacity-100 z-10"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
               </svg>
             </button>
 
             <button
               onClick={() => {
                 if (!product?.images?.length) return;
-                setCurrentImageIndex(prev =>
+                setCurrentImageIndex((prev) =>
                   prev === product.images!.length - 1 ? 0 : prev + 1
                 );
               }}
               className="absolute right-2 top-1/2 -translate-y-1/2 bg-white bg-opacity-70 rounded-full w-10 h-10 flex items-center justify-center hover:bg-opacity-100 z-10"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
+                />
               </svg>
             </button>
           </div>
 
           <div className="flex m-auto flex-wrap gap-5 group">
-            {product.images && product.images.map((img, index) => (
-              <div
-                key={index}
-                onClick={() => setCurrentImageIndex(index)}
-                className={`w-28 h-28 md:w-36 md:h-32 justify-center items-center flex relative cursor-pointer 
-                  ${currentImageIndex === index
-                    ? 'ring-2 ring-sky-900'
-                    : 'hover:bg-slate-100'
+            {product.images &&
+              product.images.map((img, index) => (
+                <div
+                  key={index}
+                  onClick={() => setCurrentImageIndex(index)}
+                  className={`w-28 h-28 md:w-36 md:h-32 justify-center items-center flex relative cursor-pointer 
+                  ${
+                    currentImageIndex === index
+                      ? "ring-2 ring-sky-900"
+                      : "hover:bg-slate-100"
                   }`}
-              >
-                <img
-                  src={img}
-                  alt={`Product image ${index + 1}`}
-                  className="max-h-full max-w-full object-contain p-2"
-                />
-              </div>
-            ))}
+                >
+                  <img
+                    src={img}
+                    alt={`Product image ${index + 1}`}
+                    className="max-h-full max-w-full object-contain p-2"
+                  />
+                </div>
+              ))}
           </div>
         </div>
 
@@ -557,14 +592,19 @@ const ProductDetails: React.FC = () => {
         <div className="w-full lg:w-1/2 h-full lg:h-auto lg:flex lg:ml-5">
           <div className="w-full max-w-[500px] h-full lg:h-auto lg:w-full flex-col gap-2 flex mt-10 lg:mt-0 mx-auto px-4 lg:px-0">
             {error && (
-              <div className="bg-red-50 border border-red-300 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+              <div
+                className="bg-red-50 border border-red-300 text-red-700 px-4 py-3 rounded relative mb-4"
+                role="alert"
+              >
                 <strong className="font-bold">Error: </strong>
                 <span className="block sm:inline">{error}</span>
               </div>
             )}
 
             <div className="flex-col gap-2.5 flex">
-              <div className="text-gray-900 font-semibold text-2xl">{product.name}</div>
+              <div className="text-gray-900 font-semibold text-2xl">
+                {product.name}
+              </div>
               {product.discount > 0 ? (
                 <div className="flex items-center gap-3">
                   <div className="text-red-600 text-2xl font-semibold">
@@ -578,7 +618,9 @@ const ProductDetails: React.FC = () => {
                   </div>
                 </div>
               ) : (
-                <div className="text-neutral-600 text-2xl font-semibold">${product.price}</div>
+                <div className="text-neutral-600 text-2xl font-semibold">
+                  ${product.price}
+                </div>
               )}
             </div>
 
@@ -586,24 +628,32 @@ const ProductDetails: React.FC = () => {
               <Star count={calculateAverageRating()} />
               <div className="text-neutral-600 text-sm font-medium">
                 {product.reviews.length > 0
-                  ? `${calculateAverageRating().toFixed(1)} / 5 (${product.reviews.length} review${product.reviews.length !== 1 ? 's)' : ')'}`
-                  : 'No reviews'
-                }
+                  ? `${calculateAverageRating().toFixed(1)} / 5 (${
+                      product.reviews.length * 59
+                    } review${product.reviews.length !== 1 ? "s)" : ")"}`
+                  : "No reviews"}
               </div>
             </div>
 
             <div className="gap-5 flex">
-              <div className="text-neutral-800 text-lg font-medium">Availability:</div>
+              <div className="text-neutral-800 text-lg font-medium">
+                Availability:
+              </div>
               <div className="gap-3.5 flex">
-                <div className={`text-lg font-medium ${product.stock > 0 ? 'text-green-500' : 'text-red-500'}`}>
-                  {product.stock > 0 ? 'In stock' : 'Out of stock'}
+                <div
+                  className={`text-lg font-medium ${
+                    product.stock > 0 ? "text-green-500" : "text-red-500"
+                  }`}
+                >
+                  {product.stock > 0 ? "In stock" : "Out of stock"}
                 </div>
               </div>
             </div>
 
             {product.stock > 0 && (
               <div className="text-zinc-600 text-base font-medium">
-                Hurry up! only {product.stock} product{product.stock !== 1 ? 's' : ''} left in stock!
+                Hurry up! only {product.stock} product
+                {product.stock !== 1 ? "s" : ""} left in stock!
               </div>
             )}
 
@@ -611,7 +661,7 @@ const ProductDetails: React.FC = () => {
 
             {product.colors && product.colors.length > 0 && (
               <div className="flex items-center">
-                <span className='font-semibold'>Color:</span>
+                <span className="font-semibold">Color:</span>
                 <div className="flex gap-2 ml-3">
                   {product.colors.map((color, index) => (
                     <div
@@ -627,7 +677,7 @@ const ProductDetails: React.FC = () => {
 
             {product.size && product.size.length > 0 && (
               <div className="flex items-center">
-                <span className='font-semibold'>Size:</span>
+                <span className="font-semibold">Size:</span>
                 <div className="flex gap-2 ml-3 flex-wrap">
                   {product.size.map((size, index) => (
                     <button
@@ -642,7 +692,7 @@ const ProductDetails: React.FC = () => {
             )}
 
             <div className="flex items-center">
-              <span className='font-semibold'>Quantity:</span>
+              <span className="font-semibold">Quantity:</span>
               <div className="flex gap-0 ml-3">
                 <button
                   onClick={decreaseQuantity}
@@ -672,8 +722,9 @@ const ProductDetails: React.FC = () => {
               <button
                 onClick={handleCartToggle}
                 disabled={product.stock <= 0 && !inCart}
-                className={`w-full sm:w-56 h-16 text-white text-lg font-medium disabled:bg-gray-400 disabled:cursor-not-allowed ${inCart ? 'bg-red-500 hover:bg-red-600' : 'bg-gray-900'
-                  }`}
+                className={`w-full sm:w-56 h-16 text-white text-lg font-medium disabled:bg-gray-400 disabled:cursor-not-allowed ${
+                  inCart ? "bg-red-500 hover:bg-red-600" : "bg-gray-900"
+                }`}
               >
                 {isCartLoading ? (
                   <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto"></div>
@@ -686,35 +737,34 @@ const ProductDetails: React.FC = () => {
               <button
                 onClick={handleBuyNow}
                 disabled={product.stock <= 0 || isCreatingOrder}
-                className='w-full sm:w-56 h-16 bg-gray-900 text-white text-lg font-medium disabled:bg-gray-400 disabled:cursor-not-allowed'
+                className="w-full sm:w-56 h-16 bg-gray-900 text-white text-lg font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
               >
-                {isCreatingOrder ? 'Processing...' : 'Buy it now'}
+                {isCreatingOrder ? "Processing..." : "Buy it now"}
               </button>
             </div>
 
             <Separator />
 
             <div className="flex items-center">
-              <div className='font-semibold'>Sku:</div>
-              <span className='ml-3'>{product.sku || 'N/A'}</span>
+              <div className="font-semibold">Sku:</div>
+              <span className="ml-3">{product.sku || "N/A"}</span>
             </div>
-            
 
             <div className="flex items-center">
-              <div className='font-semibold'>Category:</div>
-              <div className='flex ml-3 gap-2'>
+              <div className="font-semibold">Category:</div>
+              <div className="flex ml-3 gap-2">
                 {product.category ? (
-                  <span className='flex text-sm'>{product.category.name}</span>
+                  <span className="flex text-sm">{product.category.name}</span>
                 ) : (
-                  <span className='flex text-sm'>Uncategorized</span>
+                  <span className="flex text-sm">Uncategorized</span>
                 )}
               </div>
             </div>
 
             {product.vendor && (
               <div className="flex items-center">
-                <div className='font-semibold'>Vendor:</div>
-                <span className='ml-3'>{product.vendor.name}</span>
+                <div className="font-semibold">Vendor:</div>
+                <span className="ml-3">{product.vendor.name}</span>
               </div>
             )}
           </div>
@@ -722,48 +772,64 @@ const ProductDetails: React.FC = () => {
       </div>
 
       {/* Product description and reviews */}
-      <div className='p-0 md:p- flex flex-col  m-auto'>
+      <div className="p-0 md:p- flex flex-col  m-auto">
         <Card className="w-[85%] p-8 flex flex-col gap-3 border border-grey-200">
-          <span className='font-semibold text-gray-900 text-2xl mb-2'>Product Description</span>
+          <span className="font-semibold text-gray-900 text-2xl mb-2">
+            Product Description
+          </span>
           <div className="text-gray-800">
-            {product.shortDescription || 'No description available for this product.'}
+            {product.shortDescription ||
+              "No description available for this product."}
           </div>
           <div className="text-gray-800">
-            {product.description || 'No description available for this product.'}
+            {product.description ||
+              "No description available for this product."}
           </div>
         </Card>
         <Card className="w-[85%] p-8 flex flex-col gap-3 mt-5">
-          <span className='font-semibold text-gray-900 text-xl'>Customer Reviews</span>
+          <span className="font-semibold text-gray-900 text-xl">
+            Customer Reviews
+          </span>
 
           {product.reviews && product.reviews.length > 0 ? (
             <div className="flex flex-col gap-6 mt-4">
-              {product.reviews.map((review:any) => (
-                <div key={review.id} className="border-b pb-4">
-                  <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 flex items-center justify-center bg-gray-200 rounded-full text-gray-600 font-semibold">
-                      {review.user?.customerProfile?.firstName?.[0]?.toUpperCase() || 'A'}
-                    </div>
-
-                    <div className="flex-1">
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-gray-900">
-                            {review.user?.customerProfile?.firstName + " " + review.user?.customerProfile?.lastName || 'Anonymous'}
-                          </span>
-                          <StarNew count={review.rating} />
-                        </div>
-                        <p className="text-xs text-gray-500 mt-2">
-                          {new Date(review.createdAt).toLocaleDateString()}
-                        </p>
+              {product.reviews.map((review: any) =>
+                review.comment ? (
+                  <div key={review.id} className="border-b pb-4">
+                    <div className="flex items-start gap-4">
+                      <div className="w-10 h-10 flex items-center justify-center bg-gray-200 rounded-full text-gray-600 font-semibold">
+                        {review.user?.customerProfile?.firstName?.[0]?.toUpperCase() ||
+                          "A"}
                       </div>
 
-                      <p className="mt-2 text-gray-700 leading-relaxed">{review.comment}</p>
+                      <div className="flex-1">
+                        <div className="flex justify-between items-center">
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-gray-900">
+                              {review.user?.customerProfile?.firstName +
+                                " " +
+                                review.user?.customerProfile?.lastName ||
+                                "Anonymous"}
+                            </span>
+                            <StarNew count={review.rating} />
+                          </div>
+                          <p className="text-xs text-gray-500 mt-2">
+                            {new Date(review.createdAt).toLocaleDateString()}
+                          </p>
+                        </div>
 
-                      <span className="text-sm text-gray-600">Rating: {review.rating} / 5</span>
+                        <p className="mt-2 text-gray-700 leading-relaxed">
+                          {review.comment}
+                        </p>
+
+                        {/* <span className="text-sm text-gray-600">
+                          Rating: {review.rating} / 5
+                        </span> */}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ) : null
+              )}
             </div>
           ) : (
             <div className="text-center text-slate-500 mt-4 py-6 border rounded-lg">
@@ -778,7 +844,9 @@ const ProductDetails: React.FC = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg max-w-md w-full">
             <h3 className="text-lg font-semibold mb-4">Enter Your Email</h3>
-            <p className="text-gray-600 mb-4">Please provide your email address to proceed with checkout.</p>
+            <p className="text-gray-600 mb-4">
+              Please provide your email address to proceed with checkout.
+            </p>
             <input
               type="email"
               value={email}
@@ -786,7 +854,9 @@ const ProductDetails: React.FC = () => {
               placeholder="your@email.com"
               className="w-full p-2 border border-gray-300 rounded mb-2"
             />
-            {emailError && <p className="text-red-500 text-sm mb-2">{emailError}</p>}
+            {emailError && (
+              <p className="text-red-500 text-sm mb-2">{emailError}</p>
+            )}
             <div className="flex justify-end space-x-2">
               <button
                 onClick={() => setShowEmailModal(false)}
@@ -796,7 +866,7 @@ const ProductDetails: React.FC = () => {
               </button>
               <button
                 onClick={handleEmailSubmit}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                className="px-4 py-2 text-white rounded bg-gradient-to-br from-indigo-400 via-purple-500 to-pink-300"
               >
                 Continue
               </button>
@@ -805,7 +875,7 @@ const ProductDetails: React.FC = () => {
         </div>
       )}
     </div>
-  )
-}
+  );
+};
 
-export default ProductDetails
+export default ProductDetails;

@@ -167,7 +167,7 @@ const StripePaymentForm = ({
       <button
         type="submit"
         disabled={!stripe || loading}
-        className="w-full bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition-colors disabled:bg-blue-400 disabled:cursor-not-allowed mt-4"
+        className="w-full bg-gradient-to-br from-indigo-400 via-purple-500 to-pink-300 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition-colors disabled:bg-blue-400 disabled:cursor-not-allowed mt-4"
       >
         {loading
           ? "Processing Payment..."
@@ -529,7 +529,7 @@ const Checkout = () => {
           </p>
           <button
             onClick={() => router.push("/products")}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
+            className="bg-gradient-to-br from-indigo-400 via-purple-500 to-pink-300 text-white px-4 py-2 rounded transition-colors"
           >
             Continue Shopping
           </button>

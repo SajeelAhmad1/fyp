@@ -214,7 +214,7 @@ const TopSeller = () => {
                                     
                                     {/* Price - Only Original Price */}
                                     <div className="flex items-center gap-2">
-                                        <span className="font-bold text-slate-800">${item.originalPrice}</span>
+                                        <span className="font-bold text-slate-800">£{item.originalPrice}</span>
                                     </div>
                                 </div>
                             </div>

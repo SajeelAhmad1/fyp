@@ -95,7 +95,7 @@ export default function Orders() {
                                 </button>
                                 <button
                                     type="submit"
-                                    className="px-4 py-2 bg-orange-500 text-white rounded"
+                                    className="px-4 py-2 bg-gradient-to-br from-indigo-400 via-purple-500 to-pink-300 text-white rounded"
                                 >
                                     Submit
                                 </button>
@@ -186,7 +186,7 @@ export default function Orders() {
                                     </div>
                                     <div className="mt-4 text-right">
                                         <p className="text-lg font-bold">
-                                            Total: ${order.totalPrice}
+                                            Total(without shipping cost): ${order.totalPrice}
                                         </p>
                                     </div>
                                 </div>
