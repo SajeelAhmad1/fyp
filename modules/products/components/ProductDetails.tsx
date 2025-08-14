@@ -486,7 +486,7 @@ const ProductDetails: React.FC = () => {
 
   return (
     <div className="container mx-auto">
-      <div className="min-h-full flex flex-col lg:flex-row py-14">
+      <div className="min-h-full flex flex-col lg:flex-row py-6 md:py-14">
         {/* Product images section */}
         <div className="w-full lg:w-1/2 h-full justify-center items-center gap-5 flex flex-col">
           <div
@@ -772,8 +772,8 @@ const ProductDetails: React.FC = () => {
       </div>
 
       {/* Product description and reviews */}
-      <div className="p-0 md:p- flex flex-col  m-auto">
-        <Card className="w-[85%] p-8 flex flex-col gap-3 border border-grey-200">
+      <div className="p-0 flex flex-col  m-auto">
+        <Card className="w-[100%] p-4 flex flex-col gap-3 border border-grey-200">
           <span className="font-semibold text-gray-900 text-2xl mb-2">
             Product Description
           </span>
@@ -781,9 +781,12 @@ const ProductDetails: React.FC = () => {
             {product.shortDescription ||
               "No description available for this product."}
           </div>
-          <div className="text-gray-800">
-            {product.description ||
-              "No description available for this product."}
+          <div className="text-gray-800 ">
+            <div
+              dangerouslySetInnerHTML={{
+                __html: product.description as string,
+              }}
+            />
           </div>
         </Card>
         <Card className="w-[85%] p-8 flex flex-col gap-3 mt-5">
@@ -803,28 +806,24 @@ const ProductDetails: React.FC = () => {
                       </div>
 
                       <div className="flex-1">
-                        <div className="flex justify-between items-center">
-                          <div className="flex items-center gap-2">
-                            <span className="font-semibold text-gray-900">
-                              {review.user?.customerProfile?.firstName +
-                                " " +
-                                review.user?.customerProfile?.lastName ||
-                                "Anonymous"}
-                            </span>
+                        <div className="flex flex-col md:flex-row md:justify-between md:items-center">
+                          <span className="font-semibold text-gray-900">
+                            {review.user?.customerProfile?.firstName +
+                              " " +
+                              review.user?.customerProfile?.lastName ||
+                              "Anonymous"}
+                          </span>
+                          <div className="flex flex-col md:flex-row md:items-center md:gap-2 mt-2 md:mt-0">
                             <StarNew count={review.rating} />
+                            <p className="text-xs text-gray-500 mt-1 md:mt-0">
+                              {new Date(review.createdAt).toLocaleDateString()}
+                            </p>
                           </div>
-                          <p className="text-xs text-gray-500 mt-2">
-                            {new Date(review.createdAt).toLocaleDateString()}
-                          </p>
                         </div>
 
                         <p className="mt-2 text-gray-700 leading-relaxed">
                           {review.comment}
                         </p>
-
-                        {/* <span className="text-sm text-gray-600">
-                          Rating: {review.rating} / 5
-                        </span> */}
                       </div>
                     </div>
                   </div>
