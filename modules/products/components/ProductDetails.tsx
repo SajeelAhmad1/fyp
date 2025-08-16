@@ -461,7 +461,7 @@ const ProductDetails: React.FC = () => {
     <div className="container mx-auto">
       <div className="min-h-full flex flex-col lg:flex-row py-6 md:py-14">
         {/* Product images section */}
-        <div className="w-full lg:w-1/2 h-full justify-center items-center gap-5 flex flex-col">
+        <div className="md:sticky top-0 w-full lg:w-1/2 h-full justify-center items-center gap-5 flex flex-col">
           <div className="w-full max-w-[600px] h-96 relative overflow-hidden group">
             {product.images && product.images.length > 0 && (
               <div
@@ -556,8 +556,6 @@ const ProductDetails: React.FC = () => {
                   />
                 </div>
               ))}
-
-            
           </div>
         </div>
 
@@ -723,41 +721,37 @@ const ProductDetails: React.FC = () => {
                 )}
               </div>
             </div>
+            <div className="mt-4">
+              <Card className="flex flex-col border border-grey-200">
+                <span className="font-semibold text-gray-900 text-2xl mb-2">
+                  Product Description
+                </span>
+                <div className="text-gray-800">
+                  {product.shortDescription ||
+                    "No description available for this product."}
+                </div>
+                <div className="text-gray-800">
+                  <div
+                    dangerouslySetInnerHTML={{
+                      __html: product.description as string,
+                    }}
+                  />
+                </div>
+              </Card>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Product description and reviews */}
-      <div className="p-0 flex m-auto">
-  <div className="w-1/2">
-    <div className="sticky top-0">
-      <video
-        src={product.video}
-        className="max-h-screen max-w-full object-contain"
-        controls
-        preload="metadata"
-      />
-    </div>
-  </div>
-  <div className="w-1/2">
-    <Card className="flex flex-col border border-grey-200">
-      <span className="font-semibold text-gray-900 text-2xl mb-2">
-        Product Description
-      </span>
-      <div className="text-gray-800">
-        {product.shortDescription ||
-          "No description available for this product."}
+      <div className="py-2 md:py-16">
+            <video
+              src={product.video}
+              className="px-4 max-h-screen md:h-screen max-w-screen md:w-screen"
+              controls
+              preload="metadata"
+            />
       </div>
-      <div className="text-gray-800">
-        <div
-          dangerouslySetInnerHTML={{
-            __html: product.description as string,
-          }}
-        />
-      </div>
-    </Card>
-  </div>
-</div>
       <ReviewsSection productId={product.id} />
 
       {/* Email modal for guest checkout */}
