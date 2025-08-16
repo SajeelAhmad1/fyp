@@ -556,6 +556,8 @@ const ProductDetails: React.FC = () => {
                   />
                 </div>
               ))}
+
+            
           </div>
         </div>
 
@@ -721,34 +723,41 @@ const ProductDetails: React.FC = () => {
                 )}
               </div>
             </div>
-
           </div>
         </div>
       </div>
 
       {/* Product description and reviews */}
       <div className="p-0 flex m-auto">
-        {/* <div className="w-1/2">
-        </div> */}
-        <div className="w-full">
-          <Card className="p-4 flex flex-col gap-3 border border-grey-200">
-            <span className="font-semibold text-gray-900 text-2xl mb-2">
-              Product Description
-            </span>
-            <div className="text-gray-800">
-              {product.shortDescription ||
-                "No description available for this product."}
-            </div>
-            <div className="text-gray-800 ">
-              <div
-                dangerouslySetInnerHTML={{
-                  __html: product.description as string,
-                }}
-              />
-            </div>
-          </Card>
-        </div>
+  <div className="w-1/2">
+    <div className="sticky top-0">
+      <video
+        src={product.video}
+        className="max-h-screen max-w-full object-contain"
+        controls
+        preload="metadata"
+      />
+    </div>
+  </div>
+  <div className="w-1/2">
+    <Card className="flex flex-col border border-grey-200">
+      <span className="font-semibold text-gray-900 text-2xl mb-2">
+        Product Description
+      </span>
+      <div className="text-gray-800">
+        {product.shortDescription ||
+          "No description available for this product."}
       </div>
+      <div className="text-gray-800">
+        <div
+          dangerouslySetInnerHTML={{
+            __html: product.description as string,
+          }}
+        />
+      </div>
+    </Card>
+  </div>
+</div>
       <ReviewsSection productId={product.id} />
 
       {/* Email modal for guest checkout */}

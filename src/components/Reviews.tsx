@@ -309,7 +309,7 @@ export default function ReviewsSection({ productId }: ReviewsSectionProps) {
     );
   }
 
-  const reviewsWithComments = reviews.filter((review) => review.comment);
+  const reviewsWithComments = reviews.filter((review) => review.comment!=="" ? review.comment : null);
 
   return (
     <div className="w-full flex flex-col md:flex-row">
