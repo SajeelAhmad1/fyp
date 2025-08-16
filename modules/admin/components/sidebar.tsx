@@ -12,6 +12,7 @@ const Sidebar = () => {
     { title: 'Products', icon: <Package size={20} />, path: '/admin/products' },
     { title: 'Categories', icon: <Package size={20} />, path: '/admin/categories' },
     { title: 'Orders', icon: <ShoppingBag size={20} />, path: '/admin/orders' },
+    { title: 'Reviews', icon: <ShoppingBag size={20} />, path: '/admin/reviews' },
     // { title: 'Customers', icon: <Users size={20} />, path: '/admin/customers' },
     // { title: 'Analytics', icon: <BarChart size={20} />, path: '/admin/analytics' },
     // { title: 'Settings', icon: <Settings size={20} />, path: '/admin/settings' },

@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient, Prisma } from '@prisma/client';
 import prisma from '@/lib/prisma';
 
-// Define types for query parameters
 type ProductQueryParams = {
   category?: string;
   vendorId?: string;
@@ -16,7 +15,6 @@ type ProductQueryParams = {
   minDiscount: number;
 };
 
-// Define type for response
 type ProductsResponse = {
   products: Array<any>;
   pagination: {
@@ -27,12 +25,10 @@ type ProductsResponse = {
   };
 };
 
-// GET /api/products - Get all products with optional filtering
 export async function GET(request: NextRequest): Promise<NextResponse<ProductsResponse | { error: string }>> {
   try {
     const { searchParams } = new URL(request.url);
     
-    // Parse query parameters
     const queryParams: ProductQueryParams = {
       category: searchParams.get('category') || undefined,
       vendorId: searchParams.get('vendorId') || undefined,
@@ -46,7 +42,6 @@ export async function GET(request: NextRequest): Promise<NextResponse<ProductsRe
       minDiscount: searchParams.get('minDiscount') ? parseFloat(searchParams.get('minDiscount')!) : 0,
     };
     
-    // Build filter object
     const where: Prisma.ProductWhereInput = {};
     
     if (queryParams.category) {
@@ -57,7 +52,6 @@ export async function GET(request: NextRequest): Promise<NextResponse<ProductsRe
       where.vendorId = queryParams.vendorId;
     }
     
-    // Only apply isFeatured filter if explicitly set to true
     if (queryParams.isFeatured === true) {
       where.isFeatured = true;
     }
@@ -72,7 +66,6 @@ export async function GET(request: NextRequest): Promise<NextResponse<ProductsRe
       }
     }
     
-    // Add filter for minimum discount
     if (queryParams.minDiscount > 0) {
       where.discount = {
         gte: new Prisma.Decimal(queryParams.minDiscount)
@@ -132,7 +125,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ProductsRe
           name: true,
           description: true,
           price: true,
-          stock: true,
+          stock: true, 
           sku: true,
           images: true,
           categoryId: true,
@@ -217,6 +210,7 @@ interface CreateProductRequest {
   discount: number;
   shortDescription: string;
   shippingCost?: number;
+  video?: string;
 }
 
 // POST /api/products - Create a new product
@@ -225,7 +219,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<any>> {
     const body: CreateProductRequest = await request.json();
     
     // Validate required fields
-    const { name, description, price, categoryId, discount, isFeatured, isBestChoice, color, size, shortDescription, sku, images, shippingCost  } = body;
+    const { name, description, price, categoryId, discount, isFeatured, isBestChoice, color, size, shortDescription, sku, images, shippingCost, video  } = body;
     
     if (!name || !description || price === undefined || !sku || !images || !Array.isArray(images)) {
       return NextResponse.json(
@@ -253,6 +247,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<any>> {
           shortDescription,
           vendorId: body.vendorId,
           shippingCost: shippingCost,
+          video: video
         }
       });
       

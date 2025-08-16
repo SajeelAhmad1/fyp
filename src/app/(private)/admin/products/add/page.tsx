@@ -33,6 +33,7 @@ interface ProductFormData {
   isFeatured: boolean;
   discount: string,
   isBestChoice: boolean;
+  video?: string;
   color: string[],
   size: string[],
   shortDescription: string,
@@ -62,6 +63,7 @@ export default function AddProductPage() {
     images: [],
     isFeatured: false,
     discount: '',
+    video: '',
     isBestChoice: false,
     color: [],
     size: [],
@@ -146,6 +148,20 @@ export default function AddProductPage() {
   const handleImageUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setImageUrl(e.target.value);
   };
+
+  const handleVideoUpload = (e:any) => {
+  const file = e.target.files?.[0];
+  if (file) {
+    // Convert to URL (you might want to upload to cloud storage instead)
+    const videoUrl = URL.createObjectURL(file);
+    setFormData(prev => ({
+      ...prev,
+      video: videoUrl
+    }));
+  }
+};
+
+
 
   // Add image URL to the array
   const addImageUrl = () => {
@@ -650,6 +666,41 @@ export default function AddProductPage() {
                   </div>
                 </div>
               )}
+
+
+
+
+              {formData.video && (
+                <div className="mt-4">
+                  <p className="text-sm font-medium text-gray-700 mb-2">Added Video:</p>
+                  <div className="relative group max-w-md">
+                    <video
+                      src={formData.video}
+                      controls
+                      className="h-32 w-full object-cover rounded-md border border-gray-200"
+                    />
+                    
+                  </div>
+                </div>
+              )}
+              <div>
+                  <input
+                    type="file"
+                    id="video-upload"
+                    accept="video/*"
+                    onChange={handleVideoUpload}
+                    className="hidden"
+                  />
+                  <label
+                    htmlFor="video-upload"
+                    className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 cursor-pointer"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                    Add Video
+                  </label>
+              </div>
             </div>
 
             {/* Color Input (as array) */}

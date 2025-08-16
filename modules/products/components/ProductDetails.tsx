@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { v4 as uuidv4 } from "uuid";
 import { useCart } from "@/components/context/CartContext";
 import { useSession } from "next-auth/react";
+import ReviewsSection from "@/components/Reviews";
 
 // Define TypeScript interfaces
 interface Review {
@@ -39,7 +40,7 @@ interface Product {
   description?: string;
   shortDescription?: string;
   price: number;
-  discount: number; // Now represents percentage
+  discount: number;
   stock: number;
   sku?: string;
   images?: string[];
@@ -50,6 +51,7 @@ interface Product {
   reviews: Review[];
   avgRating: number;
   reviewCount: number;
+  video?: string;
 }
 
 // Star component implementation remains the same
@@ -68,8 +70,8 @@ const Star: React.FC<{ count: number }> = ({ count }) => {
             xmlns="http://www.w3.org/2000/svg"
             className="h-5 w-5"
             viewBox="0 0 24 24"
-            fill="none"
-            stroke="#D3D3D3"
+            fill="#FF9B00"
+            stroke=""
             strokeWidth={2}
           >
             <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
@@ -85,7 +87,7 @@ const Star: React.FC<{ count: number }> = ({ count }) => {
             </defs>
             <path
               d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
-              fill="#FFD700"
+              fill="#FF9B00"
               clipPath={`url(#starClip-${star})`}
             />
           </svg>
@@ -95,7 +97,7 @@ const Star: React.FC<{ count: number }> = ({ count }) => {
   );
 };
 
-const StarNew: React.FC<{ count: number }> = ({ count }) => {
+export const StarNew: React.FC<{ count: number }> = ({ count }) => {
   return (
     <div className="flex">
       {[1, 2, 3, 4, 5].map((star) => {
@@ -108,8 +110,8 @@ const StarNew: React.FC<{ count: number }> = ({ count }) => {
               xmlns="http://www.w3.org/2000/svg"
               className="absolute top-0 left-0 w-full h-full"
               viewBox="0 0 24 24"
-              stroke="#D3D3D3"
-              fill="#D3D3D3"
+              stroke="#FF9B00"
+              fill="#FF9B00"
             >
               <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
             </svg>
@@ -121,7 +123,7 @@ const StarNew: React.FC<{ count: number }> = ({ count }) => {
                 xmlns="http://www.w3.org/2000/svg"
                 className="w-full h-full"
                 viewBox="0 0 24 24"
-                fill="#FFD700"
+                fill="#FF9B00"
               >
                 <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
               </svg>
@@ -276,35 +278,6 @@ const ProductDetails: React.FC = () => {
       throw new Error("Failed to toggle cart status");
     } finally {
       setIsCartLoading(false);
-    }
-  };
-
-  const updateCartQuantity = async (newQuantity: number) => {
-    if ((!userId && !guestCartId) || !cartItemId || !inCart) return;
-
-    try {
-      const queryParams = userId ? { userId } : { guestCartId };
-
-      const response = await fetch(`/api/cart/${cartItemId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ...queryParams,
-          quantity: newQuantity,
-        }),
-      });
-
-      if (response.ok) {
-        setCartQuantity(newQuantity);
-      } else {
-        setQuantity(cartQuantity);
-        const errorData = await response.json();
-      }
-    } catch (error) {
-      throw new Error("Failed to update cart quantity");
-      setQuantity(cartQuantity);
     }
   };
 
@@ -489,18 +462,16 @@ const ProductDetails: React.FC = () => {
       <div className="min-h-full flex flex-col lg:flex-row py-6 md:py-14">
         {/* Product images section */}
         <div className="w-full lg:w-1/2 h-full justify-center items-center gap-5 flex flex-col">
-          <div
-            ref={imageContainerRef}
-            className="w-full max-w-[500px] h-96 relative overflow-hidden group"
-            onMouseEnter={() => setIsZoomed(true)}
-            onMouseLeave={() => setIsZoomed(false)}
-            onMouseMove={handleMouseMove}
-          >
+          <div className="w-full max-w-[600px] h-96 relative overflow-hidden group">
             {product.images && product.images.length > 0 && (
               <div
+                ref={imageContainerRef}
+                onMouseEnter={() => setIsZoomed(true)}
+                onMouseLeave={() => setIsZoomed(false)}
+                onMouseMove={handleMouseMove}
                 className="w-full h-full relative"
                 style={{
-                  transform: isZoomed ? "scale(2)" : "scale(1)",
+                  transform: isZoomed ? "scale(4)" : "scale(1)",
                   transformOrigin: `${zoomPosition.x}% ${zoomPosition.y}%`,
                   transition: "transform 0.2s ease-out",
                   cursor: isZoomed ? "zoom-in" : "zoom-in",
@@ -509,7 +480,7 @@ const ProductDetails: React.FC = () => {
                 <img
                   src={product.images[currentImageIndex]}
                   alt={`${product.name} - Image ${currentImageIndex + 1}`}
-                  className="w-full h-full object-contain p-5"
+                  className="w-full h-full object-contain p-0"
                 />
               </div>
             )}
@@ -590,19 +561,9 @@ const ProductDetails: React.FC = () => {
 
         {/* Product details section */}
         <div className="w-full lg:w-1/2 h-full lg:h-auto lg:flex lg:ml-5">
-          <div className="w-full max-w-[500px] h-full lg:h-auto lg:w-full flex-col gap-2 flex mt-10 lg:mt-0 mx-auto px-4 lg:px-0">
-            {error && (
-              <div
-                className="bg-red-50 border border-red-300 text-red-700 px-4 py-3 rounded relative mb-4"
-                role="alert"
-              >
-                <strong className="font-bold">Error: </strong>
-                <span className="block sm:inline">{error}</span>
-              </div>
-            )}
-
+          <div className="w-full h-full lg:h-auto lg:w-full flex-col gap-2 flex mt-10 lg:mt-0 mx-auto px-4 lg:px-0">
             <div className="flex-col gap-2.5 flex">
-              <div className="text-gray-900 font-semibold text-2xl">
+              <div className="text-gray-900 font-medium text-2xl">
                 {product.name}
               </div>
               {product.discount > 0 ? (
@@ -629,7 +590,7 @@ const ProductDetails: React.FC = () => {
               <div className="text-neutral-600 text-sm font-medium">
                 {product.reviews.length > 0
                   ? `${calculateAverageRating().toFixed(1)} / 5 (${
-                      product.reviews.length * 59
+                      product.reviews.length + 500
                     } review${product.reviews.length !== 1 ? "s)" : ")"}`
                   : "No reviews"}
               </div>
@@ -761,82 +722,34 @@ const ProductDetails: React.FC = () => {
               </div>
             </div>
 
-            {product.vendor && (
-              <div className="flex items-center">
-                <div className="font-semibold">Vendor:</div>
-                <span className="ml-3">{product.vendor.name}</span>
-              </div>
-            )}
           </div>
         </div>
       </div>
 
       {/* Product description and reviews */}
-      <div className="p-0 flex flex-col  m-auto">
-        <Card className="w-[100%] p-4 flex flex-col gap-3 border border-grey-200">
-          <span className="font-semibold text-gray-900 text-2xl mb-2">
-            Product Description
-          </span>
-          <div className="text-gray-800">
-            {product.shortDescription ||
-              "No description available for this product."}
-          </div>
-          <div className="text-gray-800 ">
-            <div
-              dangerouslySetInnerHTML={{
-                __html: product.description as string,
-              }}
-            />
-          </div>
-        </Card>
-        <Card className="w-[85%] p-8 flex flex-col gap-3 mt-5">
-          <span className="font-semibold text-gray-900 text-xl">
-            Recent Customer Reviews
-          </span>
-
-          {product.reviews && product.reviews.length > 0 ? (
-            <div className="flex flex-col gap-6 mt-4">
-              {product.reviews.map((review: any) =>
-                review.comment ? (
-                  <div key={review.id} className="border-b pb-4">
-                    <div className="flex items-start gap-4">
-                      <div className="w-10 h-10 flex items-center justify-center bg-gray-200 rounded-full text-gray-600 font-semibold">
-                        {review.user?.customerProfile?.firstName?.[0]?.toUpperCase() ||
-                          "A"}
-                      </div>
-
-                      <div className="flex-1">
-                        <div className="flex flex-col md:flex-row md:justify-between md:items-center">
-                          <span className="font-semibold text-gray-900">
-                            {review.user?.customerProfile?.firstName +
-                              " " +
-                              review.user?.customerProfile?.lastName ||
-                              "Anonymous"}
-                          </span>
-                          <div className="flex flex-col md:flex-row md:items-center md:gap-2 mt-2 md:mt-0">
-                            <StarNew count={review.rating} />
-                            <p className="text-xs text-gray-500 mt-1 md:mt-0">
-                              {new Date(review.createdAt).toLocaleDateString()}
-                            </p>
-                          </div>
-                        </div>
-
-                        <p className="mt-2 text-gray-700 leading-relaxed">
-                          {review.comment}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ) : null
-              )}
+      <div className="p-0 flex m-auto">
+        {/* <div className="w-1/2">
+        </div> */}
+        <div className="w-full">
+          <Card className="p-4 flex flex-col gap-3 border border-grey-200">
+            <span className="font-semibold text-gray-900 text-2xl mb-2">
+              Product Description
+            </span>
+            <div className="text-gray-800">
+              {product.shortDescription ||
+                "No description available for this product."}
             </div>
-          ) : (
-            <div className="text-center text-slate-500 mt-4 py-6 border rounded-lg">
-              No reviews yet. Be the first to leave a review!
+            <div className="text-gray-800 ">
+              <div
+                dangerouslySetInnerHTML={{
+                  __html: product.description as string,
+                }}
+              />
             </div>
-          )}
-        </Card>
+          </Card>
+        </div>
       </div>
+      <ReviewsSection productId={product.id} />
 
       {/* Email modal for guest checkout */}
       {showEmailModal && (

@@ -97,6 +97,7 @@ interface UpdateProductRequest {
   color?: string[];
   size?: string[];
   shortDescription?: string;
+  video?: string
 }
 
 // PUT /api/products/[id] - Update a product
@@ -137,7 +138,8 @@ export async function PUT(
         price: body.price ? (typeof body.price === 'string' ? parseFloat(body.price) : body.price) : undefined,
         stock: body.stock !== undefined ? body.stock : undefined,
         sku: body.sku,
-        images: body.images, // Will be properly validated as string[]
+        images: body.images,
+        video: body.video,
         categoryId: body.categoryId,
         vendorId: body.vendorId,
         isFeatured: body.isFeatured,
