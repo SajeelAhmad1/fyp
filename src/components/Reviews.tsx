@@ -447,7 +447,7 @@ export default function ReviewsSection({ productId }: ReviewsSectionProps) {
           {/* Simple Image Modal */}
           {selectedImage && (
             <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-              <div className="relative max-w-4xl max-h-full">
+              <div className="relative max-w-4xl ">
                 <button
                   onClick={closeImageModal}
                   className="absolute top-2 right-2 w-8 h-8 bg-black bg-opacity-50 text-white rounded-full flex items-center justify-center hover:bg-opacity-75"
@@ -475,7 +475,7 @@ export default function ReviewsSection({ productId }: ReviewsSectionProps) {
                 <img
                   src={selectedImage}
                   alt="Review image"
-                  className="max-w-full max-h-full object-contain"
+                  className="max-w-full max-h-[500px] flex items-center justify-center object-contain"
                 />
 
                 {currentReviewImages.length > 1 && (
