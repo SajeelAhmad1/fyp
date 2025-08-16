@@ -64,47 +64,46 @@ interface ReviewsSectionProps {
   productId: string;
 }
 
+const renderStars = (rating: number) => {
+  const stars = [];
+  const fullStars = Math.floor(rating);
+  const hasHalfStar = rating % 1 !== 0;
+
+  // Full stars
+  for (let i = 0; i < fullStars; i++) {
+    stars.push(
+      <Star key={i} className="w-5 h-5 fill-orange-500 text-orange-500" />
+    );
+  }
+
+  // Half star
+  if (hasHalfStar) {
+    stars.push(
+      <div key="half" className="relative">
+        <Star className="w-5 h-5 text-gray-300" />
+        <Star
+          className="w-5 h-5 fill-orange-500 text-orange-500 absolute top-0 left-0"
+          style={{ clipPath: "inset(0 50% 0 0)" }}
+        />
+      </div>
+    );
+  }
+
+  // Empty stars
+  const remainingStars = 5 - Math.ceil(rating);
+  for (let i = 0; i < remainingStars; i++) {
+    stars.push(<Star key={`empty-${i}`} className="w-5 h-5 text-gray-300" />);
+  }
+
+  return stars;
+};
+
 // Rating Summary Component
 const RatingSummary: React.FC<{ ratingStats: RatingStats }> = ({
   ratingStats,
 }) => {
   const { totalReviews, averageRating, distribution, percentages } =
     ratingStats;
-
-  // Render stars for average rating
-  const renderStars = (rating: number) => {
-    const stars = [];
-    const fullStars = Math.floor(rating);
-    const hasHalfStar = rating % 1 !== 0;
-
-    // Full stars
-    for (let i = 0; i < fullStars; i++) {
-      stars.push(
-        <Star key={i} className="w-5 h-5 fill-orange-500 text-orange-500" />
-      );
-    }
-
-    // Half star
-    if (hasHalfStar) {
-      stars.push(
-        <div key="half" className="relative">
-          <Star className="w-5 h-5 text-gray-300" />
-          <Star
-            className="w-5 h-5 fill-orange-500 text-orange-500 absolute top-0 left-0"
-            style={{ clipPath: "inset(0 50% 0 0)" }}
-          />
-        </div>
-      );
-    }
-
-    // Empty stars
-    const remainingStars = 5 - Math.ceil(rating);
-    for (let i = 0; i < remainingStars; i++) {
-      stars.push(<Star key={`empty-${i}`} className="w-5 h-5 text-gray-300" />);
-    }
-
-    return stars;
-  };
 
   if (totalReviews === 0) {
     return (
@@ -121,9 +120,7 @@ const RatingSummary: React.FC<{ ratingStats: RatingStats }> = ({
 
   return (
     <Card className="w-full p-8 bg-white mb-6">
-      <h3 className="text-2xl font-medium mb-2">
-        Customer reviews
-      </h3>
+      <h3 className="text-2xl font-medium mb-2">Customer reviews</h3>
 
       <div className="flex items-center gap-4 mb-2">
         <div className="flex items-center gap-1">
@@ -361,7 +358,8 @@ export default function ReviewsSection({ productId }: ReviewsSectionProps) {
                         </span>
                       </div>
                       <div className="flex items-center gap-2 mb-1">
-                        <StarNew count={review.rating} />
+                        {renderStars(review.rating)}
+                        {/* <StarNew count={review.rating} /> */}
                       </div>
                       <p className="text-sm text-gray-600">
                         Reviewed on{" "}
@@ -407,8 +405,6 @@ export default function ReviewsSection({ productId }: ReviewsSectionProps) {
                         ))}
                       </div>
                     )}
-
-                    
                   </div>
                 </div>
               ))}
