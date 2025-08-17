@@ -2,11 +2,9 @@
 
 import { Card } from "@/common/components/elements/Card";
 import { useState, useEffect } from "react";
-import { StarNew } from "../../modules/products/components/ProductDetails";
 import avatar from "@/assets/myImages/avatar.png";
 import {
   X,
-  MessageSquare,
   ChevronLeft,
   ChevronRight,
   Star,
@@ -273,23 +271,23 @@ export default function ReviewsSection({ productId }: ReviewsSectionProps) {
     setSelectedImage(currentReviewImages[newIndex]);
   };
 
-  const getInitials = (firstName?: string, lastName?: string) => {
-    if (firstName && lastName) {
-      return `${firstName[0]}${lastName[0]}`.toUpperCase();
-    }
-    if (firstName) {
-      return firstName[0].toUpperCase();
-    }
-    return "A";
-  };
+  // const getInitials = (firstName?: string, lastName?: string) => {
+  //   if (firstName && lastName) {
+  //     return `${firstName[0]}${lastName[0]}`.toUpperCase();
+  //   }
+  //   if (firstName) {
+  //     return firstName[0].toUpperCase();
+  //   }
+  //   return "A";
+  // };
 
-  const getRandomGradient = (id: string) => {
-    const gradients = [
-      "bg-gradient-to-br from-indigo-400 via-purple-500 to-pink-300",
-    ];
-    const index = id.length % gradients.length;
-    return gradients[index];
-  };
+  // const getRandomGradient = (id: string) => {
+  //   const gradients = [
+  //     "bg-gradient-to-br from-indigo-400 via-purple-500 to-pink-300",
+  //   ];
+  //   const index = id.length % gradients.length;
+  //   return gradients[index];
+  // };
 
   if (loading) {
     return (
@@ -309,7 +307,7 @@ export default function ReviewsSection({ productId }: ReviewsSectionProps) {
     );
   }
 
-  const reviewsWithComments = reviews.filter((review) => review.comment!=="" ? review.comment : null);
+  const reviewsWithComments = reviews.filter((review) => review.comment);
 
   return (
     <div className="w-full flex flex-col md:flex-row">

@@ -69,12 +69,12 @@ const Footer = () => {
     {
       icon: Truck,
       title: "Fast Delivery",
-      description: "Free shipping on orders over £50"
+      description: "Free shipping on orders over £90"
     },
     {
       icon: RotateCcw,
       title: "Easy Returns",
-      description: "30-day return policy"
+      description: "24-hours return policy"
     },
     {
       icon: CheckCircle,

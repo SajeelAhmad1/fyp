@@ -108,9 +108,7 @@ const ProductDetails: React.FC = () => {
     }
 
     setIsCartLoading(true);
-    if (!inCart && !isBuyNow) {
-      openCart();
-    }
+    
 
     try {
       const cartPayload = userId
@@ -160,6 +158,9 @@ const ProductDetails: React.FC = () => {
       throw new Error("Failed to toggle cart status");
     } finally {
       setIsCartLoading(false);
+    }
+    if (!inCart && !isBuyNow && !isCartLoading) {
+      openCart();
     }
   };
 

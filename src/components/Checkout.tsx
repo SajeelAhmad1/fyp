@@ -21,19 +21,16 @@ const stripePromise = loadStripe(
 const GUEST_EMAIL_KEY = "guestEmail";
 const GUEST_CART_ID_KEY = "guestCartId";
 
-// Helper function to calculate shipping cost
 const calculateShippingCost = (items: OrderItem[]): number => {
   const shippingCosts = items.map(
     (item) => Number(item.product.shippingCost) || 0
   );
   const uniqueCosts = Array.from(new Set(shippingCosts));
 
-  // If all costs are the same, return that cost
   if (uniqueCosts.length === 1) {
     return uniqueCosts[0];
   }
 
-  // Otherwise, return the highest cost
   return Math.max(...shippingCosts);
 };
 
@@ -101,19 +98,26 @@ const StripePaymentForm = ({
   if (!clientSecret) return null;
 
   return (
-    <form onSubmit={handleSubmit} className="mt-6">
-      {clientSecret && <PaymentElement />}
-      {errorMessage && <div className="text-red-500 mt-2">{errorMessage}</div>}
-      <button
-        type="submit"
-        disabled={!stripe || loading}
-        className="w-full bg-gradient-to-br from-indigo-400 via-purple-500 to-pink-300 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition-colors disabled:bg-blue-400 disabled:cursor-not-allowed mt-4"
-      >
-        {loading
-          ? "Processing Payment..."
-          : `Pay £${(Number(order.totalPrice) + shippingCost).toFixed(2)}`}
-      </button>
-    </form>
+    <div className="bg-white rounded-lg border p-6">
+      <h3 className="text-lg font-medium mb-4">Payment Details</h3>
+      <form onSubmit={handleSubmit}>
+        {clientSecret && <PaymentElement />}
+        {errorMessage && (
+          <div className="text-red-600 text-sm mt-2 p-2 bg-red-50 rounded">
+            {errorMessage}
+          </div>
+        )}
+        <button
+          type="submit"
+          disabled={!stripe || loading}
+          className="w-full bg-amber-400 hover:bg-amber-500 text-black font-semibold py-3 px-4 rounded-lg mt-6 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+        >
+          {loading
+            ? "Processing..."
+            : `Complete your order - £${(Number(order.totalPrice) + shippingCost).toFixed(2)}`}
+        </button>
+      </form>
+    </div>
   );
 };
 
@@ -124,11 +128,11 @@ const Checkout = () => {
   const orderId = searchParams.get("orderId");
 
   const [order, setOrder] = useState<Order | null>(null);
-  const [customerProfile, setCustomerProfile] =
-    useState<CustomerProfile | null>(null);
+  const [customerProfile, setCustomerProfile] = useState<CustomerProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isCreatingOrder, setIsCreatingOrder] = useState(false);
+  const [currentStep, setCurrentStep] = useState(1);
 
   const [formData, setFormData] = useState({
     shippingFirstName: "",
@@ -402,6 +406,19 @@ const Checkout = () => {
     }
   };
 
+  const validateStep1 = () => {
+    return (
+      formData.shippingFirstName &&
+      formData.shippingLastName &&
+      formData.shippingStreet &&
+      formData.shippingCity &&
+      formData.shippingPostalCode &&
+      formData.shippingCountry &&
+      formData.shippingPhone &&
+      formData.email
+    );
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -436,20 +453,29 @@ const Checkout = () => {
 
   if (loading || isCreatingOrder) {
     return (
-      <div className="flex justify-center items-center h-64">
-        Loading checkout...
+      <div className="min-h-screen bg-gray-50 flex justify-center items-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading checkout...</p>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="p-12 mx-auto">
-        <div className="text-red-500 p-4 bg-red-50 rounded">{error}</div>
-        <div className="text-center mt-4">
+      <div className="min-h-screen bg-gray-50 flex justify-center items-center">
+        <div className="bg-white p-8 rounded-lg shadow-sm max-w-md w-full mx-4">
+          <div className="text-red-600 text-center mb-4">
+            <svg className="w-12 h-12 mx-auto mb-4" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+            </svg>
+            <h3 className="text-lg font-medium">Something went wrong</h3>
+            <p className="text-sm text-gray-600 mt-2">{error}</p>
+          </div>
           <button
             onClick={() => router.push("/cart")}
-            className="text-blue-600 hover:text-blue-800 transition-colors"
+            className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
           >
             Return to Cart
           </button>
@@ -460,16 +486,15 @@ const Checkout = () => {
 
   if (!order && !isCreatingOrder) {
     return (
-      <div className="p-12 mx-auto">
-        <div className="bg-white p-6 rounded-lg  text-center">
+      <div className="min-h-screen bg-gray-50 flex justify-center items-center">
+        <div className="bg-white p-8 rounded-lg shadow-sm max-w-md w-full mx-4 text-center">
           <h2 className="text-xl font-semibold mb-4">Order Not Found</h2>
-          <p className="text-gray-600 mb-4">
-            The order you&apos;re looking for doesn&apos;t exist or you
-            don&apos;t have permission to view it.
+          <p className="text-gray-600 mb-6">
+            The order you're looking for doesn't exist or you don't have permission to view it.
           </p>
           <button
             onClick={() => router.push("/products")}
-            className="bg-gradient-to-br from-indigo-400 via-purple-500 to-pink-300 text-white px-4 py-2 rounded transition-colors"
+            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
           >
             Continue Shopping
           </button>
@@ -478,619 +503,296 @@ const Checkout = () => {
     );
   }
 
-  // Calculate shipping cost for the current order
   const shippingCost = order ? calculateShippingCost(order.items) : 0;
+  const subtotal = order ? order.items.reduce((sum, item: any) => {
+    const itemPrice = parseFloat(item.price);
+    const discountPercent = item.product.discount ? parseFloat(item.product.discount) : 0;
+    const discountAmount = (itemPrice * discountPercent) / 100;
+    return sum + (itemPrice - discountAmount);
+  }, 0) : 0;
 
   return (
-    <div className="p-2 mx-auto">
-      <div className="bg-white p-6 rounded-lg mb-6">
-        <h1 className="text-2xl font-semibold mb-6">Checkout</h1>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <p className="text-gray-600 mt-2">Complete your purchase securely</p>
+        </div>
+
+        {/* Progress Bar */}
+        <div className="mb-8">
+          <div className="flex items-center justify-center space-x-4">
+            <div className={`flex items-center ${currentStep >= 1 ? 'bg-gradient-to-br from-indigo-400 via-purple-500 to-pink-300 bg-clip-text text-transparent' : 'text-gray-400'}`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep >= 1 ? 'bg-gradient-to-br from-indigo-400 via-purple-500 to-pink-300 text-white' : 'bg-gray-200'}`}>1</div>
+              <span className="ml-2 font-medium">Shipping</span>
+            </div>
+            <div className={`w-16 h-1 ${currentStep >= 2 ? 'bg-gradient-to-br from-indigo-400 via-purple-500 to-pink-300' : 'bg-gray-200'}`}></div>
+            <div className={`flex items-center ${currentStep >= 2 ? 'bg-gradient-to-br from-indigo-400 via-purple-500 to-pink-300 bg-clip-text text-transparent' : 'text-gray-400'}`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep >= 2 ? 'bg-gradient-to-br from-indigo-400 via-purple-500 to-pink-300 text-white' : 'bg-gray-200'}`}>2</div>
+              <span className="ml-2 font-medium">Payment</span>
+            </div>
+          </div>
+        </div>
 
         {order && (
-          <Elements
-            stripe={stripePromise}
-            options={{
-              mode: "payment",
-              amount: Math.round((order.totalPrice + shippingCost) * 100),
-              currency: "gbp",
-            }}
-          >
-            <div className="mb-6">
-              <h2 className="text-lg font-medium mb-3">Order Summary</h2>
-              <div className="border rounded-md overflow-hidden">
-                <div className="w-full">
-                  {/* Desktop Table - hidden on mobile */}
-                  <div className="hidden md:block">
-                    <table className="w-full">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th className="px-4 py-2 text-left text-sm font-medium text-gray-500">
-                            Product
-                          </th>
-                          <th className="px-4 py-2 text-right text-sm font-medium text-gray-500">
-                            Qty
-                          </th>
-                          <th className="px-4 py-2 text-right text-sm font-medium text-gray-500">
-                            Price
-                          </th>
-                          <th className="px-4 py-2 text-right text-sm font-medium text-gray-500">
-                            Discount
-                          </th>
-                          <th className="px-4 py-2 text-right text-sm font-medium text-gray-500">
-                            Total
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-200">
-                        {order.items.map((item: any) => {
-                          const itemPrice = parseFloat(item.price);
-                          const discountPercent = item.product.discount
-                            ? parseFloat(item.product.discount)
-                            : 0;
-                          const discountAmount =
-                            (itemPrice * discountPercent) / 100;
-                          const finalPrice = itemPrice - discountAmount;
-
-                          return (
-                            <tr key={item.id}>
-                              <td className="px-4 py-3">
-                                <div className="flex items-center">
-                                  <div className="w-12 h-12 relative mr-3">
-                                    {item.product.images &&
-                                    item.product.images.length > 0 ? (
-                                      <Image
-                                        src={item.product.images[0]}
-                                        alt={item.product.name}
-                                        fill
-                                        sizes="48px"
-                                        className="object-cover rounded"
-                                      />
-                                    ) : (
-                                      <div className="w-full h-full bg-gray-200 rounded flex items-center justify-center">
-                                        <span className="text-gray-400 text-xs">
-                                          No image
-                                        </span>
-                                      </div>
-                                    )}
-                                  </div>
-                                  <div>
-                                    <p className="font-medium text-sm">
-                                      {item.product.name}
-                                    </p>
-                                  </div>
-                                </div>
-                              </td>
-                              <td className="px-4 py-3 text-right">
-                                {item.quantity}
-                              </td>
-                              <td className="px-4 py-3 text-right">
-                                £{formatPrice(itemPrice)}
-                              </td>
-                              <td className="px-4 py-3 text-right">
-                                {discountPercent > 0 ? (
-                                  <span className="text-red-600">
-                                    -{discountPercent}% (£
-                                    {formatPrice(discountAmount)})
-                                  </span>
-                                ) : (
-                                  <span className="text-gray-400">-</span>
-                                )}
-                              </td>
-                              <td className="px-4 py-3 text-right font-medium">
-                                £{formatPrice(finalPrice)}
-                              </td>
-                            </tr>
-                          );
-                        })}
-                        <tr>
-                          <td className="px-4 py-3 text-left text-sm font-medium text-gray-500">
-                            Shipping
-                          </td>
-                          <td className="px-4 py-3 text-right text-sm font-medium text-gray-500"></td>
-                          <td className="px-4 py-3 text-right text-sm font-medium text-gray-500"></td>
-                          <td className="px-4 py-3 text-right text-sm font-medium text-gray-500"></td>
-                          <td className="px-4 py-3 text-right text-sm font-medium text-gray-500">
-                            £{formatPrice(shippingCost)}
-                          </td>
-                        </tr>
-                      </tbody>
-                      <tfoot className="bg-gray-50">
-                        <tr>
-                          <td
-                            colSpan={4}
-                            className="px-4 py-3 text-right font-semibold"
-                          >
-                            Total:
-                          </td>
-                          <td className="px-4 py-3 text-right font-semibold">
-                            £
-                            {formatPrice(
-                              order.items.reduce((sum, item: any) => {
-                                const itemPrice = parseFloat(item.price);
-                                const discountPercent = item.product.discount
-                                  ? parseFloat(item.product.discount)
-                                  : 0;
-                                const discountAmount =
-                                  (itemPrice * discountPercent) / 100;
-                                return sum + (itemPrice - discountAmount);
-                              }, 0) + shippingCost
-                            )}
-                          </td>
-                        </tr>
-                      </tfoot>
-                    </table>
-                  </div>
-
-                  {/* Mobile Card Layout - visible on mobile and tablet */}
-                  <div className="md:hidden space-y-4">
-                    {order.items.map((item: any) => {
-                      const itemPrice = parseFloat(item.price);
-                      const discountPercent = item.product.discount
-                        ? parseFloat(item.product.discount)
-                        : 0;
-                      const discountAmount =
-                        (itemPrice * discountPercent) / 100;
-                      const finalPrice = itemPrice - discountAmount;
-
-                      return (
-                        <div
-                          key={item.id}
-                          className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm"
-                        >
-                          <div className="flex items-start space-x-4">
-                            <div className="w-16 h-16 relative flex-shrink-0">
-                              {item.product.images &&
-                              item.product.images.length > 0 ? (
-                                <Image
-                                  src={item.product.images[0]}
-                                  alt={item.product.name}
-                                  fill
-                                  sizes="64px"
-                                  className="object-cover rounded"
-                                />
-                              ) : (
-                                <div className="w-full h-full bg-gray-200 rounded flex items-center justify-center">
-                                  <span className="text-gray-400 text-xs">
-                                    No image
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-
-                            <div className="flex-1 min-w-0">
-                              <h3 className="font-medium text-gray-900 truncate">
-                                {item.product.name}
-                              </h3>
-
-                              <div className="mt-2 space-y-1">
-                                <div className="flex justify-between items-center">
-                                  <span className="text-sm text-gray-500">
-                                    Quantity:
-                                  </span>
-                                  <span className="text-sm font-medium">
-                                    {item.quantity}
-                                  </span>
-                                </div>
-
-                                <div className="flex justify-between items-center">
-                                  <span className="text-sm text-gray-500">
-                                    Price:
-                                  </span>
-                                  <span className="text-sm">
-                                    £{formatPrice(itemPrice)}
-                                  </span>
-                                </div>
-
-                                {discountPercent > 0 && (
-                                  <div className="flex justify-between items-center">
-                                    <span className="text-sm text-gray-500">
-                                      Discount:
-                                    </span>
-                                    <span className="text-sm text-red-600">
-                                      -{discountPercent}% (£
-                                      {formatPrice(discountAmount)})
-                                    </span>
-                                  </div>
-                                )}
-
-                                <div className="flex justify-between items-center pt-1 border-t border-gray-100">
-                                  <span className="text-sm font-medium text-gray-900">
-                                    Total:
-                                  </span>
-                                  <span className="text-sm font-bold text-gray-900">
-                                    £{formatPrice(finalPrice)}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-
-                    {/* Mobile Shipping */}
-                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium text-gray-900">
-                          Shipping:
-                        </span>
-                        <span className="text-sm font-medium">
-                          £{formatPrice(shippingCost)}
-                        </span>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Left Column - Forms */}
+            <div className="lg:col-span-2 space-y-6">
+              {currentStep === 1 && (
+                <>
+                  {/* Shipping Address */}
+                  <div className="bg-white rounded-lg border p-6">
+                    <h2 className="text-xl font-semibold mb-4">Shipping Address</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          First Name *
+                        </label>
+                        <input
+                          type="text"
+                          name="shippingFirstName"
+                          value={formData.shippingFirstName}
+                          onChange={handleInputChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Last Name *
+                        </label>
+                        <input
+                          type="text"
+                          name="shippingLastName"
+                          value={formData.shippingLastName}
+                          onChange={handleInputChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          required
+                        />
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Street Address *
+                        </label>
+                        <input
+                          type="text"
+                          name="shippingStreet"
+                          value={formData.shippingStreet}
+                          onChange={handleInputChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          City *
+                        </label>
+                        <input
+                          type="text"
+                          name="shippingCity"
+                          value={formData.shippingCity}
+                          onChange={handleInputChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          State/Province
+                        </label>
+                        <input
+                          type="text"
+                          name="shippingState"
+                          value={formData.shippingState}
+                          onChange={handleInputChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Postal Code *
+                        </label>
+                        <input
+                          type="text"
+                          name="shippingPostalCode"
+                          value={formData.shippingPostalCode}
+                          onChange={handleInputChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Country *
+                        </label>
+                        <input
+                          type="text"
+                          name="shippingCountry"
+                          value={formData.shippingCountry}
+                          onChange={handleInputChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          required
+                        />
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Phone Number *
+                        </label>
+                        <input
+                          type="tel"
+                          name="shippingPhone"
+                          value={formData.shippingPhone}
+                          onChange={handleInputChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          required
+                        />
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Email Address *
+                        </label>
+                        <input
+                          type="email"
+                          name="email"
+                          value={formData.email}
+                          onChange={handleInputChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          required
+                        />
                       </div>
                     </div>
 
-                    {/* Mobile Total */}
-                    <div className="bg-gray-900 text-white rounded-lg p-4">
-                      <div className="flex justify-between items-center">
-                        <span className="text-lg font-semibold">Total:</span>
-                        <span className="text-lg font-bold">
-                          £
-                          {formatPrice(
-                            order.items.reduce((sum, item: any) => {
-                              const itemPrice = parseFloat(item.price);
-                              const discountPercent = item.product.discount
-                                ? parseFloat(item.product.discount)
-                                : 0;
-                              const discountAmount =
-                                (itemPrice * discountPercent) / 100;
-                              return sum + (itemPrice - discountAmount);
-                            }, 0) + shippingCost
-                          )}
-                        </span>
-                      </div>
+                    <div className="mt-6">
+                      <button
+                        onClick={() => setCurrentStep(2)}
+                        disabled={!validateStep1()}
+                        className="w-full bg-gradient-to-br from-indigo-400 via-purple-500 to-pink-300 text-white font-semibold py-3 px-4 rounded-lg transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+                      >
+                        Continue to Payment
+                      </button>
                     </div>
                   </div>
-                </div>
-              </div>
-            </div>
+                </>
+              )}
 
-            {/* Shipping Details Section */}
-            <div className="mb-6">
-              <h2 className="text-lg font-medium mb-3">Shipping Details</h2>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label
-                    htmlFor="shippingFirstName"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    First Name
-                  </label>
-                  <input
-                    type="text"
-                    id="shippingFirstName"
-                    name="shippingFirstName"
-                    placeholder="Enter First Name"
-                    value={formData.shippingFirstName}
-                    onChange={handleInputChange}
-                    className="w-full p-2 border border-gray-300 rounded"
-                    required
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="shippingLastName"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Last Name
-                  </label>
-                  <input
-                    type="text"
-                    id="shippingLastName"
-                    name="shippingLastName"
-                    placeholder="Enter Last Name"
-                    value={formData.shippingLastName}
-                    onChange={handleInputChange}
-                    className="w-full p-2 border border-gray-300 rounded"
-                    required
-                  />
-                </div>
-                <div className="col-span-2">
-                  <label
-                    htmlFor="shippingStreet"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Street Address
-                  </label>
-                  <input
-                    type="text"
-                    id="shippingStreet"
-                    name="shippingStreet"
-                    placeholder="Enter Street Address"
-                    value={formData.shippingStreet}
-                    onChange={handleInputChange}
-                    className="w-full p-2 border border-gray-300 rounded"
-                    required
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="shippingCity"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    City
-                  </label>
-                  <input
-                    type="text"
-                    id="shippingCity"
-                    name="shippingCity"
-                    placeholder="Enter City"
-                    value={formData.shippingCity}
-                    onChange={handleInputChange}
-                    className="w-full p-2 border border-gray-300 rounded"
-                    required
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="shippingState"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    State/Province
-                  </label>
-                  <input
-                    type="text"
-                    id="shippingState"
-                    name="shippingState"
-                    placeholder="Enter State"
-                    value={formData.shippingState}
-                    onChange={handleInputChange}
-                    className="w-full p-2 border border-gray-300 rounded"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="shippingPostalCode"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Postal Code
-                  </label>
-                  <input
-                    type="text"
-                    id="shippingPostalCode"
-                    name="shippingPostalCode"
-                    placeholder="Enter Postal Code"
-                    value={formData.shippingPostalCode}
-                    onChange={handleInputChange}
-                    className="w-full p-2 border border-gray-300 rounded"
-                    required
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="shippingCountry"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Country
-                  </label>
-                  <input
-                    type="text"
-                    id="shippingCountry"
-                    name="shippingCountry"
-                    placeholder="Enter Country"
-                    value={formData.shippingCountry}
-                    onChange={handleInputChange}
-                    className="w-full p-2 border border-gray-300 rounded"
-                    required
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="shippingPhone"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Phone Number
-                  </label>
-                  <input
-                    type="tel"
-                    id="shippingPhone"
-                    name="shippingPhone"
-                    placeholder="Enter Phone Number"
-                    value={formData.shippingPhone}
-                    onChange={handleInputChange}
-                    className="w-full p-2 border border-gray-300 rounded"
-                    required
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Billing Details Section */}
-            <div className="mb-6">
-              <div className="flex items-center mb-3">
-                <input
-                  type="checkbox"
-                  id="sameAddress"
-                  checked={formData.useSameAddress}
-                  onChange={handleSameAddressToggle}
-                  className="mr-2"
-                />
-                <label
-                  htmlFor="sameAddress"
-                  className="text-sm font-medium text-gray-700"
+              {currentStep === 2 && (
+                <Elements
+                  stripe={stripePromise}
+                  options={{
+                    mode: "payment",
+                    amount: Math.round((order.totalPrice + shippingCost) * 100),
+                    currency: "gbp",
+                  }}
                 >
-                  Billing address same as shipping
-                </label>
-              </div>
+                  <div className="space-y-6">
+                    {/* Shipping Summary */}
+                    <div className="bg-white rounded-lg border p-6">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-lg font-medium">Shipping to:</h3>
+                        <button
+                          onClick={() => setCurrentStep(1)}
+                          className="bg-gradient-to-br from-indigo-400 via-purple-500 to-pink-300 bg-clip-text text-transparent hover:text-blue-800 text-sm"
+                        >
+                          Change
+                        </button>
+                      </div>
+                      <div className="mt-2 text-gray-600">
+                        <p>{formData.shippingFirstName} {formData.shippingLastName}</p>
+                        <p>{formData.shippingStreet}</p>
+                        <p>{formData.shippingCity}, {formData.shippingState} {formData.shippingPostalCode}</p>
+                        <p>{formData.shippingCountry}</p>
+                      </div>
+                    </div>
 
-              {!formData.useSameAddress && (
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label
-                      htmlFor="billingFirstName"
-                      className="block text-sm font-medium text-gray-700 mb-1"
-                    >
-                      First Name
-                    </label>
-                    <input
-                      type="text"
-                      id="billingFirstName"
-                      name="billingFirstName"
-                      placeholder="Enter First Name"
-                      value={
-                        formData.billingFirstName ||
-                        customerProfile?.firstName ||
-                        ""
-                      }
-                      onChange={handleInputChange}
-                      className="w-full p-2 border border-gray-300 rounded"
+                    <StripePaymentForm
+                      order={order}
+                      formData={formData}
+                      onPaymentSuccess={handlePaymentSuccess}
                     />
                   </div>
-                  <div>
-                    <label
-                      htmlFor="billingLastName"
-                      className="block text-sm font-medium text-gray-700 mb-1"
-                    >
-                      Last Name
-                    </label>
-                    <input
-                      type="text"
-                      id="billingLastName"
-                      name="billingLastName"
-                      placeholder="Enter Last Name"
-                      value={
-                        formData.billingLastName ||
-                        customerProfile?.lastName ||
-                        ""
-                      }
-                      onChange={handleInputChange}
-                      className="w-full p-2 border border-gray-300 rounded"
-                    />
-                  </div>
-                  <div className="col-span-2">
-                    <label
-                      htmlFor="billingStreet"
-                      className="block text-sm font-medium text-gray-700 mb-1"
-                    >
-                      Street Address
-                    </label>
-                    <input
-                      type="text"
-                      id="billingStreet"
-                      name="billingStreet"
-                      placeholder="Enter Street Address"
-                      value={
-                        formData.billingStreet ||
-                        customerProfile?.streetAddress ||
-                        ""
-                      }
-                      onChange={handleInputChange}
-                      className="w-full p-2 border border-gray-300 rounded"
-                    />
-                  </div>
-                  <div>
-                    <label
-                      htmlFor="billingCity"
-                      className="block text-sm font-medium text-gray-700 mb-1"
-                    >
-                      City
-                    </label>
-                    <input
-                      type="text"
-                      id="billingCity"
-                      name="billingCity"
-                      placeholder="Enter City"
-                      value={
-                        formData.billingCity || customerProfile?.city || ""
-                      }
-                      onChange={handleInputChange}
-                      className="w-full p-2 border border-gray-300 rounded"
-                    />
-                  </div>
-                  <div>
-                    <label
-                      htmlFor="billingState"
-                      className="block text-sm font-medium text-gray-700 mb-1"
-                    >
-                      State/Province
-                    </label>
-                    <input
-                      type="text"
-                      id="billingState"
-                      name="billingState"
-                      placeholder="Enter State"
-                      value={
-                        formData.billingState || customerProfile?.state || ""
-                      }
-                      onChange={handleInputChange}
-                      className="w-full p-2 border border-gray-300 rounded"
-                    />
-                  </div>
-                  <div>
-                    <label
-                      htmlFor="billingPostalCode"
-                      className="block text-sm font-medium text-gray-700 mb-1"
-                    >
-                      Postal Code
-                    </label>
-                    <input
-                      type="text"
-                      id="billingPostalCode"
-                      name="billingPostalCode"
-                      placeholder="Enter Postal Code"
-                      value={
-                        formData.billingPostalCode ||
-                        customerProfile?.postalCode ||
-                        ""
-                      }
-                      onChange={handleInputChange}
-                      className="w-full p-2 border border-gray-300 rounded"
-                    />
-                  </div>
-                  <div>
-                    <label
-                      htmlFor="billingCountry"
-                      className="block text-sm font-medium text-gray-700 mb-1"
-                    >
-                      Country
-                    </label>
-                    <input
-                      type="text"
-                      id="billingCountry"
-                      name="billingCountry"
-                      placeholder="Enter Country"
-                      value={
-                        formData.billingCountry ||
-                        customerProfile?.country ||
-                        ""
-                      }
-                      onChange={handleInputChange}
-                      className="w-full p-2 border border-gray-300 rounded"
-                    />
-                  </div>
-                </div>
+                </Elements>
               )}
             </div>
 
-            {/* Contact Information */}
-            <div className="mb-6">
-              <h2 className="text-lg font-medium mb-3">Contact Information</h2>
-              <div>
-                <label
-                  htmlFor="email"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  placeholder="Enter Email Address"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border border-gray-300 rounded"
-                  required
-                />
+            {/* Right Column - Order Summary */}
+            <div className="lg:col-span-1">
+              <div className="bg-white rounded-lg border p-6 sticky top-4">
+                <h3 className="text-xl font-semibold mb-4">Order Summary</h3>
+                
+                {/* Order Items */}
+                <div className="space-y-4 mb-4">
+                  {order.items.map((item: any) => {
+                    const itemPrice = parseFloat(item.price);
+                    const discountPercent = item.product.discount ? parseFloat(item.product.discount) : 0;
+                    const discountAmount = (itemPrice * discountPercent) / 100;
+                    const finalPrice = itemPrice - discountAmount;
+
+                    return (
+                      <div key={item.id} className="flex items-center space-x-4 py-2">
+                        <div className="w-16 h-16 relative bg-gray-100 rounded-md overflow-hidden">
+                          {item.product.images && item.product.images.length > 0 ? (
+                            <Image
+                              src={item.product.images[0]}
+                              alt={item.product.name}
+                              fill
+                              sizes="64px"
+                              className="object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <span className="text-gray-400 text-xs">No image</span>
+                            </div>
+                          )}
+                          <div className="absolute -top-2 -right-2 bg-gray-800 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                            {item.quantity}
+                          </div>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-sm font-medium text-gray-900 truncate">
+                            {item.product.name}
+                          </h4>
+                          <p className="text-sm text-gray-500">
+                            £{formatPrice(finalPrice)}
+                          </p>
+                          {discountPercent > 0 && (
+                            <p className="text-xs text-red-600">
+                              {discountPercent}% off
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Order Totals */}
+                <div className="border-t pt-4 space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Subtotal:</span>
+                    <span>£{formatPrice(subtotal)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span>Shipping:</span>
+                    <span>£{formatPrice(shippingCost)}</span>
+                  </div>
+                  <div className="flex justify-between text-lg font-semibold border-t pt-2">
+                    <span>Total:</span>
+                    <span>£{formatPrice(subtotal + shippingCost)}</span>
+                  </div>
+                </div>
+
+                {/* Security Badge */}
+                <div className="mt-6 pt-4 border-t">
+                  <div className="flex items-center justify-center space-x-2 text-sm text-gray-600">
+                    <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                    </svg>
+                    <span>Secure checkout</span>
+                  </div>
+                </div>
               </div>
             </div>
-
-            <StripePaymentForm
-              order={order}
-              formData={formData}
-              onPaymentSuccess={handlePaymentSuccess}
-            />
-          </Elements>
+          </div>
         )}
       </div>
     </div>
@@ -1099,7 +801,11 @@ const Checkout = () => {
 
 const CheckoutPage = () => {
   return (
-    <Suspense fallback={<></>}>
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex justify-center items-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    }>
       <Checkout />
     </Suspense>
   );
