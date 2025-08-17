@@ -28,6 +28,10 @@ const PrivacyPolicy = () => {
                 {
                     subtitle: "Purpose",
                     content: "We collect this information to provide you with services, improve our offerings, and fulfill legal obligations."
+                },
+                {
+                    subtitle: "",
+                    content: "We do not collect your credit card information."
                 }
             ]
         },

@@ -21,7 +21,7 @@ const HeaderBottom = () => {
   };
 
   return (
-    <header className="bg-[#3580b9] w-full top-4 left-0 z-50">
+    <header className="w-full top-4 left-0 z-50">
       <div className="px-auto mx-auto">
         {/* Main header layout */}
         <div className="flex items-center justify-between cursor-pointer py-2">
