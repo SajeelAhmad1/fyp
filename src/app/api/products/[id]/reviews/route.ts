@@ -22,6 +22,7 @@ export async function GET(
     
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
+    const withComments = searchParams.get('withComments') === 'true';
     
     const skip = (page - 1) * limit;
     
@@ -31,8 +32,6 @@ export async function GET(
       select: { id: true, name: true }
     });
     
-    console.log('Product exists:', productExists);
-    
     if (!productExists) {
       return NextResponse.json(
         { error: 'Product not found' },
@@ -40,23 +39,35 @@ export async function GET(
       );
     }
     
-    // Get all reviews to calculate rating ranges
+    // Base where condition
+    const baseWhereCondition = {
+      productId: id.trim()
+    };
+
+    // Add comment filter if requested
+    const whereCondition = withComments 
+      ? {
+          ...baseWhereCondition,
+          comment: {
+            // not: null,
+            not: ''
+          }
+        }
+      : baseWhereCondition;
+    
+    // Get all reviews to calculate rating ranges (always use all reviews for stats)
     const allReviews = await prisma.review.findMany({
-      where: {
-        productId: id.trim()
-      },
+      where: baseWhereCondition,
       select: {
         rating: true
       }
     });
 
-    // Calculate total reviews and average rating
+    // Calculate total reviews and average rating (from all reviews)
     const totalReviews = allReviews.length;
 
     const averageRating = await prisma.review.aggregate({
-      where: {
-        productId: id.trim()
-      },
+      where: baseWhereCondition,
       _avg: {
         rating: true
       }
@@ -93,11 +104,14 @@ export async function GET(
       return acc;
     }, {} as Record<string, number>);
     
-    // Now get reviews with explicit productId filter
+    // Get total count for filtered reviews (for pagination)
+    const filteredReviewsCount = await prisma.review.count({
+      where: whereCondition
+    });
+    
+    // Now get reviews with the appropriate filter
     const reviews = await prisma.review.findMany({
-      where: {
-        productId: id.trim()
-      },
+      where: whereCondition,
       include: {
         user: {
           select: {
@@ -120,8 +134,6 @@ export async function GET(
       take: limit
     });
     
-    console.log('Total count:', totalReviews);
-    
     return NextResponse.json({
       reviews,
       ratingStats: {
@@ -133,13 +145,15 @@ export async function GET(
       pagination: {
         page,
         limit,
-        total: totalReviews,
-        hasMore: skip + limit < totalReviews
+        total: filteredReviewsCount, // Use filtered count for pagination
+        hasMore: skip + limit < filteredReviewsCount
       },
       debug: {
         requestedProductId: id,
         foundReviews: reviews.length,
-        totalReviews: totalReviews
+        totalReviews: totalReviews,
+        filteredReviewsCount: filteredReviewsCount,
+        withComments: withComments
       }
     });
     

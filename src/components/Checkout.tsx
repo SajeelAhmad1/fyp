@@ -490,7 +490,7 @@ const Checkout = () => {
         <div className="bg-white p-8 rounded-lg shadow-sm max-w-md w-full mx-4 text-center">
           <h2 className="text-xl font-semibold mb-4">Order Not Found</h2>
           <p className="text-gray-600 mb-6">
-            The order you're looking for doesn't exist or you don't have permission to view it.
+            The order you are looking for does not exist or you do not have permission to view it.
           </p>
           <button
             onClick={() => router.push("/products")}

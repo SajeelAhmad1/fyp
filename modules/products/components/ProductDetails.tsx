@@ -108,7 +108,6 @@ const ProductDetails: React.FC = () => {
     }
 
     setIsCartLoading(true);
-    
 
     try {
       const cartPayload = userId
@@ -273,7 +272,7 @@ const ProductDetails: React.FC = () => {
         const data = await response.json();
         setProduct(data);
         setCurrentImageIndex(0);
-        
+
         // Set sales end time from API response
         setSalesEndTime(data.salesEndTime || null);
       } catch (error) {
@@ -630,14 +629,16 @@ const ProductDetails: React.FC = () => {
       </div>
 
       {/* Product description and reviews */}
-      <div className="py-2 md:py-16">
-            <video
-              src={product.video}
-              className="px-4 max-h-screen md:h-screen max-w-screen md:w-screen"
-              controls
-              preload="metadata"
-            />
-      </div>
+      {product.video && (
+        <div className="py-2 md:py-16">
+          <video
+            src={product.video}
+            className="px-4 max-h-screen md:h-screen max-w-screen md:w-screen"
+            controls
+            preload="metadata"
+          />
+        </div>
+      )}
       <ReviewsSection productId={product.id} />
 
       {/* Sales Timer - Chatbot style */}

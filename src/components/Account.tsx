@@ -58,8 +58,6 @@ export default function Account() {
         country: ""
     };
 
-    console.log("Profile Data:", safeProfile);
-
     return (
         <div className="container mx-auto px-4 py-8">
             {/* Tab Navigation */}

@@ -201,8 +201,9 @@ export default function ReviewsSection({ productId }: ReviewsSectionProps) {
       if (page === 1) setLoading(true);
       else setLoadingMore(true);
 
+      // Add withComments=true parameter to get only reviews with comments
       const response = await fetch(
-        `/api/products/${productId}/reviews?page=${page}&limit=5`
+        `/api/products/${productId}/reviews?page=${page}&limit=5&withComments=true`
       );
 
       if (!response.ok) {
@@ -271,24 +272,6 @@ export default function ReviewsSection({ productId }: ReviewsSectionProps) {
     setSelectedImage(currentReviewImages[newIndex]);
   };
 
-  // const getInitials = (firstName?: string, lastName?: string) => {
-  //   if (firstName && lastName) {
-  //     return `${firstName[0]}${lastName[0]}`.toUpperCase();
-  //   }
-  //   if (firstName) {
-  //     return firstName[0].toUpperCase();
-  //   }
-  //   return "A";
-  // };
-
-  // const getRandomGradient = (id: string) => {
-  //   const gradients = [
-  //     "bg-gradient-to-br from-indigo-400 via-purple-500 to-pink-300",
-  //   ];
-  //   const index = id.length % gradients.length;
-  //   return gradients[index];
-  // };
-
   if (loading) {
     return (
       <div className="w-full">
@@ -307,8 +290,6 @@ export default function ReviewsSection({ productId }: ReviewsSectionProps) {
     );
   }
 
-  const reviewsWithComments = reviews.filter((review) => review.comment);
-
   return (
     <div className="w-full flex flex-col md:flex-row">
       {/* Rating Summary Section */}
@@ -325,9 +306,9 @@ export default function ReviewsSection({ productId }: ReviewsSectionProps) {
             </h3>
           </div>
 
-          {reviewsWithComments.length > 0 ? (
+          {reviews.length > 0 ? (
             <div className="space-y-6">
-              {reviewsWithComments.map((review: Review, index: number) => (
+              {reviews.map((review: Review, index: number) => (
                 <div key={review.id} className="border-b border-gray-200 pb-6">
                   {/* Review Header */}
                   <div className="flex items-start gap-3 mb-3">
