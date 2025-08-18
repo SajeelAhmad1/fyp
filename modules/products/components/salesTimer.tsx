@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 interface SalesTimerProps {
-  endTime: string | null;
+  endTime: string | null | undefined;
 }
 
 export const SalesTimer = ({ endTime }: SalesTimerProps) => {
@@ -46,41 +46,70 @@ export const SalesTimer = ({ endTime }: SalesTimerProps) => {
 
   return (
     <div className="fixed bottom-8 right-4 z-50">
-      <div className={`bg-white border border-gray-300 rounded-md shadow-md transition-all duration-200 ${
-        isMinimized ? 'w-10 h-10' : 'w-48'
+      <div className={`bg-white border border-gray-200 rounded-lg shadow-lg transition-all duration-300 ${
+        isMinimized ? 'w-14 h-14' : 'w-72'
       }`}>
         {isMinimized ? (
           <button
             onClick={() => setIsMinimized(false)}
-            className="w-full h-full flex items-center justify-center text-orange-600 hover:bg-gray-50 rounded-md"
+            className="w-full h-full flex items-center justify-center text-orange-600 hover:bg-gray-50 rounded-lg transition-colors duration-200"
           >
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
             </svg>
           </button>
         ) : (
-          <div className="p-5">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-medium text-gray-600">Deal ends in</span>
+          <div className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h1 className="text-sm font-semibold text-gray-800 whitespace-nowrap">
+                Hurry up! Order now
+              </h1>
               <button
                 onClick={() => setIsMinimized(true)}
-                className="text-gray-400 hover:text-gray-600 text-xs"
+                className="text-gray-400 hover:text-gray-600 text-lg font-bold transition-colors duration-200 w-5 h-5 flex items-center justify-center"
               >
                 ×
               </button>
             </div>
-            <div className="flex items-center space-x-1 text-sm">
+            
+            <div className="mb-3">
+              <span className="text-xs font-medium text-gray-600 block">
+                Deal ends in
+              </span>
+            </div>
+            
+            <div className="flex items-center justify-center space-x-2">
               {timeLeft.days > 0 && (
                 <>
-                  <span className="font-bold text-red-600">{timeLeft.days}d</span>
-                  <span className="text-gray-400">:</span>
+                  <div className="text-center">
+                    <div className="bg-red-600 text-white px-2 py-1 rounded text-lg font-bold min-w-[32px]">
+                      {timeLeft.days}
+                    </div>
+                    <div className="text-xs text-gray-600 mt-1">days</div>
+                  </div>
+                  <span className="text-gray-400 font-bold">:</span>
                 </>
               )}
-              <span className="font-bold text-red-600">{timeLeft.hours.toString().padStart(2, '0')}h</span>
-              <span className="text-gray-400">:</span>
-              <span className="font-bold text-red-600">{timeLeft.minutes.toString().padStart(2, '0')}m</span>
-              <span className="text-gray-400">:</span>
-              <span className="font-bold text-red-600">{timeLeft.seconds.toString().padStart(2, '0')}s</span>
+              <div className="text-center">
+                <div className="bg-red-600 text-white px-2 py-1 rounded text-lg font-bold min-w-[32px]">
+                  {timeLeft.hours.toString().padStart(2, '0')}
+                </div>
+                <div className="text-xs text-gray-600 mt-1">hours</div>
+              </div>
+              <span className="text-gray-400 font-bold">:</span>
+              <div className="text-center">
+                <div className="bg-red-600 text-white px-2 py-1 rounded text-lg font-bold min-w-[32px]">
+                  {timeLeft.minutes.toString().padStart(2, '0')}
+                </div>
+                <div className="text-xs text-gray-600 mt-1">mins</div>
+              </div>
+              <span className="text-gray-400 font-bold">:</span>
+              <div className="text-center">
+                <div className="bg-red-600 text-white px-2 py-1 rounded text-lg font-bold min-w-[32px]">
+                  {timeLeft.seconds.toString().padStart(2, '0')}
+                </div>
+                <div className="text-xs text-gray-600 mt-1">secs</div>
+              </div>
             </div>
           </div>
         )}

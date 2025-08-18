@@ -26,8 +26,6 @@ const ProductDetails: React.FC = () => {
   const userId = session?.user?.id;
   const router = useRouter();
 
-  // Sales timer state
-  const [salesEndTime, setSalesEndTime] = useState<string | null>(null);
 
   // Cart state variables
   const [isCartLoading, setIsCartLoading] = useState<boolean>(false);
@@ -273,8 +271,6 @@ const ProductDetails: React.FC = () => {
         setProduct(data);
         setCurrentImageIndex(0);
 
-        // Set sales end time from API response
-        setSalesEndTime(data.salesEndTime || null);
       } catch (error) {
         throw new Error("Failed to fetch product details");
       } finally {
@@ -496,6 +492,10 @@ const ProductDetails: React.FC = () => {
               </div>
             </div>
 
+            <div className="text-neutral-600 text-base font-medium">
+              Fast shipping in 3 to 5 business days.
+            </div>
+
             {product.stock > 0 && (
               <div className="text-zinc-600 text-base font-medium">
                 Hurry up! only {product.stock} product
@@ -642,7 +642,7 @@ const ProductDetails: React.FC = () => {
       <ReviewsSection productId={product.id} />
 
       {/* Sales Timer - Chatbot style */}
-      <SalesTimer endTime={salesEndTime} />
+      <SalesTimer endTime={product.salesEndTime} />
 
       {/* Email modal for guest checkout */}
       {showEmailModal && (

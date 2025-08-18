@@ -38,4 +38,5 @@ export interface Product {
   avgRating: number;
   reviewCount: number;
   video?: string;
+  salesEndTime?: string | null;
 }

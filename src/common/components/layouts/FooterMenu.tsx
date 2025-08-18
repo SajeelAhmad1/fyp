@@ -69,7 +69,7 @@ const Footer = () => {
     {
       icon: Truck,
       title: "Fast Delivery",
-      description: "Free shipping on orders over £90"
+      description: "Fast delivery within 3 to 5 business days"
     },
     {
       icon: RotateCcw,
