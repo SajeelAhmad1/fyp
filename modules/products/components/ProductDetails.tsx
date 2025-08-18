@@ -471,7 +471,7 @@ const ProductDetails: React.FC = () => {
               <div className="text-neutral-600 text-sm font-medium">
                 {product.reviews.length > 0
                   ? `${calculateAverageRating().toFixed(1)} / 5 (${
-                      product.reviews.length + 500
+                      product.reviews.length + 297
                     } review${product.reviews.length !== 1 ? "s)" : ")"}`
                   : "No reviews"}
               </div>
@@ -523,12 +523,12 @@ const ProductDetails: React.FC = () => {
 
             {product.size && product.size.length > 0 && (
               <div className="flex items-center">
-                <span className="font-semibold">Size:</span>
+                <span className="font-semibold text-black">Size:</span>
                 <div className="flex gap-2 ml-3 flex-wrap">
                   {product.size.map((size, index) => (
                     <button
                       key={index}
-                      className="w-16 h-8 bg-zinc-100 border items-center justify-center flex focus:bg-blue-200"
+                      className="text-black w-16 h-8 bg-zinc-100 border items-center justify-center flex focus:bg-blue-200"
                     >
                       {size}
                     </button>
@@ -538,11 +538,11 @@ const ProductDetails: React.FC = () => {
             )}
 
             <div className="flex items-center">
-              <span className="font-semibold">Quantity:</span>
+              <span className="font-semibold text-black">Quantity:</span>
               <div className="flex gap-0 ml-3">
                 <button
                   onClick={decreaseQuantity}
-                  className="w-10 h-8 bg-zinc-100 border items-center justify-center flex"
+                  className="text-black w-10 h-8 bg-zinc-100 border items-center justify-center flex"
                   aria-label="Decrease quantity"
                 >
                   -
@@ -551,12 +551,12 @@ const ProductDetails: React.FC = () => {
                   type="text"
                   value={quantity}
                   onChange={handleQuantityChange}
-                  className="w-14 h-8 bg-zinc-100 border border-slate-200 focus:ring-0 focus:border-slate-200 text-center"
+                  className="w-14 h-8 text-black bg-zinc-100 border border-slate-200 focus:ring-0 focus:border-slate-200 text-center"
                   aria-label="Quantity"
                 />
                 <button
                   onClick={increaseQuantity}
-                  className="w-10 h-8 bg-zinc-100 border items-center justify-center flex"
+                  className="text-black w-10 h-8 bg-zinc-100 border items-center justify-center flex"
                   aria-label="Increase quantity"
                 >
                   +
@@ -573,7 +573,7 @@ const ProductDetails: React.FC = () => {
                 }`}
               >
                 {isCartLoading ? (
-                  <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto"></div>
+                  <div className="text-black w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto"></div>
                 ) : inCart ? (
                   "Remove from cart"
                 ) : (

@@ -130,7 +130,7 @@ const RatingSummary: React.FC<{ ratingStats: RatingStats }> = ({
       </div>
 
       <div className="text-sm text-gray-600 mb-6">
-        {totalReviews + 100} global rating{totalReviews !== 1 ? "s" : ""}
+        {totalReviews + 93} global rating{totalReviews !== 1 ? "s" : ""}
       </div>
 
       <div className="space-y-3">
